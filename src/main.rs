@@ -3,13 +3,14 @@ enum Token {
     Value(f64),
     Function(fn(WCode) -> WCode),
     FunctionLiteral(fn(WCode) -> WCode),
-    Other(String)
+    Other(String),
 }
 
 type WCode = Vec<Token>;
 
 fn as_nums(arr: WCode) -> Vec<f64> {
-        arr.iter().map(|value| match value.clone() {
+    arr.iter()
+        .map(|value| match value.clone() {
             Token::Value(n) => n,
             _ => 1.0,
         })
@@ -17,14 +18,14 @@ fn as_nums(arr: WCode) -> Vec<f64> {
 }
 
 fn as_wcode(arr: Vec<f64>) -> WCode {
-        arr.iter().map(|&value| Token::Value(value)).collect()
+    arr.iter().map(|&value| Token::Value(value)).collect()
 }
 
 fn has_function(arr: &WCode) -> bool {
     for token in arr {
         match token {
             Token::Function(_) => return true,
-            _ => continue
+            _ => continue,
         }
     }
 
@@ -55,8 +56,7 @@ fn evaluate(data: WCode) -> WCode {
 }
 
 fn lexer(code: &str) -> WCode {
-    code
-        .split(" ")
+    code.split(" ")
         .map(|x| match x.parse::<f64>() {
             Ok(n) => Token::Value(n),
             Err(_) => {
@@ -64,12 +64,12 @@ fn lexer(code: &str) -> WCode {
 
                 if x.len() > 2 && chars.nth(0).unwrap() == '`' && chars.last().unwrap() == '`' {
                     Token::FunctionLiteral(sum)
-                } else if ["(", ")"].iter().any(|&y| x == y){
+                } else if ["(", ")"].iter().any(|&y| x == y) {
                     Token::Other(x.to_string())
                 } else {
                     Token::Function(sum)
                 }
-            },
+            }
         })
         .collect()
 }
