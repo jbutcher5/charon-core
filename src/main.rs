@@ -6,34 +6,25 @@ enum Token {
     Other(String)
 }
 
-type WCode = Vec<Vec<Token>>;
+type WCode = Vec<Token>;
 
-fn as_nums(data: WCode) -> Vec<Vec<f64>> {
-    data.iter()
-        .map(|arr| {
-            arr.iter()
-                .map(|value| match value.clone() {
-                    Token::Value(n) => n,
-                    _ => 1.0,
-                })
-                .collect()
+fn as_nums(arr: WCode) -> Vec<f64> {
+        arr.iter().map(|value| match value.clone() {
+            Token::Value(n) => n,
+            _ => 1.0,
         })
         .collect()
 }
 
-fn as_wcode(data: Vec<Vec<f64>>) -> WCode {
-    data.iter()
-        .map(|arr| arr.iter().map(|&value| Token::Value(value)).collect())
-        .collect()
+fn as_wcode(arr: Vec<f64>) -> WCode {
+        arr.iter().map(|&value| Token::Value(value)).collect()
 }
 
-fn has_function(data: Vec<Vec<Token>>) -> bool {
-    for arr in data {
-        for token in arr {
-            match token {
-                Token::Function(_) => return true,
-                _ => continue
-            }
+fn has_function(arr: &WCode) -> bool {
+    for token in arr {
+        match token {
+            Token::Function(_) => return true,
+            _ => continue
         }
     }
 
@@ -42,18 +33,13 @@ fn has_function(data: Vec<Vec<Token>>) -> bool {
 
 fn sum(data: WCode) -> WCode {
     let nums = as_nums(data);
-    as_wcode(vec![nums.iter().map(|arr| arr.iter().sum()).collect()])
+    vec![Token::Value(nums.iter().sum())]
 }
 
 fn evaluate(data: WCode) -> WCode {
     let mut new_code = data.clone();
 
-    let final_token: Option<Token> = match new_code.first() {
-        Some(_) => new_code[0].pop(),
-        None => panic!("No code provided"),
-    };
-
-    let final_function: fn(WCode) -> WCode = match final_token {
+    let final_function: fn(WCode) -> WCode = match new_code.pop() {
         Some(token) => match token {
             Token::Function(func) => func,
             _ => return data,
@@ -61,10 +47,7 @@ fn evaluate(data: WCode) -> WCode {
         None => panic!("No code provided"),
     };
 
-    if new_code[0].iter().any(|x| match x {
-        Token::Function(_) => true,
-        _ => false
-    }) {
+    if has_function(&new_code) {
         return final_function(evaluate(new_code));
     }
 
@@ -72,7 +55,7 @@ fn evaluate(data: WCode) -> WCode {
 }
 
 fn lexer(code: &str) -> WCode {
-    vec![code
+    code
         .split(" ")
         .map(|x| match x.parse::<f64>() {
             Ok(n) => Token::Value(n),
@@ -88,7 +71,7 @@ fn lexer(code: &str) -> WCode {
                 }
             },
         })
-        .collect()]
+        .collect()
 }
 
 fn main() {
