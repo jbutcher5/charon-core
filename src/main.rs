@@ -25,13 +25,26 @@ fn as_wcode(data: Vec<Vec<f64>>) -> WCode {
         .collect()
 }
 
+fn has_function(data: Vec<Vec<Token>>) -> bool {
+    for arr in data {
+        for token in arr {
+            match token {
+                Token::Function(_) => return true,
+                _ => continue
+            }
+        }
+    }
+
+    false
+}
+
 fn sum(data: WCode) -> WCode {
     let nums = as_nums(data);
     as_wcode(vec![nums.iter().map(|arr| arr.iter().sum()).collect()])
 }
 
 fn evaluate(data: WCode) -> WCode {
-    let mut new_code = data;
+    let mut new_code = data.clone();
 
     let final_token: Option<Token> = match new_code.first() {
         Some(_) => new_code[0].pop(),
@@ -41,7 +54,7 @@ fn evaluate(data: WCode) -> WCode {
     let final_function: fn(WCode) -> WCode = match final_token {
         Some(token) => match token {
             Token::Function(func) => func,
-            Token::Value(_) => panic!("Code must end in a function"),
+            Token::Value(_) => return data,
         },
         None => panic!("No code provided"),
     };
@@ -67,5 +80,5 @@ fn lexer(code: &str) -> WCode {
 }
 
 fn main() {
-    println!("{:#?}", evaluate(lexer("1 2 3 3 +")));
+    println!("{:#?}", evaluate(lexer("1 2 3 3 4 ")));
 }
