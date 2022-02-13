@@ -1,0 +1,18 @@
+const FUNCTIONS: Vec<String> = vec!["+".to_string()];
+
+#[derive(Debug)]
+enum Token {
+    Array(Vec<i64>),
+    Variable(String),
+    Function(String),
+}
+
+fn lexer(code: &str) -> Vec<Token> {
+    code.split(" ")
+        .map(|x| Token::Function(x.to_string()))
+        .collect()
+}
+
+fn main() {
+    println!("{:#?}", lexer("1 2 +"));
+}
