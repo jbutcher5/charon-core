@@ -116,7 +116,7 @@ fn lexer(code: &str) -> WCode {
             Err(_) => {
                 let mut chars = x.chars();
 
-                if x.len() > 2 && chars.nth(0).unwrap() == '`' && chars.last().unwrap() == '`' {
+                if x.len() > 2 && chars.next().unwrap() == '`' && chars.last().unwrap() == '`' {
                     let function = x.substring(1, x.len() - 1);
 
                     Token::FunctionLiteral(
