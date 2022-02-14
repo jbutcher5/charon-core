@@ -1,4 +1,4 @@
-use phf::phf_map;
+use phf::{phf_map, phf_set};
 use substring::Substring;
 
 #[derive(Debug, Clone)]
@@ -7,7 +7,7 @@ enum Token {
     Function(fn(WCode) -> WCode),
     FunctionLiteral(fn(WCode) -> WCode),
     Atom(String),
-    Other(String),
+    Special(String),
 }
 
 type WCode = Vec<Token>;
@@ -42,7 +42,7 @@ fn last_function(arr: &WCode) -> Option<(usize, WFunc)> {
 fn get_first_bracket_open(arr: &WCode) -> Option<usize> {
     for (i, token) in arr.iter().enumerate() {
         match token {
-            Token::Other(value) => {
+            Token::Special(value) => {
                 if value == "(" {
                     return Some(i);
                 } else {
@@ -61,7 +61,7 @@ fn get_last_bracket_close(arr: &WCode) -> Option<usize> {
 
     for (i, token) in reversed.enumerate() {
         match token {
-            Token::Other(value) => {
+            Token::Special(value) => {
                 if value == ")" {
                     return Some(arr.len() - (i + 1));
                 } else {
@@ -82,6 +82,11 @@ fn sum(data: WCode) -> WCode {
 
 static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "sum" => sum
+};
+
+static SPECIALS: phf::Set<&'static str> = phf_set! {
+    ")",
+    "("
 };
 
 fn evaluate(data: WCode) -> WCode {
@@ -125,8 +130,8 @@ fn lexer(code: &str) -> WCode {
                             .get(function)
                             .unwrap_or_else(|| panic!("Unknown function: {:?}", function)),
                     )
-                } else if ["(", ")"].iter().any(|&y| x == y) {
-                    Token::Other(x.to_string())
+                } else if SPECIALS.contains(x) {
+                    Token::Special(x.to_string())
                 } else {
                     match FUNCTIONS.get(x) {
                         Some(x) => Token::Function(*x),
