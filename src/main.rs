@@ -39,12 +39,12 @@ fn get_first_bracket_open(arr: &WCode) -> Option<usize> {
         match token {
             Token::Other(value) => {
                 if value == "(" {
-                    return Some(i)
+                    return Some(i);
                 } else {
-                    continue
+                    continue;
                 }
-            },
-            _ => continue
+            }
+            _ => continue,
         }
     }
 
@@ -57,13 +57,13 @@ fn get_last_bracket_close(arr: &WCode) -> Option<usize> {
     for (i, token) in reversed.enumerate() {
         match token {
             Token::Other(value) => {
-                if value == "(" {
-                    return Some(arr.len() - i)
+                if value == ")" {
+                    return Some(arr.len() - i);
                 } else {
-                    continue
+                    continue;
                 }
-            },
-            _ => continue
+            }
+            _ => continue,
         }
     }
 
@@ -78,23 +78,25 @@ fn sum(data: WCode) -> WCode {
 fn evaluate(data: WCode) -> WCode {
     let mut new_code = data.clone();
 
-    let brackets = (get_first_bracket_open(&new_code), get_last_bracket_close(&new_code));
+    let brackets = (
+        get_first_bracket_open(&new_code),
+        get_last_bracket_close(&new_code),
+    );
 
     if brackets.0.is_some() && brackets.1.is_some() {
         let (x, y) = (brackets.0.unwrap(), brackets.1.unwrap());
-        let bracket_code = &data[x+1..y+1];
-        new_code.splice(x..y+2, evaluate(bracket_code.to_vec()));
+        let bracket_code = &data[x + 1..y + 1];
+        new_code.splice(x..y + 1, evaluate(bracket_code.to_vec()));
     }
 
     match last_function(&new_code) {
         Some(func_pos) => {
-            let code_to_evaluate = &data[..func_pos+1];
-            new_code.splice(..func_pos+1, evaluate(code_to_evaluate.to_vec()));
+            let code_to_evaluate = &data[..func_pos + 1];
+            new_code.splice(..func_pos + 1, evaluate(code_to_evaluate.to_vec()));
             new_code
-        },
-        None => new_code
+        }
+        None => new_code,
     }
-
 }
 
 fn lexer(code: &str) -> WCode {
@@ -117,5 +119,5 @@ fn lexer(code: &str) -> WCode {
 }
 
 fn main() {
-    println!("{:#?}", evaluate(lexer("1 2 3 3 ( 4 ) +")));
+    println!("{:#?}", evaluate(lexer("1 2 3 3 ( 4 6 ) +")));
 }
