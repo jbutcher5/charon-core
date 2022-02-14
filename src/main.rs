@@ -91,7 +91,7 @@ fn evaluate(data: WCode) -> WCode {
 
     match last_function(&new_code) {
         Some((func_pos, func)) => {
-            let code_to_evaluate: WCode = data[..func_pos].to_vec();
+            let code_to_evaluate: WCode = new_code[..func_pos].to_vec();
             let result = func(code_to_evaluate);
 
             new_code.splice(..func_pos + 1, result);
@@ -121,5 +121,5 @@ fn lexer(code: &str) -> WCode {
 }
 
 fn main() {
-    println!("{:#?}", evaluate(lexer("1 2 3 3 ( 4 6 + ) +")));
+    println!("{:#?}", evaluate(lexer("1 2 3 3 ( 4 6 + ) sum")));
 }
