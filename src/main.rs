@@ -1,8 +1,12 @@
+use phf::phf_map;
+use substring::Substring;
+
 #[derive(Debug, Clone)]
 enum Token {
     Value(f64),
     Function(fn(WCode) -> WCode),
     FunctionLiteral(fn(WCode) -> WCode),
+    Atom(String),
     Other(String),
 }
 
@@ -75,6 +79,10 @@ fn sum(data: WCode) -> WCode {
     vec![Token::Value(nums.iter().sum())]
 }
 
+static FUNCTIONS: phf::Map<&'static str, fn(WCode) -> WCode> = phf_map! {
+    "sum" => sum
+};
+
 fn evaluate(data: WCode) -> WCode {
     let mut new_code = data.clone();
 
@@ -109,11 +117,20 @@ fn lexer(code: &str) -> WCode {
                 let mut chars = x.chars();
 
                 if x.len() > 2 && chars.nth(0).unwrap() == '`' && chars.last().unwrap() == '`' {
-                    Token::FunctionLiteral(sum)
+                    let function = x.substring(1, x.len() - 1);
+
+                    Token::FunctionLiteral(
+                        *FUNCTIONS
+                            .get(function)
+                            .expect(format!("Unknown function: {:?}", function).as_str()),
+                    )
                 } else if ["(", ")"].iter().any(|&y| x == y) {
                     Token::Other(x.to_string())
                 } else {
-                    Token::Function(sum)
+                    match FUNCTIONS.get(x) {
+                        Some(x) => Token::Function(*x),
+                        None => Token::Atom(x.to_string()),
+                    }
                 }
             }
         })
@@ -121,5 +138,5 @@ fn lexer(code: &str) -> WCode {
 }
 
 fn main() {
-    println!("{:#?}", evaluate(lexer("1 2 3 3 ( 4 6 + ) sum")));
+    println!("{:#?}", evaluate(lexer("1 2 3 3 ( 4 6 sum ) sum 8")));
 }
