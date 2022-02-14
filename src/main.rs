@@ -21,15 +21,17 @@ fn as_wcode(arr: Vec<f64>) -> WCode {
     arr.iter().map(|&value| Token::Value(value)).collect()
 }
 
-fn has_function(arr: &WCode) -> bool {
-    for token in arr {
+fn last_function(arr: &WCode) -> Option<usize> {
+    let reversed = arr.iter().rev();
+
+    for (i, token) in reversed.enumerate() {
         match token {
-            Token::Function(_) => return true,
+            Token::Function(value) => return Some(i),
             _ => continue,
         }
     }
 
-    false
+    None
 }
 
 fn get_first_bracket_open(arr: &WCode) -> Option<usize> {
@@ -76,28 +78,23 @@ fn sum(data: WCode) -> WCode {
 fn evaluate(data: WCode) -> WCode {
     let mut new_code = data.clone();
 
-    let final_function: fn(WCode) -> WCode = match new_code.pop() {
-        Some(token) => match token {
-            Token::Function(func) => func,
-            _ => return data,
+    let brackets = (get_first_bracket_open(&new_code), get_last_bracket_close(&new_code));
+
+    if brackets.0.is_some() && brackets.1.is_some() {
+        let (x, y) = (brackets.0.unwrap(), brackets.1.unwrap());
+        let bracket_code = &data[x+1..y+1];
+        new_code.splice(x..y+2, evaluate(bracket_code.to_vec()));
+    }
+
+    match last_function(&new_code) {
+        Some(func_pos) => {
+            let code_to_evaluate = &data[..func_pos+1];
+            new_code.splice(..func_pos+1, evaluate(code_to_evaluate.to_vec()));
+            new_code
         },
-        None => panic!("No code provided"),
-    };
-
-    let first_bracket = get_first_bracket_open(&new_code);
-
-    if first_bracket.is_some() {
-        match get_last_bracket_close(&new_code) {
-            Some(last_index) => unimplemented!(),
-            None => panic!("Unmatched brackets")
-        }
+        None => new_code
     }
 
-    if has_function(&new_code) {
-        return final_function(evaluate(new_code));
-    }
-
-    final_function(new_code)
 }
 
 fn lexer(code: &str) -> WCode {
