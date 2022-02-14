@@ -122,7 +122,7 @@ fn lexer(code: &str) -> WCode {
                     Token::FunctionLiteral(
                         *FUNCTIONS
                             .get(function)
-                            .expect(format!("Unknown function: {:?}", function).as_str()),
+                            .unwrap_or_else(|| panic!("Unknown function: {:?}", function)),
                     )
                 } else if ["(", ")"].iter().any(|&y| x == y) {
                     Token::Other(x.to_string())
