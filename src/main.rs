@@ -58,7 +58,7 @@ fn get_last_bracket_close(arr: &WCode) -> Option<usize> {
         match token {
             Token::Other(value) => {
                 if value == ")" {
-                    return Some(arr.len() - i);
+                    return Some(arr.len() - (i + 1));
                 } else {
                     continue;
                 }
@@ -85,7 +85,7 @@ fn evaluate(data: WCode) -> WCode {
 
     if brackets.0.is_some() && brackets.1.is_some() {
         let (x, y) = (brackets.0.unwrap(), brackets.1.unwrap());
-        let bracket_code = &data[x + 1..y + 1];
+        let bracket_code = &data[x + 1..y];
         new_code.splice(x..y + 1, evaluate(bracket_code.to_vec()));
     }
 
@@ -119,5 +119,5 @@ fn lexer(code: &str) -> WCode {
 }
 
 fn main() {
-    println!("{:#?}", evaluate(lexer("1 2 3 3 ( 4 6 ) +")));
+    println!("{:#?}", evaluate(lexer("1 2 3 3 ( 4 6 + ) +")));
 }
