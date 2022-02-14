@@ -11,6 +11,7 @@ enum Token {
 }
 
 type WCode = Vec<Token>;
+type WFunc = fn(WCode) -> WCode;
 
 fn as_nums(arr: WCode) -> Vec<f64> {
     arr.iter()
@@ -25,7 +26,7 @@ fn as_wcode(arr: Vec<f64>) -> WCode {
     arr.iter().map(|&value| Token::Value(value)).collect()
 }
 
-fn last_function(arr: &WCode) -> Option<(usize, fn(WCode) -> WCode)> {
+fn last_function(arr: &WCode) -> Option<(usize, WFunc)> {
     let reversed = arr.iter().rev();
 
     for (i, token) in reversed.enumerate() {
@@ -79,7 +80,7 @@ fn sum(data: WCode) -> WCode {
     vec![Token::Value(nums.iter().sum())]
 }
 
-static FUNCTIONS: phf::Map<&'static str, fn(WCode) -> WCode> = phf_map! {
+static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "sum" => sum
 };
 
