@@ -21,12 +21,12 @@ fn as_wcode(arr: Vec<f64>) -> WCode {
     arr.iter().map(|&value| Token::Value(value)).collect()
 }
 
-fn last_function(arr: &WCode) -> Option<usize> {
+fn last_function(arr: &WCode) -> Option<(usize, fn(WCode) -> WCode)> {
     let reversed = arr.iter().rev();
 
     for (i, token) in reversed.enumerate() {
         match token {
-            Token::Function(value) => return Some(i),
+            Token::Function(value) => return Some((arr.len() - (i + 1), *value)),
             _ => continue,
         }
     }
@@ -90,9 +90,11 @@ fn evaluate(data: WCode) -> WCode {
     }
 
     match last_function(&new_code) {
-        Some(func_pos) => {
-            let code_to_evaluate = &data[..func_pos + 1];
-            new_code.splice(..func_pos + 1, evaluate(code_to_evaluate.to_vec()));
+        Some((func_pos, func)) => {
+            let code_to_evaluate: WCode = data[..func_pos].to_vec();
+            let result = func(code_to_evaluate);
+
+            new_code.splice(..func_pos + 1, result);
             new_code
         }
         None => new_code,
