@@ -110,7 +110,7 @@ fn evaluate(data: WCode) -> WCode {
 }
 
 fn lexer(code: &str) -> WCode {
-    code.split(" ")
+    code.split(' ')
         .map(|x| match x.parse::<f64>() {
             Ok(n) => Token::Value(n),
             Err(_) => {
