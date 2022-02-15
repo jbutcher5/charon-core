@@ -20,13 +20,6 @@ pub fn outter_function(arr: &WCode) -> WFuncPair {
 
     let mut results: WFuncPair = (None, None);
 
-    for (i, token) in reversed.enumerate() {
-        match token {
-            Token::Function(value) => results.1 = Some((arr.len() - (i + 1), *value)),
-            _ => continue,
-        }
-    }
-
     for (i, token) in arr.iter().enumerate() {
         match token {
             Token::Function(value) => results.0 = Some((i, *value)),
@@ -34,18 +27,25 @@ pub fn outter_function(arr: &WCode) -> WFuncPair {
         }
     }
 
+    for (i, token) in reversed.enumerate() {
+        match token {
+            Token::Function(value) => results.1 = Some((arr.len() - (i + 1), *value)),
+            _ => continue,
+        }
+    }
+
     results
 }
 
-pub fn bracket_pairs(arr: &WCode, initial_pos: usize) -> Option<usize> {
+pub fn bracket_pairs(arr: &WCode, initial_pos: &usize) -> Option<usize> {
     let mut counter = 0;
     let mut next_open = 0;
 
-    for (i, token) in arr[initial_pos..].iter().enumerate() {
+    for (i, token) in arr[initial_pos.clone() + 1..].iter().enumerate() {
         match token {
             Token::Special(value) => {
                 if value == ")" {
-                    return Some(i);
+                    return Some(initial_pos + i + 1);
                 } else if value == "(" {
                     next_open = initial_pos + i;
                     counter += 1;
@@ -56,7 +56,7 @@ pub fn bracket_pairs(arr: &WCode, initial_pos: usize) -> Option<usize> {
         }
     }
 
-    for (i, token) in arr[next_open - 1..].iter().enumerate() {
+    for (i, token) in arr[next_open..].iter().enumerate() {
         match token {
             Token::Special(value) => {
                 if value == "(" {

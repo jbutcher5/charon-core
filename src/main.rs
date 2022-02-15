@@ -8,7 +8,8 @@ use substring::Substring;
 use crate::modles::{Token, WCode, WFunc};
 use crate::stdlib::FUNCTIONS;
 use crate::utils::{
-    as_nums, as_wcode, get_first_bracket_open, get_last_bracket_close, last_function,
+    as_nums, as_wcode, bracket_pairs, get_first_bracket_open, get_last_bracket_close,
+    outter_function,
 };
 
 static SPECIALS: phf::Set<&'static str> = phf_set! {
@@ -19,26 +20,38 @@ static SPECIALS: phf::Set<&'static str> = phf_set! {
 fn evaluate(data: WCode) -> WCode {
     let mut new_code = data.clone();
 
-    let brackets = (
-        get_first_bracket_open(&new_code),
-        get_last_bracket_close(&new_code),
-    );
+    let first = get_first_bracket_open(&new_code);
+    let second = match first {
+        Some(x) => bracket_pairs(&new_code, &x),
+        None => None,
+    };
 
-    if brackets.0.is_some() && brackets.1.is_some() {
-        let (x, y) = (brackets.0.unwrap(), brackets.1.unwrap());
+    if first.is_some() && second.is_some() {
+        let (x, y) = (first.unwrap(), second.unwrap());
         let bracket_code = &data[x + 1..y];
         new_code.splice(x..y + 1, evaluate(bracket_code.to_vec()));
+
+        if get_first_bracket_open(&new_code).is_some() {
+            new_code = evaluate(new_code)
+        }
     }
 
-    match last_function(&new_code) {
-        Some((func_pos, func)) => {
-            let code_to_evaluate: WCode = new_code[..func_pos].to_vec();
+    let funcs = outter_function(&new_code);
+
+    match funcs {
+        (Some((second_func_pos, _)), Some((first_func_pos, func))) => {
+            let code_to_evaluate: WCode = new_code[..first_func_pos].to_vec();
             let result = func(code_to_evaluate);
 
-            new_code.splice(..func_pos + 1, result);
+            new_code.splice(..first_func_pos + 1, result);
+
+            if first_func_pos != second_func_pos {
+                new_code = evaluate(new_code);
+            }
+
             new_code
         }
-        None => new_code,
+        _ => new_code,
     }
 }
 
@@ -71,5 +84,5 @@ fn lexer(code: &str) -> WCode {
 }
 
 fn main() {
-    println!("{:#?}", evaluate(lexer("1 2 3 3 ( ( 4 6 ) + ) sum 8")));
+    println!("{:#?}", evaluate(lexer("1 2 div 7 mul 9")));
 }
