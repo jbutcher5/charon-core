@@ -49,6 +49,7 @@ pub fn bracket_pairs(arr: &WCode, initial_pos: usize) -> Option<usize> {
                 } else if value == "(" {
                     next_open = initial_pos + i;
                     counter += 1;
+                    break;
                 }
             }
             _ => continue,
