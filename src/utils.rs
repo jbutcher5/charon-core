@@ -1,5 +1,7 @@
 use crate::{Token, WCode, WFunc};
 
+type WFuncPair = (Option<(usize, WFunc)>, Option<(usize, WFunc)>);
+
 pub fn as_nums(arr: WCode) -> Vec<f64> {
     arr.iter()
         .map(|value| match value.clone() {
@@ -13,17 +15,26 @@ pub fn as_wcode(arr: Vec<f64>) -> WCode {
     arr.iter().map(|&value| Token::Value(value)).collect()
 }
 
-pub fn last_function(arr: &WCode) -> Option<(usize, WFunc)> {
+pub fn function_pairs(arr: &WCode) -> WFuncPair {
     let reversed = arr.iter().rev();
+
+    let mut results: WFuncPair = (None, None);
 
     for (i, token) in reversed.enumerate() {
         match token {
-            Token::Function(value) => return Some((arr.len() - (i + 1), *value)),
+            Token::Function(value) => results.1 = Some((arr.len() - (i + 1), *value)),
             _ => continue,
         }
     }
 
-    None
+    for (i, token) in arr.iter().enumerate() {
+        match token {
+            Token::Function(value) => results.0 = Some((i, *value)),
+            _ => continue
+        }
+    }
+
+    results
 }
 
 pub fn get_first_bracket_open(arr: &WCode) -> Option<usize> {
