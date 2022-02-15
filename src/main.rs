@@ -1,88 +1,13 @@
-use phf::{phf_map, phf_set};
+mod modles;
+mod utils;
+mod stdlib;
+
+use phf::phf_set;
 use substring::Substring;
 
-#[derive(Debug, Clone)]
-enum Token {
-    Value(f64),
-    Function(fn(WCode) -> WCode),
-    FunctionLiteral(fn(WCode) -> WCode),
-    Atom(String),
-    Special(String),
-}
-
-type WCode = Vec<Token>;
-type WFunc = fn(WCode) -> WCode;
-
-fn as_nums(arr: WCode) -> Vec<f64> {
-    arr.iter()
-        .map(|value| match value.clone() {
-            Token::Value(n) => n,
-            _ => 1.0,
-        })
-        .collect()
-}
-
-fn as_wcode(arr: Vec<f64>) -> WCode {
-    arr.iter().map(|&value| Token::Value(value)).collect()
-}
-
-fn last_function(arr: &WCode) -> Option<(usize, WFunc)> {
-    let reversed = arr.iter().rev();
-
-    for (i, token) in reversed.enumerate() {
-        match token {
-            Token::Function(value) => return Some((arr.len() - (i + 1), *value)),
-            _ => continue,
-        }
-    }
-
-    None
-}
-
-fn get_first_bracket_open(arr: &WCode) -> Option<usize> {
-    for (i, token) in arr.iter().enumerate() {
-        match token {
-            Token::Special(value) => {
-                if value == "(" {
-                    return Some(i);
-                } else {
-                    continue;
-                }
-            }
-            _ => continue,
-        }
-    }
-
-    None
-}
-
-fn get_last_bracket_close(arr: &WCode) -> Option<usize> {
-    let reversed = arr.iter().rev();
-
-    for (i, token) in reversed.enumerate() {
-        match token {
-            Token::Special(value) => {
-                if value == ")" {
-                    return Some(arr.len() - (i + 1));
-                } else {
-                    continue;
-                }
-            }
-            _ => continue,
-        }
-    }
-
-    None
-}
-
-fn sum(data: WCode) -> WCode {
-    let nums = as_nums(data);
-    vec![Token::Value(nums.iter().sum())]
-}
-
-static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
-    "sum" => sum
-};
+use crate::utils::{as_nums, as_wcode, last_function, get_first_bracket_open, get_last_bracket_close};
+use crate::modles::{Token, WCode, WFunc};
+use crate::stdlib::FUNCTIONS;
 
 static SPECIALS: phf::Set<&'static str> = phf_set! {
     ")",
@@ -144,5 +69,5 @@ fn lexer(code: &str) -> WCode {
 }
 
 fn main() {
-    println!("{:#?}", evaluate(lexer("1 2 3 3 ( 4 6 sum ) sum 8")));
+    println!("{:#?}", evaluate(lexer("1 2 3 3 ( ( 4 6 ) sum ) sum 8")));
 }
