@@ -1,13 +1,15 @@
 mod modles;
-mod utils;
 mod stdlib;
+mod utils;
 
 use phf::phf_set;
 use substring::Substring;
 
-use crate::utils::{as_nums, as_wcode, last_function, get_first_bracket_open, get_last_bracket_close};
 use crate::modles::{Token, WCode, WFunc};
 use crate::stdlib::FUNCTIONS;
+use crate::utils::{
+    as_nums, as_wcode, get_first_bracket_open, get_last_bracket_close, last_function,
+};
 
 static SPECIALS: phf::Set<&'static str> = phf_set! {
     ")",
@@ -69,5 +71,5 @@ fn lexer(code: &str) -> WCode {
 }
 
 fn main() {
-    println!("{:#?}", evaluate(lexer("1 2 3 3 ( ( 4 6 ) sum ) sum 8")));
+    println!("{:#?}", evaluate(lexer("1 2 3 3 ( ( 4 6 ) + ) sum 8")));
 }
