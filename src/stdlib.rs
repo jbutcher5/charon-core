@@ -7,20 +7,12 @@ fn sum(data: WCode) -> WCode {
 }
 
 fn add(mut data: WCode) -> WCode {
-    if data.len() < 2 {
-        panic!("Not enough parameters to call add!");
-    }
-
     let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
     data.push(Token::Value(x.iter().sum()));
     data
 }
 
 fn sub(mut data: WCode) -> WCode {
-    if data.len() < 2 {
-        panic!("Not enough parameters to call sub!");
-    }
-
     let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
     let result = x[1] - x[0];
     data.push(Token::Value(result));
@@ -28,10 +20,6 @@ fn sub(mut data: WCode) -> WCode {
 }
 
 fn mul(mut data: WCode) -> WCode {
-    if data.len() < 2 {
-        panic!("Not enough parameters to call mul!");
-    }
-
     let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
     let result = x[1] * x[0];
     data.push(Token::Value(result));
@@ -39,14 +27,15 @@ fn mul(mut data: WCode) -> WCode {
 }
 
 fn div(mut data: WCode) -> WCode {
-    if data.len() < 2 {
-        panic!("Not enough parameters to call div!");
-    }
-
     let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
     let result = x[1] / x[0];
     data.push(Token::Value(result));
     data
+}
+
+fn len(data: WCode) -> WCode {
+    let length = data.len() as f64;
+    vec![Token::Value(length)]
 }
 
 pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
@@ -58,5 +47,6 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "+" => add,
     "-" => sub,
     "*" => mul,
-    "/" => div
+    "/" => div,
+    "len" => len
 };
