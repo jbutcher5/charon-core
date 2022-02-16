@@ -92,22 +92,3 @@ pub fn get_first_bracket_open(arr: &WCode) -> Option<usize> {
 
     None
 }
-
-pub fn get_last_bracket_close(arr: &WCode) -> Option<usize> {
-    let reversed = arr.iter().rev();
-
-    for (i, token) in reversed.enumerate() {
-        match token {
-            Token::Special(value) => {
-                if value == ")" {
-                    return Some(arr.len() - (i + 1));
-                } else {
-                    continue;
-                }
-            }
-            _ => continue,
-        }
-    }
-
-    None
-}
