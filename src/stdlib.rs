@@ -38,6 +38,20 @@ fn len(data: WCode) -> WCode {
     vec![Token::Value(length)]
 }
 
+fn output(data: WCode) -> WCode {
+    let result = data
+        .clone()
+        .iter()
+        .fold(String::new(), |acc, token| match token {
+            Token::Value(x) => format!("{} {}", acc, x),
+            Token::Atom(x) | Token::Special(x) => format!("{} {}", acc, x),
+            Token::Function(func) | Token::FunctionLiteral(func) => format!("{} {:?}", acc, func),
+        });
+
+    println!("{}", result);
+    data
+}
+
 pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "sum" => sum,
     "add" => add,
@@ -48,5 +62,6 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "-" => sub,
     "*" => mul,
     "/" => div,
-    "len" => len
+    "len" => len,
+    "OUTPUT" => output
 };

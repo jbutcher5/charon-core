@@ -7,9 +7,7 @@ use substring::Substring;
 
 use crate::modles::{Token, WCode, WFunc};
 use crate::stdlib::FUNCTIONS;
-use crate::utils::{
-    as_nums, as_wcode, bracket_pairs, outter_function, get_first_bracket_open
-};
+use crate::utils::{as_nums, as_wcode, bracket_pairs, get_first_bracket_open, outter_function};
 
 static SPECIALS: phf::Set<&'static str> = phf_set! {
     ")",
@@ -83,5 +81,5 @@ fn lexer(code: &str) -> WCode {
 }
 
 fn main() {
-    println!("{:#?}", evaluate(lexer("1 2 div 7 mul 9 atom len")));
+    evaluate(lexer("1 2 div 7 mul 9 atom `len` OUTPUT"));
 }
