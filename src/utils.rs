@@ -1,4 +1,4 @@
-use crate::{Token, WCode, WFunc};
+use crate::{evaluate, FunctionParameter, Token, WCode, WFunc};
 
 type WFuncPair = (Option<(usize, WFunc)>, Option<(usize, WFunc)>);
 
@@ -91,4 +91,50 @@ pub fn get_first_bracket_open(arr: &WCode) -> Option<usize> {
     }
 
     None
+}
+
+pub fn wfunc(function: &WCode, arr: &WCode) -> WCode {
+    let has_remaining_param = function.iter().any(|x| match x {
+        Token::Parameter(FunctionParameter::Remaining) => true,
+        _ => false,
+    });
+
+    let max_param: usize = function.iter().fold(0, |acc, x| match x {
+            Token::Parameter(FunctionParameter::Exact(x)) => {
+                if acc < x + 1 {
+                    x + 1
+                } else {
+                    acc
+                }
+            }
+            _ => acc,
+    });
+
+    let mut buffer: WCode = Vec::new();
+
+    for token in function {
+        match token {
+            Token::Parameter(FunctionParameter::Exact(x)) => buffer.push(match arr.get(*x) {
+                Some(y) => y.clone(),
+                None => continue,
+            }),
+            Token::Parameter(FunctionParameter::Remaining) => {
+                buffer.append(&mut arr[max_param..].to_vec())
+            }
+            _ => buffer.push(token.clone()),
+        }
+    }
+
+    let mut result = evaluate(buffer);
+
+    if has_remaining_param {
+        result
+    } else {
+        let mut untouched = arr.clone();
+        for _ in 0..max_param {
+            untouched.pop();
+        }
+        untouched.append(&mut result);
+        untouched
+    }
 }
