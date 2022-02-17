@@ -4,8 +4,10 @@ mod utils;
 
 use phf::phf_set;
 use substring::Substring;
+use lazy_static::lazy_static;
+use regex::Regex;
 
-use crate::modles::{Token, WCode, WFunc};
+use crate::modles::{Token, FunctionParameter, WCode, WFunc, WSection};
 use crate::stdlib::FUNCTIONS;
 use crate::utils::{as_nums, as_wcode, bracket_pairs, get_first_bracket_open, outter_function};
 
@@ -52,7 +54,20 @@ fn evaluate(data: WCode) -> WCode {
     }
 }
 
-fn lexer(code: &str) -> WCode {
+fn lexer(code: &str) -> Vec<WSection> {
+    lazy_static! {
+        static ref re: Regex = Regex::new(" <- ").unwrap();
+    }
+
+    code.split('\n')
+        .map(|line| match re.find(line) {
+            Some(pos) => WSection{container: Some(line[..pos.start()].to_string()), code: line_lexer(&line[pos.end()..])},
+            None => WSection{container: None, code: line_lexer(code)}
+        })
+        .collect()
+}
+
+fn line_lexer(code: &str) -> WCode {
     code.split(' ')
         .map(|x| match x.parse::<f64>() {
             Ok(n) => Token::Value(n),
@@ -81,5 +96,5 @@ fn lexer(code: &str) -> WCode {
 }
 
 fn main() {
-    evaluate(lexer("1 2 div 7 mul 9 atom `len` OUTPUT"));
+    evaluate(lexer("1 2 div 7 mul 9 atom `len` OUTPUT len OUTPUT"));
 }
