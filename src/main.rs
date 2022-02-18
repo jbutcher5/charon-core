@@ -54,27 +54,22 @@ fn evaluate(data: WCode) -> WCode {
     }
 }
 
-fn lexer(code: &str) -> Vec<WSection> {
-    lazy_static! {
-        static ref re: Regex = Regex::new(" <- ").unwrap();
-    }
-
-    code.split('\n')
-        .map(|line| match re.find(line) {
-            Some(pos) => WSection{container: Some(line[..pos.start()].to_string()), code: line_lexer(&line[pos.end()..])},
-            None => WSection{container: None, code: line_lexer(code)}
-        })
-        .collect()
-}
-
-fn line_lexer(code: &str) -> WCode {
+fn lexer(code: &str, containers: Vec<String>) -> WCode {
     code.split(' ')
         .map(|x| match x.parse::<f64>() {
             Ok(n) => Token::Value(n),
             Err(_) => {
                 let mut chars = x.chars();
 
-                if x.len() > 2 && chars.next().unwrap() == '`' && chars.last().unwrap() == '`' {
+                if x.len() > 1 && chars.nth(0).unwrap() == '#'{
+                    if let Ok(index) = x[1..].parse::<usize>() {
+                        Token::Parameter(FunctionParameter::Exact(index))
+                    } else if chars.nth(1).unwrap() == 'n' && x.len() == 2 {
+                        Token::Parameter(FunctionParameter::Remaining)
+                    } else {
+                        Token::Atom(x.to_string())
+                    }
+                } else if x.len() > 2 && chars.nth(0).unwrap() == '`' && chars.last().unwrap() == '`' {
                     let function = x.substring(1, x.len() - 1);
 
                     Token::FunctionLiteral(
