@@ -6,6 +6,7 @@ use phf::phf_set;
 use substring::Substring;
 use lazy_static::lazy_static;
 use regex::Regex;
+use std::collections::HashMap;
 
 use crate::modles::{Token, FunctionParameter, WCode, WFunc, WSection};
 use crate::stdlib::FUNCTIONS;
@@ -16,7 +17,34 @@ static SPECIALS: phf::Set<&'static str> = phf_set! {
     "("
 };
 
-fn evaluate(data: WCode) -> WCode {
+fn section_lexer(code: &str) -> Vec<WSection> {
+    lazy_static! {
+        static ref re: Regex = Regex::new(" <- ").unwrap();
+    }
+
+    code.split('\n')
+        .map(|line| match re.find(line) {
+            Some(pos) => WSection{container: Some(line[..pos.start()].to_string()), code: lexer(&line[pos.end()..])},
+            None => WSection{container: None, code: lexer(code)}
+        })
+        .collect()
+}
+
+fn section_evaluator(data: Vec<WSection>) -> Vec<WCode> {
+    let mut function_map: HashMap<String, WCode>;
+    let mut result: Vec<WCode> = Vec::new();
+
+    for section in data {
+        match section.container {
+            Some(container) => function_map[&container] = section.code,
+            None => result.push(evaluate(section.code, function_map))
+        }
+    }
+
+    result
+}
+
+fn evaluate(data: WCode, state: HashMap<String, WCode>) -> WCode {
     let mut new_code = data.clone();
 
     let first = get_first_bracket_open(&new_code);
