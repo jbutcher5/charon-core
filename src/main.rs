@@ -61,7 +61,9 @@ fn lexer(code: &str, containers: Vec<String>) -> WCode {
             Err(_) => {
                 let mut chars = x.chars();
 
-                if x.len() > 1 && chars.nth(0).unwrap() == '#'{
+                if containers.iter().any(|&name| name == x) {
+                    Token::Container(x.to_string())
+                } else if x.len() > 1 && chars.nth(0).unwrap() == '#' {
                     if let Ok(index) = x[1..].parse::<usize>() {
                         Token::Parameter(FunctionParameter::Exact(index))
                     } else if chars.nth(1).unwrap() == 'n' && x.len() == 2 {
