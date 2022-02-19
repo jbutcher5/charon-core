@@ -1,6 +1,13 @@
-use crate::{evaluate, FunctionParameter, Token, WCode, WFunc};
+use crate::{
+    FunctionParameter,
+    HashMap,
+    Token,
+    WCode,
+    evaluate,
+    WFuncVariant
+};
 
-type WFuncPair = (Option<(usize, WFunc)>, Option<(usize, WFunc)>);
+type WFuncPair = (Option<(usize, WFuncVariant)>, Option<(usize, WFuncVariant)>);
 
 pub fn as_nums(arr: WCode) -> Vec<f64> {
     arr.iter()
@@ -22,14 +29,16 @@ pub fn outter_function(arr: &WCode) -> WFuncPair {
 
     for (i, token) in arr.iter().enumerate() {
         match token {
-            Token::Function(value) => results.0 = Some((i, *value)),
+            Token::Function(value) => results.0 = Some((i, WFuncVariant::Function(*value))),
+            Token::Container(value) => results.0 = Some((i, WFuncVariant::Container(value.to_string()))),
             _ => continue,
         }
     }
 
     for (i, token) in reversed.enumerate() {
         match token {
-            Token::Function(value) => results.1 = Some((arr.len() - (i + 1), *value)),
+            Token::Function(value) => results.1 = Some((arr.len() - (i + 1), WFuncVariant::Function(*value))),
+            Token::Container(value) => results.1 = Some((arr.len() - (i + 1), WFuncVariant::Container(value.to_string()))),
             _ => continue,
         }
     }
@@ -93,21 +102,21 @@ pub fn get_first_bracket_open(arr: &WCode) -> Option<usize> {
     None
 }
 
-pub fn wfunc(function: &WCode, arr: &WCode) -> WCode {
+pub fn wfunc(function: &WCode, arr: &WCode, state: &HashMap<String, WCode>) -> WCode {
     let has_remaining_param = function.iter().any(|x| match x {
         Token::Parameter(FunctionParameter::Remaining) => true,
         _ => false,
     });
 
     let max_param: usize = function.iter().fold(0, |acc, x| match x {
-            Token::Parameter(FunctionParameter::Exact(x)) => {
-                if acc < x + 1 {
-                    x + 1
-                } else {
-                    acc
-                }
+        Token::Parameter(FunctionParameter::Exact(x)) => {
+            if acc < x + 1 {
+                x + 1
+            } else {
+                acc
             }
-            _ => acc,
+        }
+        _ => acc,
     });
 
     let mut buffer: WCode = Vec::new();
@@ -125,7 +134,7 @@ pub fn wfunc(function: &WCode, arr: &WCode) -> WCode {
         }
     }
 
-    let mut result = evaluate(buffer);
+    let mut result = evaluate(buffer, &state);
 
     if has_remaining_param {
         result

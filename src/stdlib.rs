@@ -1,4 +1,4 @@
-use crate::{as_nums, as_wcode, Token, WCode, WFunc};
+use crate::{as_nums, as_wcode, FunctionParameter, Token, WCode, WFunc};
 use phf::phf_map;
 
 fn sum(data: WCode) -> WCode {
@@ -44,8 +44,10 @@ fn output(data: WCode) -> WCode {
         .iter()
         .fold(String::new(), |acc, token| match token {
             Token::Value(x) => format!("{} {}", acc, x),
-            Token::Atom(x) | Token::Special(x) => format!("{} {}", acc, x),
+            Token::Atom(x) | Token::Special(x) | Token::Container(x) => format!("{} {}", acc, x),
             Token::Function(func) | Token::FunctionLiteral(func) => format!("{} {:?}", acc, func),
+            Token::Parameter(FunctionParameter::Exact(index)) => format!("{} #{}", acc, index),
+            Token::Parameter(FunctionParameter::Remaining) => format!("{} #n", acc),
         });
 
     println!("{}", result);
