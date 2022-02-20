@@ -1,11 +1,6 @@
-use crate::{
-    FunctionParameter,
-    HashMap,
-    Token,
-    WCode,
-    evaluate,
-    WFuncVariant
-};
+use std::collections::HashMap;
+use crate::modles::{FunctionParameter, Token, WCode, WFuncVariant};
+use crate::evaluator::eval;
 
 type WFuncPair = (Option<(usize, WFuncVariant)>, Option<(usize, WFuncVariant)>);
 
@@ -134,7 +129,7 @@ pub fn wfunc(function: &WCode, arr: &WCode, state: &HashMap<String, WCode>) -> W
         }
     }
 
-    let mut result = evaluate(buffer, &state);
+    let mut result = eval(buffer, &state);
 
     if has_remaining_param {
         result

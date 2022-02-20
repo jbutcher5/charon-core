@@ -1,4 +1,5 @@
-use crate::{as_nums, as_wcode, FunctionParameter, Token, WCode, WFunc};
+use crate::utils::{as_nums, as_wcode};
+use crate::modles::{FunctionParameter, Token, WCode, WFunc};
 use phf::phf_map;
 
 fn sum(data: WCode) -> WCode {
