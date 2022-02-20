@@ -10,8 +10,9 @@ use crate::evaluator::wsection_eval;
 fn main() {
     wsection_eval(lexer(
 "
-my_sum <- #n sum
-( 3 8 ) my_sum OUTPUT
-",
-    ));
+arr <- 1 4 6 2 5 1
+mean <- ( #n sum ) ( #n len ) div
+arr mean OUTPUT
+"
+));
 }

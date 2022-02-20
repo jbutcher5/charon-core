@@ -1,10 +1,10 @@
 use std::collections::HashMap;
-use crate::modles::{WCode, WSection, WFuncVariant};
+use crate::modles::{WTokens, WSection, WFuncVariant};
 use crate::utils::{bracket_pairs, get_first_bracket_open, outter_function, wfunc};
 
-pub fn wsection_eval(data: Vec<WSection>) -> Vec<WCode> {
-    let mut function_map: HashMap<String, WCode> = HashMap::new();
-    let mut result: Vec<WCode> = Vec::new();
+pub fn wsection_eval(data: Vec<WSection>) -> Vec<WTokens> {
+    let mut function_map: HashMap<String, WTokens> = HashMap::new();
+    let mut result: Vec<WTokens> = Vec::new();
 
     for section in data {
         match section.container {
@@ -18,7 +18,7 @@ pub fn wsection_eval(data: Vec<WSection>) -> Vec<WCode> {
     result
 }
 
-pub fn eval(data: WCode, state: &HashMap<String, WCode>) -> WCode {
+pub fn eval(data: WTokens, state: &HashMap<String, WTokens>) -> WTokens {
     let mut new_code = data.clone();
 
     let first = get_first_bracket_open(&new_code);
@@ -41,7 +41,7 @@ pub fn eval(data: WCode, state: &HashMap<String, WCode>) -> WCode {
 
     match funcs {
         (Some((second_func_pos, _)), Some((first_func_pos, func))) => {
-            let code_to_evaluate: WCode = new_code[..first_func_pos].to_vec();
+            let code_to_evaluate: WTokens = new_code[..first_func_pos].to_vec();
 
             let result = match func {
                 WFuncVariant::Function(func) => func(code_to_evaluate),

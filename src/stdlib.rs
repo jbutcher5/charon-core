@@ -1,45 +1,45 @@
 use crate::utils::{as_nums, as_wcode};
-use crate::modles::{FunctionParameter, Token, WCode, WFunc};
+use crate::modles::{FunctionParameter, Token, WTokens, WFunc};
 use phf::phf_map;
 
-fn sum(data: WCode) -> WCode {
+fn sum(data: WTokens) -> WTokens {
     let nums = as_nums(data);
     as_wcode(vec![nums.iter().sum()])
 }
 
-fn add(mut data: WCode) -> WCode {
+fn add(mut data: WTokens) -> WTokens {
     let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
     data.push(Token::Value(x.iter().sum()));
     data
 }
 
-fn sub(mut data: WCode) -> WCode {
+fn sub(mut data: WTokens) -> WTokens {
     let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
     let result = x[1] - x[0];
     data.push(Token::Value(result));
     data
 }
 
-fn mul(mut data: WCode) -> WCode {
+fn mul(mut data: WTokens) -> WTokens {
     let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
     let result = x[1] * x[0];
     data.push(Token::Value(result));
     data
 }
 
-fn div(mut data: WCode) -> WCode {
+fn div(mut data: WTokens) -> WTokens {
     let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
     let result = x[1] / x[0];
     data.push(Token::Value(result));
     data
 }
 
-fn len(data: WCode) -> WCode {
+fn len(data: WTokens) -> WTokens {
     let length = data.len() as f64;
     vec![Token::Value(length)]
 }
 
-fn output(data: WCode) -> WCode {
+fn output(data: WTokens) -> WTokens {
     let result = data
         .clone()
         .iter()

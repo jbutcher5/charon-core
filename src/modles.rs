@@ -1,8 +1,8 @@
 #[derive(Debug, Clone)]
 pub enum Token {
     Value(f64),
-    Function(fn(WCode) -> WCode),
-    FunctionLiteral(fn(WCode) -> WCode),
+    Function(fn(WTokens) -> WTokens),
+    FunctionLiteral(fn(WTokens) -> WTokens),
     Container(String),
     Parameter(FunctionParameter),
     Atom(String),
@@ -18,7 +18,7 @@ pub enum FunctionParameter {
 #[derive(Debug, Clone)]
 pub struct WSection {
     pub container: Option<String>,
-    pub code: WCode,
+    pub code: WTokens,
 }
 
 #[derive(Debug, Clone)]
@@ -27,5 +27,5 @@ pub enum WFuncVariant {
     Function(WFunc)
 }
 
-pub type WCode = Vec<Token>;
-pub type WFunc = fn(WCode) -> WCode;
+pub type WTokens = Vec<Token>;
+pub type WFunc = fn(WTokens) -> WTokens;

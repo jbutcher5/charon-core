@@ -1,10 +1,10 @@
 use std::collections::HashMap;
-use crate::modles::{FunctionParameter, Token, WCode, WFuncVariant};
+use crate::modles::{FunctionParameter, Token, WTokens, WFuncVariant};
 use crate::evaluator::eval;
 
 type WFuncPair = (Option<(usize, WFuncVariant)>, Option<(usize, WFuncVariant)>);
 
-pub fn as_nums(arr: WCode) -> Vec<f64> {
+pub fn as_nums(arr: WTokens) -> Vec<f64> {
     arr.iter()
         .map(|value| match value.clone() {
             Token::Value(n) => n,
@@ -13,11 +13,11 @@ pub fn as_nums(arr: WCode) -> Vec<f64> {
         .collect()
 }
 
-pub fn as_wcode(arr: Vec<f64>) -> WCode {
+pub fn as_wcode(arr: Vec<f64>) -> WTokens {
     arr.iter().map(|&value| Token::Value(value)).collect()
 }
 
-pub fn outter_function(arr: &WCode) -> WFuncPair {
+pub fn outter_function(arr: &WTokens) -> WFuncPair {
     let reversed = arr.iter().rev();
 
     let mut results: WFuncPair = (None, None);
@@ -41,7 +41,7 @@ pub fn outter_function(arr: &WCode) -> WFuncPair {
     results
 }
 
-pub fn bracket_pairs(arr: &WCode, initial_pos: &usize) -> Option<usize> {
+pub fn bracket_pairs(arr: &WTokens, initial_pos: &usize) -> Option<usize> {
     let mut counter = 0;
     let mut next_open = 0;
 
@@ -80,7 +80,7 @@ pub fn bracket_pairs(arr: &WCode, initial_pos: &usize) -> Option<usize> {
     None
 }
 
-pub fn get_first_bracket_open(arr: &WCode) -> Option<usize> {
+pub fn get_first_bracket_open(arr: &WTokens) -> Option<usize> {
     for (i, token) in arr.iter().enumerate() {
         match token {
             Token::Special(value) => {
@@ -97,7 +97,7 @@ pub fn get_first_bracket_open(arr: &WCode) -> Option<usize> {
     None
 }
 
-pub fn wfunc(function: &WCode, arr: &WCode, state: &HashMap<String, WCode>) -> WCode {
+pub fn wfunc(function: &WTokens, arr: &WTokens, state: &HashMap<String, WTokens>) -> WTokens {
     let has_remaining_param = function.iter().any(|x| match x {
         Token::Parameter(FunctionParameter::Remaining) => true,
         _ => false,
@@ -114,7 +114,7 @@ pub fn wfunc(function: &WCode, arr: &WCode, state: &HashMap<String, WCode>) -> W
         _ => acc,
     });
 
-    let mut buffer: WCode = Vec::new();
+    let mut buffer: WTokens = Vec::new();
 
     for token in function {
         match token {

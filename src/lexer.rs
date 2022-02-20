@@ -1,11 +1,11 @@
 use crate::stdlib::FUNCTIONS;
-use crate::modles::{FunctionParameter, Token, WCode, WSection};
+use crate::modles::{FunctionParameter, Token, WTokens, WSection};
 use lazy_static::lazy_static;
 use phf::phf_set;
 use regex::Regex;
 use substring::Substring;
 
-fn annotate(code: &str, containers: &Vec<String>) -> WCode {
+fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
     lazy_static! {
         static ref SPECIALS: phf::Set<&'static str> = phf_set! {
             ")",
