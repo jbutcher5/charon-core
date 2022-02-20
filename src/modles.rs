@@ -9,19 +9,19 @@ pub enum Token {
     Special(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum FunctionParameter {
     Exact(usize),
     Remaining,
 }
 
-#[derive(Debug, Clone)]
 pub struct WCode {
     pub container: Option<String>,
     pub code: WTokens,
 }
 
-#[derive(Debug, Clone)]
+
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum WFuncVariant {
     Container(String),
     Function(WFunc)
