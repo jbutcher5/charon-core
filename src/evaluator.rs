@@ -1,8 +1,8 @@
 use std::collections::HashMap;
-use crate::modles::{WTokens, WSection, WFuncVariant};
+use crate::modles::{WTokens, WCode, WFuncVariant};
 use crate::utils::{bracket_pairs, get_first_bracket_open, outter_function, wfunc};
 
-pub fn wsection_eval(data: Vec<WSection>) -> Vec<WTokens> {
+pub fn wsection_eval(data: Vec<WCode>) -> Vec<WTokens> {
     let mut function_map: HashMap<String, WTokens> = HashMap::new();
     let mut result: Vec<WTokens> = Vec::new();
 

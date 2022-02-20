@@ -16,7 +16,7 @@ pub enum FunctionParameter {
 }
 
 #[derive(Debug, Clone)]
-pub struct WSection {
+pub struct WCode {
     pub container: Option<String>,
     pub code: WTokens,
 }

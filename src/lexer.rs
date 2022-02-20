@@ -1,5 +1,5 @@
 use crate::stdlib::FUNCTIONS;
-use crate::modles::{FunctionParameter, Token, WTokens, WSection};
+use crate::modles::{FunctionParameter, Token, WTokens, WCode};
 use lazy_static::lazy_static;
 use phf::phf_set;
 use regex::Regex;
@@ -54,7 +54,7 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
         .collect()
 }
 
-pub fn lexer(code: &str) -> Vec<WSection> {
+pub fn lexer(code: &str) -> Vec<WCode> {
     lazy_static! {
         static ref RE: Regex = Regex::new(" <- ").unwrap();
     }
@@ -69,12 +69,12 @@ pub fn lexer(code: &str) -> Vec<WSection> {
                 let code = line[pos.end()..].to_string();
                 containers.push(container.clone());
 
-                WSection {
+                WCode {
                     container: Some(container),
                     code: annotate(&code, &containers),
                 }
             }
-            None => WSection {
+            None => WCode {
                 container: None,
                 code: annotate(line, &containers),
             },
