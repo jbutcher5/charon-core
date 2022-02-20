@@ -1,5 +1,5 @@
+use crate::modles::{FunctionParameter, Token, WFunc, WTokens};
 use crate::utils::{as_nums, as_wcode};
-use crate::modles::{FunctionParameter, Token, WTokens, WFunc};
 use phf::phf_map;
 
 fn sum(data: WTokens) -> WTokens {
@@ -55,6 +55,27 @@ fn output(data: WTokens) -> WTokens {
     data
 }
 
+fn eq(mut data: WTokens) -> WTokens {
+    let parameters = (data.pop().unwrap(), data.pop().unwrap());
+
+    let result = match parameters {
+        (Token::Value(x), Token::Value(y)) => x == y,
+        (Token::Function(x), Token::Function(y))
+        | (Token::FunctionLiteral(x), Token::FunctionLiteral(y)) => x == y,
+        (Token::Container(x), Token::Container(y)) | (Token::Atom(x), Token::Atom(y)) => x == y,
+        (Token::Parameter(x), Token::Parameter(y)) => x == y,
+        _ => panic!("Incorrect tokens"),
+    };
+
+    let token = Token::Value(match result {
+        true => 1.0,
+        false => 0.0,
+    });
+
+    data.push(token);
+    data
+}
+
 pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "sum" => sum,
     "add" => add,
@@ -66,5 +87,6 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "*" => mul,
     "/" => div,
     "len" => len,
-    "OUTPUT" => output
+    "OUTPUT" => output,
+    "eq" => eq
 };
