@@ -1,4 +1,4 @@
-use crate::modles::{FunctionParameter, Token, WFunc, WTokens};
+use crate::modles::{FunctionParameter, WFunc, Token::*, WTokens};
 use crate::utils::{as_nums, as_wcode};
 use phf::phf_map;
 
@@ -9,34 +9,34 @@ fn sum(data: WTokens) -> WTokens {
 
 fn add(mut data: WTokens) -> WTokens {
     let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
-    data.push(Token::Value(x.iter().sum()));
+    data.push(Value(x.iter().sum()));
     data
 }
 
 fn sub(mut data: WTokens) -> WTokens {
     let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
     let result = x[1] - x[0];
-    data.push(Token::Value(result));
+    data.push(Value(result));
     data
 }
 
 fn mul(mut data: WTokens) -> WTokens {
     let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
     let result = x[1] * x[0];
-    data.push(Token::Value(result));
+    data.push(Value(result));
     data
 }
 
 fn div(mut data: WTokens) -> WTokens {
     let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
     let result = x[1] / x[0];
-    data.push(Token::Value(result));
+    data.push(Value(result));
     data
 }
 
 fn len(data: WTokens) -> WTokens {
     let length = data.len() as f64;
-    vec![Token::Value(length)]
+    vec![Value(length)]
 }
 
 fn output(data: WTokens) -> WTokens {
@@ -44,14 +44,11 @@ fn output(data: WTokens) -> WTokens {
         .clone()
         .iter()
         .fold(String::new(), |acc, token| match token {
-            Token::Value(x) => format!("{} {}", acc, x),
-            Token::Atom(x)
-            | Token::Special(x)
-            | Token::Container(x)
-            | Token::ContainerLiteral(x) => format!("{} {}", acc, x),
-            Token::Function(func) | Token::FunctionLiteral(func) => format!("{} {:?}", acc, func),
-            Token::Parameter(FunctionParameter::Exact(index)) => format!("{} #{}", acc, index),
-            Token::Parameter(FunctionParameter::Remaining) => format!("{} #n", acc),
+            Value(x) => format!("{} {}", acc, x),
+            Atom(x) | Special(x) | Container(x) | ContainerLiteral(x) => format!("{} {}", acc, x),
+            Function(func) | FunctionLiteral(func) => format!("{} {:?}", acc, func),
+            Parameter(FunctionParameter::Exact(index)) => format!("{} #{}", acc, index),
+            Parameter(FunctionParameter::Remaining) => format!("{} #n", acc),
         });
 
     println!("{}", result);
@@ -62,17 +59,16 @@ fn eq(mut data: WTokens) -> WTokens {
     let parameters = (data.pop().unwrap(), data.pop().unwrap());
 
     let result = match parameters {
-        (Token::Value(x), Token::Value(y)) => x == y,
-        (Token::Function(x), Token::Function(y))
-        | (Token::FunctionLiteral(x), Token::FunctionLiteral(y)) => x == y,
-        (Token::Container(x), Token::Container(y))
-        | (Token::Atom(x), Token::Atom(y))
-        | (Token::ContainerLiteral(x), Token::ContainerLiteral(y)) => x == y,
-        (Token::Parameter(x), Token::Parameter(y)) => x == y,
+        (Value(x), Value(y)) => x == y,
+        (Function(x), Function(y)) | (FunctionLiteral(x), FunctionLiteral(y)) => x == y,
+        (Container(x), Container(y))
+        | (Atom(x), Atom(y))
+        | (ContainerLiteral(x), ContainerLiteral(y)) => x == y,
+        (Parameter(x), Parameter(y)) => x == y,
         _ => panic!("Incorrect tokens"),
     };
 
-    let token = Token::Value(match result {
+    let token = Value(match result {
         true => 1.0,
         false => 0.0,
     });
