@@ -21,11 +21,10 @@ pub struct WCode {
     pub code: WTokens,
 }
 
-
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum WFuncVariant {
     Container(String),
-    Function(WFunc)
+    Function(WFunc),
 }
 
 pub type WTokens = Vec<Token>;
