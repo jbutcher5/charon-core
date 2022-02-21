@@ -45,7 +45,10 @@ fn output(data: WTokens) -> WTokens {
         .iter()
         .fold(String::new(), |acc, token| match token {
             Token::Value(x) => format!("{} {}", acc, x),
-            Token::Atom(x) | Token::Special(x) | Token::Container(x) => format!("{} {}", acc, x),
+            Token::Atom(x)
+            | Token::Special(x)
+            | Token::Container(x)
+            | Token::ContainerLiteral(x) => format!("{} {}", acc, x),
             Token::Function(func) | Token::FunctionLiteral(func) => format!("{} {:?}", acc, func),
             Token::Parameter(FunctionParameter::Exact(index)) => format!("{} #{}", acc, index),
             Token::Parameter(FunctionParameter::Remaining) => format!("{} #n", acc),
@@ -62,7 +65,9 @@ fn eq(mut data: WTokens) -> WTokens {
         (Token::Value(x), Token::Value(y)) => x == y,
         (Token::Function(x), Token::Function(y))
         | (Token::FunctionLiteral(x), Token::FunctionLiteral(y)) => x == y,
-        (Token::Container(x), Token::Container(y)) | (Token::Atom(x), Token::Atom(y)) => x == y,
+        (Token::Container(x), Token::Container(y))
+        | (Token::Atom(x), Token::Atom(y))
+        | (Token::ContainerLiteral(x), Token::ContainerLiteral(y)) => x == y,
         (Token::Parameter(x), Token::Parameter(y)) => x == y,
         _ => panic!("Incorrect tokens"),
     };
