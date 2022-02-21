@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[derive(Debug, Clone)]
 pub enum Token {
     Value(f64),
@@ -40,6 +42,12 @@ pub enum Operation {
 
 #[derive(Debug, Clone)]
 pub struct Payload {
-    operation: Operation,
-    parameters: WTokens
+    pub operation: Operation,
+    pub parameters: WTokens
+}
+
+#[derive(Debug, Clone)]
+pub struct ProgramState {
+    pub container_map: HashMap<String, WTokens>,
+    pub stack: WTokens
 }
