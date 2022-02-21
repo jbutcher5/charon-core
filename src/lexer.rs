@@ -1,5 +1,5 @@
+use crate::modles::{FunctionParameter, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
-use crate::modles::{FunctionParameter, Token, WTokens, WCode};
 use lazy_static::lazy_static;
 use phf::phf_set;
 use regex::Regex;
@@ -34,13 +34,17 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
                     && chars.nth(0).unwrap() == '`'
                     && chars.last().unwrap() == '`'
                 {
-                    let function = cleared.substring(1, cleared.len() - 1);
+                    let slice = cleared.substring(1, cleared.len() - 1);
 
-                    Token::FunctionLiteral(
-                        *FUNCTIONS
-                            .get(function)
-                            .unwrap_or_else(|| panic!("Unknown function: {:?}", function)),
-                    )
+                    if containers.iter().any(|name| *name == slice) {
+                        Token::ContainerLiteral(slice.to_string())
+                    } else {
+                        Token::FunctionLiteral(
+                            *FUNCTIONS
+                                .get(slice)
+                                .unwrap_or_else(|| panic!("Unknown function: {:?}", slice)),
+                        )
+                    }
                 } else if SPECIALS.contains(&cleared) {
                     Token::Special(cleared)
                 } else {
