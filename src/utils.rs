@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::modles::{FunctionParameter, Token, WTokens, WFuncVariant};
+use crate::models::{FunctionParameter, Token, WTokens, WFuncVariant};
 use crate::evaluator::eval;
 
 type WFuncPair = (Option<(usize, WFuncVariant)>, Option<(usize, WFuncVariant)>);

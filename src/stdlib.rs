@@ -1,4 +1,4 @@
-use crate::modles::{FunctionParameter, WFunc, Token::*, WTokens};
+use crate::models::{FunctionParameter, Token::*, WFunc, WTokens};
 use crate::utils::{as_nums, as_wcode};
 use phf::phf_map;
 

@@ -1,4 +1,4 @@
-use crate::modles::{FunctionParameter, Token, WCode, WTokens};
+use crate::models::{FunctionParameter, Token, WTokens, WCode};
 use crate::stdlib::FUNCTIONS;
 use lazy_static::lazy_static;
 use phf::phf_set;

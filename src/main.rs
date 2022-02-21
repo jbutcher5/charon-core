@@ -1,4 +1,4 @@
-mod modles;
+mod models;
 mod stdlib;
 mod utils;
 mod lexer;
