@@ -4,6 +4,7 @@ pub enum Token {
     Function(fn(WTokens) -> WTokens),
     FunctionLiteral(fn(WTokens) -> WTokens),
     Container(String),
+    ContainerLiteral(String),
     Parameter(FunctionParameter),
     Atom(String),
     Special(String),
