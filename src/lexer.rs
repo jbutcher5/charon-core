@@ -1,5 +1,5 @@
 use crate::stdlib::FUNCTIONS;
-use crate::modles::{FunctionParameter, Token, WTokens, WCode};
+use crate::models::{FunctionParameter, Token, WTokens, WCode};
 use lazy_static::lazy_static;
 use phf::phf_set;
 use regex::Regex;
