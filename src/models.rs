@@ -43,7 +43,7 @@ pub enum Operation {
 #[derive(Debug, Clone)]
 pub struct Payload {
     pub operation: Operation,
-    pub parameters: WTokens
+    pub parameters: Option<WTokens>
 }
 
 #[derive(Debug, Clone)]
