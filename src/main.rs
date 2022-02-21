@@ -1,16 +1,18 @@
+mod evaluator;
+mod lexer;
 mod models;
 mod stdlib;
 mod utils;
-mod lexer;
-mod evaluator;
 
-use crate::lexer::lexer;
 use crate::evaluator::wsection_eval;
+use crate::lexer::lexer;
 
 fn main() {
     wsection_eval(lexer(
-"
-1.1 1 eq OUTPUT
-"
-));
+        "
+x <- 5
+y <- 4
+y x 1 12 eq if-else OUTPUT
+",
+    ));
 }

@@ -77,6 +77,35 @@ fn eq(mut data: WTokens) -> WTokens {
     data
 }
 
+fn if_else(mut data: WTokens) -> WTokens {
+    let parameters = (
+        data.pop().unwrap(),
+        data.pop().unwrap(),
+        data.pop().unwrap(),
+    );
+
+    let selected = match parameters.0 {
+        Value(x) => {
+            if x != 0.0 {
+                parameters.1
+            } else {
+                parameters.2
+            }
+        }
+
+        _ => parameters.2,
+    };
+
+    let convered = match selected {
+        ContainerLiteral(x) => Container(x),
+        FunctionLiteral(x) => Function(x),
+        _ => selected,
+    };
+
+    data.push(convered);
+    data
+}
+
 pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "sum" => sum,
     "add" => add,
@@ -89,5 +118,6 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "/" => div,
     "len" => len,
     "OUTPUT" => output,
-    "eq" => eq
+    "eq" => eq,
+    "if-else" => if_else
 };
