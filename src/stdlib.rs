@@ -1,4 +1,4 @@
-use crate::models::{FunctionParameter, Token::*, WFunc, WTokens};
+use crate::models::{FunctionParameter, Token::*, WFunc, WTokens, Operation};
 use crate::utils::{as_nums, as_wcode};
 use phf::phf_map;
 
@@ -107,6 +107,16 @@ fn if_else(mut data: WTokens) -> WTokens {
     data
 }
 
+fn pop(mut data: WTokens) -> WTokens {
+    let payload = Payload{
+        operation: Operation::Pop,
+        parameters: None
+    };
+
+    data.push(payload);
+    data
+}
+
 pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "sum" => sum,
     "add" => add,
@@ -117,6 +127,7 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "-" => sub,
     "*" => mul,
     "/" => div,
+    "pop" => pop,
     "len" => len,
     "OUTPUT" => output,
     "eq" => eq,
