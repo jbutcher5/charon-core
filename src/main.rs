@@ -10,9 +10,7 @@ use crate::evaluator::wsection_eval;
 fn main() {
     wsection_eval(lexer(
 "
-arr <- 1 4 6 2 5 1
-mean <- ( #n sum ) ( #n len ) div
-arr mean OUTPUT
+1.1 1 eq OUTPUT
 "
 ));
 }
