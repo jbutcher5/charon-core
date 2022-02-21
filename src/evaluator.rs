@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use crate::models::{WTokens, WCode, WFuncVariant};
+use crate::models::{WCode, WFuncVariant, WTokens};
 use crate::utils::{bracket_pairs, get_first_bracket_open, outter_function, wfunc};
+use std::collections::HashMap;
 
 pub fn wsection_eval(data: Vec<WCode>) -> Vec<WTokens> {
     let mut function_map: HashMap<String, WTokens> = HashMap::new();
@@ -45,7 +45,9 @@ pub fn eval(data: WTokens, state: &HashMap<String, WTokens>) -> WTokens {
 
             let result = match func {
                 WFuncVariant::Function(func) => func(code_to_evaluate),
-                WFuncVariant::Container(x) => wfunc(state.get(&x).unwrap(), &code_to_evaluate, state)
+                WFuncVariant::Container(x) => {
+                    wfunc(state.get(&x).unwrap(), &code_to_evaluate, state)
+                }
             };
 
             new_code.splice(..first_func_pos + 1, result);

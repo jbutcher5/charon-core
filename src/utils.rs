@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use crate::models::{FunctionParameter, Token, WTokens, WFuncVariant};
 use crate::evaluator::eval;
+use crate::models::{FunctionParameter, Token, WFuncVariant, WTokens};
+use std::collections::HashMap;
 
 type WFuncPair = (Option<(usize, WFuncVariant)>, Option<(usize, WFuncVariant)>);
 
@@ -25,15 +25,24 @@ pub fn outter_function(arr: &WTokens) -> WFuncPair {
     for (i, token) in arr.iter().enumerate() {
         match token {
             Token::Function(value) => results.0 = Some((i, WFuncVariant::Function(*value))),
-            Token::Container(value) => results.0 = Some((i, WFuncVariant::Container(value.to_string()))),
+            Token::Container(value) => {
+                results.0 = Some((i, WFuncVariant::Container(value.to_string())))
+            }
             _ => continue,
         }
     }
 
     for (i, token) in reversed.enumerate() {
         match token {
-            Token::Function(value) => results.1 = Some((arr.len() - (i + 1), WFuncVariant::Function(*value))),
-            Token::Container(value) => results.1 = Some((arr.len() - (i + 1), WFuncVariant::Container(value.to_string()))),
+            Token::Function(value) => {
+                results.1 = Some((arr.len() - (i + 1), WFuncVariant::Function(*value)))
+            }
+            Token::Container(value) => {
+                results.1 = Some((
+                    arr.len() - (i + 1),
+                    WFuncVariant::Container(value.to_string()),
+                ))
+            }
             _ => continue,
         }
     }
