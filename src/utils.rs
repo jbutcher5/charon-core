@@ -50,16 +50,16 @@ pub fn outter_function(arr: &WTokens) -> WFuncPair {
     results
 }
 
-pub fn bracket_pairs(arr: &WTokens, initial_pos: &usize) -> Option<usize> {
+pub fn special_pairs(tokens: (String, String), arr: &WTokens, initial_pos: &usize) -> Option<usize> {
     let mut counter = 0;
     let mut next_open = 0;
 
     for (i, token) in arr[initial_pos.clone() + 1..].iter().enumerate() {
         match token {
             Token::Special(value) => {
-                if value == ")" {
+                if value == &tokens.1 {
                     return Some(initial_pos + i + 1);
-                } else if value == "(" {
+                } else if value == &tokens.0 {
                     next_open = initial_pos + i;
                     counter += 1;
                     break;
@@ -72,9 +72,9 @@ pub fn bracket_pairs(arr: &WTokens, initial_pos: &usize) -> Option<usize> {
     for (i, token) in arr[next_open..].iter().enumerate() {
         match token {
             Token::Special(value) => {
-                if value == "(" {
+                if value == &tokens.0 {
                     counter += 1;
-                } else if value == ")" {
+                } else if value == &tokens.1 {
                     counter -= 1;
                 }
 
