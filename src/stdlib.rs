@@ -108,13 +108,22 @@ fn if_else(mut data: WTokens) -> WTokens {
 }
 
 fn pop(mut data: WTokens) -> WTokens {
-    let payload = Payload{
+    let payload = Payload {
         operation: Operation::Pop,
         parameters: None
     };
 
     data.push(payload);
     data
+}
+
+fn push(mut data: WTokens) -> WTokens {
+    let payload = Payload {
+        operation: Operation::Push,
+        parameters: Some(data)
+    };
+
+    vec![payload]
 }
 
 pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
@@ -128,6 +137,7 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "*" => mul,
     "/" => div,
     "pop" => pop,
+    "push" =>  push,
     "len" => len,
     "OUTPUT" => output,
     "eq" => eq,
