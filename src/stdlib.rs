@@ -1,4 +1,4 @@
-use crate::models::{FunctionParameter, Token::*, WFunc, WTokens, Operation};
+use crate::models::{FunctionParameter, Operation, Token::*, WFunc, WTokens};
 use crate::utils::{as_nums, as_wcode};
 use phf::phf_map;
 
@@ -43,13 +43,20 @@ fn output(data: WTokens) -> WTokens {
     let result = data
         .clone()
         .iter()
-        .fold(String::new(), |acc, token| match token {
-            Value(x) => format!("{} {}", acc, x),
-            Atom(x) | Special(x) | Container(x) | ContainerLiteral(x) => format!("{} {}", acc, x),
-            Function(func) | FunctionLiteral(func) => format!("{} {:?}", acc, func),
-            Parameter(FunctionParameter::Exact(index)) => format!("{} #{}", acc, index),
-            Parameter(FunctionParameter::Remaining) => format!("{} #n", acc),
-            Payload(x) => format!("{:?}", x)
+        .fold(String::new(), |acc, token| -> String {
+            match token {
+                Value(x) => format!("{} {}", acc, x),
+                Atom(x) | Special(x) | Container(x) | ContainerLiteral(x) => {
+                    format!("{} {}", acc, x)
+                }
+                Function(func) | FunctionLiteral(func) => format!("{} {:?}", acc, func),
+                Parameter(FunctionParameter::Exact(index)) => format!("{} #{}", acc, index),
+                Parameter(FunctionParameter::Remaining) => format!("{} #n", acc),
+                Payload {
+                    operation: x,
+                    parameters: y,
+                } => format!("{:?} {:?}", x, y),
+            }
         });
 
     println!("{}", result);
@@ -110,7 +117,7 @@ fn if_else(mut data: WTokens) -> WTokens {
 fn pop(mut data: WTokens) -> WTokens {
     let payload = Payload {
         operation: Operation::Pop,
-        parameters: None
+        parameters: None,
     };
 
     data.push(payload);
@@ -120,7 +127,7 @@ fn pop(mut data: WTokens) -> WTokens {
 fn push(mut data: WTokens) -> WTokens {
     let payload = Payload {
         operation: Operation::Push,
-        parameters: Some(data)
+        parameters: Some(data),
     };
 
     vec![payload]
