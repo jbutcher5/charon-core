@@ -49,10 +49,9 @@ fn output(data: WTokens) -> WTokens {
                 Atom(x) | Special(x) | Container(x) | ContainerLiteral(x) => {
                     format!("{} {}", acc, x)
                 }
-                Function(func) | FunctionLiteral(func) => format!("{} {:?}", acc, func),
                 Parameter(FunctionParameter::Exact(index)) => format!("{} #{}", acc, index),
                 Parameter(FunctionParameter::Remaining) => format!("{} #n", acc),
-                Group(group) => format!("{:?}", group)
+                _ => format!("{} {:?}", acc, token)
             }
         });
 
