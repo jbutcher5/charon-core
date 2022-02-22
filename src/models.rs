@@ -8,6 +8,7 @@ pub enum Token {
     Parameter(FunctionParameter),
     Atom(String),
     Special(String),
+    Group(Vec<Token>)
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
