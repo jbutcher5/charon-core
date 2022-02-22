@@ -1,5 +1,5 @@
 use crate::models::{WCode, WFuncVariant, WTokens};
-use crate::utils::{bracket_pairs, get_first_bracket_open, outter_function, wfunc};
+use crate::utils::{special_pairs, first_special_instance, outter_function, wfunc};
 use std::collections::HashMap;
 
 pub fn wsection_eval(data: Vec<WCode>) -> Vec<WTokens> {
@@ -21,9 +21,9 @@ pub fn wsection_eval(data: Vec<WCode>) -> Vec<WTokens> {
 pub fn eval(data: WTokens, state: &HashMap<String, WTokens>) -> WTokens {
     let mut new_code = data.clone();
 
-    let first = get_first_bracket_open(&new_code);
+    let first = first_special_instance("(".to_string(), &new_code);
     let second = match first {
-        Some(x) => bracket_pairs(&new_code, &x),
+        Some(x) => special_pairs(("(".to_string(), ")".to_string()), &new_code, &x),
         None => None,
     };
 
@@ -32,7 +32,7 @@ pub fn eval(data: WTokens, state: &HashMap<String, WTokens>) -> WTokens {
         let bracket_code = &data[x + 1..y];
         new_code.splice(x..y + 1, eval(bracket_code.to_vec(), state));
 
-        if get_first_bracket_open(&new_code).is_some() {
+        if first_special_instance("(".to_string(), &new_code).is_some() {
             new_code = eval(new_code, state)
         }
     }
