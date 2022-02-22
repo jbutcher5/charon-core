@@ -89,11 +89,11 @@ pub fn special_pairs(tokens: (String, String), arr: &WTokens, initial_pos: &usiz
     None
 }
 
-pub fn get_first_bracket_open(arr: &WTokens) -> Option<usize> {
+pub fn first_special_instance(special: String, arr: &WTokens) -> Option<usize> {
     for (i, token) in arr.iter().enumerate() {
         match token {
             Token::Special(value) => {
-                if value == "(" {
+                if value == &special {
                     return Some(i);
                 } else {
                     continue;
