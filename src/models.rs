@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 #[derive(Debug, Clone)]
 pub enum Token {
     Value(f64),
@@ -10,7 +8,6 @@ pub enum Token {
     Parameter(FunctionParameter),
     Atom(String),
     Special(String),
-    Payload(Payload)
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -28,26 +25,8 @@ pub struct WCode {
 #[derive(Debug, Clone)]
 pub enum WFuncVariant {
     Container(String),
-    Function(WFunc)
+    Function(WFunc),
 }
 
 pub type WTokens = Vec<Token>;
 pub type WFunc = fn(WTokens) -> WTokens;
-
-#[derive(Debug, Clone)]
-pub enum Operation {
-    Push,
-    Pop
-}
-
-#[derive(Debug, Clone)]
-pub struct Payload {
-    pub operation: Operation,
-    pub parameters: Option<WTokens>
-}
-
-#[derive(Debug, Clone)]
-pub struct ProgramState {
-    pub container_map: HashMap<String, WTokens>,
-    pub stack: WTokens
-}

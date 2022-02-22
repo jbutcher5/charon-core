@@ -1,4 +1,4 @@
-use crate::models::{FunctionParameter, Operation, Token::*, WFunc, WTokens};
+use crate::models::{FunctionParameter, Token::*, WFunc, WTokens};
 use crate::utils::{as_nums, as_wcode};
 use phf::phf_map;
 
@@ -52,10 +52,6 @@ fn output(data: WTokens) -> WTokens {
                 Function(func) | FunctionLiteral(func) => format!("{} {:?}", acc, func),
                 Parameter(FunctionParameter::Exact(index)) => format!("{} #{}", acc, index),
                 Parameter(FunctionParameter::Remaining) => format!("{} #n", acc),
-                Payload {
-                    operation: x,
-                    parameters: y,
-                } => format!("{:?} {:?}", x, y),
             }
         });
 
@@ -114,25 +110,6 @@ fn if_else(mut data: WTokens) -> WTokens {
     data
 }
 
-fn pop(mut data: WTokens) -> WTokens {
-    let payload = Payload {
-        operation: Operation::Pop,
-        parameters: None,
-    };
-
-    data.push(payload);
-    data
-}
-
-fn push(mut data: WTokens) -> WTokens {
-    let payload = Payload {
-        operation: Operation::Push,
-        parameters: Some(data),
-    };
-
-    vec![payload]
-}
-
 pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "sum" => sum,
     "add" => add,
@@ -143,8 +120,6 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "-" => sub,
     "*" => mul,
     "/" => div,
-    "pop" => pop,
-    "push" =>  push,
     "len" => len,
     "OUTPUT" => output,
     "eq" => eq,
