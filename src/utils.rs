@@ -50,6 +50,27 @@ pub fn outter_function(arr: &WTokens) -> WFuncPair {
     results
 }
 
+pub fn bundle_groups(mut arr: WTokens) -> WTokens {
+    let first = first_special_instance("{".to_string(), &arr);
+    let second = match first {
+        Some(initial_pos) => special_pairs(("{".to_string(), "}".to_string()), &arr, &initial_pos),
+        None => None
+    };
+
+    match (first, second) {
+        (Some(x), Some(y)) => {
+            let token_group = Token::Group(arr[x+1..y].to_vec());
+            arr.splice(x..y+1, vec![token_group]);
+            match first_special_instance("{".to_string(), &arr) {
+                Some(_) => bundle_groups(arr),
+                None => arr
+            }
+        }
+        (None, None) => arr,
+        _ => panic!("Invalid grouping!")
+    }
+}
+
 pub fn special_pairs(tokens: (String, String), arr: &WTokens, initial_pos: &usize) -> Option<usize> {
     let mut counter = 0;
     let mut next_open = 0;
