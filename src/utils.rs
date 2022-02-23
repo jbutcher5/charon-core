@@ -71,6 +71,19 @@ pub fn bundle_groups(mut arr: WTokens) -> WTokens {
     }
 }
 
+pub fn release_groups(arr: WTokens) -> WTokens {
+    let mut released = arr.clone();
+
+    for (i, token) in arr.iter().enumerate() {
+        if let Token::Group(group) = token {
+            released.splice(i..i, group.clone());
+            return release_groups(released)
+        }
+    }
+
+    arr
+}
+
 pub fn special_pairs(tokens: (String, String), arr: &WTokens, initial_pos: &usize) -> Option<usize> {
     let mut counter = 0;
     let mut next_open = 0;
