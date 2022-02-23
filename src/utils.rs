@@ -76,7 +76,7 @@ pub fn release_groups(arr: WTokens) -> WTokens {
 
     for (i, token) in arr.iter().enumerate() {
         if let Token::Group(group) = token {
-            released.splice(i..i, group.clone());
+            released.splice(i..i+1, group.clone());
             return release_groups(released)
         }
     }
