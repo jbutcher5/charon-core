@@ -9,11 +9,13 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
     lazy_static! {
         static ref SPECIALS: phf::Set<&'static str> = phf_set! {
             ")",
-            "("
+            "(",
+            "}",
+            "{"
         };
     }
 
-    code.split(' ')
+    let annotated = code.split(' ')
         .map(|x| match x.parse::<f64>() {
             Ok(n) => Token::Value(n),
             Err(_) => {
@@ -55,7 +57,9 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
                 }
             }
         })
-        .collect()
+        .collect();
+
+    crate::utils::bundle_groups(annotated)
 }
 
 pub fn lexer(code: &str) -> Vec<WCode> {
