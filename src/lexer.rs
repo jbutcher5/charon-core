@@ -24,7 +24,7 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
 
                 if containers.iter().any(|name| *name == cleared) {
                     Token::Container(cleared)
-                } else if cleared.len() > 1 && chars.nth(0).unwrap() == '#' {
+                } else if cleared.len() > 1 && chars.nth(0).unwrap() == '$' {
                     if let Ok(index) = cleared[1..].parse::<usize>() {
                         Token::Parameter(FunctionParameter::Exact(index))
                     } else if chars.nth(0).unwrap() == 'n' && cleared.len() == 2 {
