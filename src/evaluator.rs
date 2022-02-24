@@ -43,12 +43,12 @@ pub fn eval(data: WTokens, state: &HashMap<String, WTokens>) -> WTokens {
         (Some((second_func_pos, _)), Some((first_func_pos, func))) => {
             let code_to_evaluate: WTokens = new_code[..first_func_pos].to_vec();
 
-            let result = match func {
+            let result = eval(match func {
                 WFuncVariant::Function(func) => func(code_to_evaluate),
                 WFuncVariant::Container(x) => {
                     wfunc(state.get(&x).unwrap(), &code_to_evaluate, state)
                 }
-            };
+            }, state);
 
             new_code.splice(..first_func_pos + 1, result);
 
