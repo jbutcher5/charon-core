@@ -17,7 +17,7 @@ A clear example of how everything in wlang is an array is the code `1 3 add 8 OU
 There are no for/while loops in wlang. All loops can be done through container recursion. This may look like the following:
 
 ```
-x <- { #0 1 add OUTPUT x } { #0 1 add OUTPUT } ( #0 10 eq ) if-else
+x <- { $0 1 add OUTPUT x } { $0 1 add OUTPUT } ( $0 10 eq ) if-else
 0 x
 ```
 
