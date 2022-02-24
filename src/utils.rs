@@ -71,19 +71,6 @@ pub fn bundle_groups(mut arr: WTokens) -> WTokens {
     }
 }
 
-pub fn release_groups(arr: WTokens) -> WTokens {
-    let mut released = arr.clone();
-
-    for (i, token) in arr.iter().enumerate() {
-        if let Token::Group(group) = token {
-            released.splice(i..i+1, group.clone());
-            return release_groups(released)
-        }
-    }
-
-    arr
-}
-
 pub fn special_pairs(tokens: (String, String), arr: &WTokens, initial_pos: &usize) -> Option<usize> {
     let mut counter = 0;
     let mut next_open = 0;
@@ -141,12 +128,27 @@ pub fn first_special_instance(special: String, arr: &WTokens) -> Option<usize> {
 }
 
 pub fn wfunc(function: &WTokens, arr: &WTokens, state: &HashMap<String, WTokens>) -> WTokens {
-    let has_remaining_param = function.iter().any(|x| match x {
+    fn release_groups(arr: &WTokens) -> WTokens {
+        let mut released = arr.clone();
+
+        for (i, token) in arr.iter().enumerate() {
+            if let Token::Group(group) = token {
+                released.splice(i..i+1, group.clone());
+                release_groups(&released);
+            }
+        }
+
+        released
+    }
+
+    let released_function = release_groups(function);
+
+    let has_remaining_param = released_function.iter().any(|x| match x {
         Token::Parameter(FunctionParameter::Remaining) => true,
         _ => false,
     });
 
-    let max_param: usize = function.iter().fold(0, |acc, x| match x {
+    let max_param: usize = released_function.iter().fold(0, |acc, x| match x {
         Token::Parameter(FunctionParameter::Exact(x)) => {
             if acc < x + 1 {
                 x + 1
@@ -157,20 +159,27 @@ pub fn wfunc(function: &WTokens, arr: &WTokens, state: &HashMap<String, WTokens>
         _ => acc,
     });
 
-    let mut buffer: WTokens = Vec::new();
-
-    for token in function {
-        match token {
-            Token::Parameter(FunctionParameter::Exact(x)) => buffer.push(match arr.get(*x) {
-                Some(y) => y.clone(),
-                None => continue,
-            }),
-            Token::Parameter(FunctionParameter::Remaining) => {
-                buffer.append(&mut arr[max_param..].to_vec())
+    fn map_parameters(mut buffer: WTokens, function: &WTokens, arr: &WTokens, max_param: usize) -> WTokens {
+        for token in function {
+            match token {
+                Token::Parameter(FunctionParameter::Exact(x)) => buffer.push(match arr.get(*x) {
+                    Some(y) => y.clone(),
+                    None => continue,
+                }),
+                Token::Parameter(FunctionParameter::Remaining) => {
+                    buffer.append(&mut arr[max_param..].to_vec())
+                },
+                Token::Group(x) => {
+                    buffer.push(Token::Group(map_parameters(vec![], x, arr, max_param)))
+                },
+                _ => buffer.push(token.clone()),
             }
-            _ => buffer.push(token.clone()),
         }
+
+        buffer
     }
+
+    let buffer = map_parameters(vec![], function, arr, max_param);
 
     let mut result = eval(buffer, &state);
 
