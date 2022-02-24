@@ -1,9 +1,9 @@
-use crate::models::{WCode, WFuncVariant, WTokens};
+use crate::models::{WCode, WFuncVariant, WTokens, State};
 use crate::utils::{special_pairs, first_special_instance, outter_function, wfunc};
 use std::collections::HashMap;
 
 pub fn wsection_eval(data: Vec<WCode>) -> Vec<WTokens> {
-    let mut function_map: HashMap<String, WTokens> = HashMap::new();
+    let mut function_map: State = HashMap::new();
     let mut result: Vec<WTokens> = Vec::new();
 
     for section in data {
@@ -18,7 +18,7 @@ pub fn wsection_eval(data: Vec<WCode>) -> Vec<WTokens> {
     result
 }
 
-pub fn eval(data: WTokens, state: &HashMap<String, WTokens>) -> WTokens {
+pub fn eval(data: WTokens, state: &State) -> WTokens {
     let mut new_code = data.clone();
 
     let first = first_special_instance("(".to_string(), &new_code);
