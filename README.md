@@ -22,3 +22,7 @@ x <- { $0 1 add OUTPUT x } { $0 1 add OUTPUT } ( $0 10 eq ) if-else
 ```
 
 This code would output the numbers 1 to 11. It achieves the recursion by calling x from within it's self an increments the parameter by 1 which is then checked if it equals 10 and the if-else provides different paths of code for the language based on the value of the first parameter. 
+
+## Dictionary
+
+- Ephemeral - A function or container that does not modify it's parameters and hence performs some side-effecting operation.
