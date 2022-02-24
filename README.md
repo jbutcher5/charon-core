@@ -12,3 +12,13 @@ Wlang is a postfix programming which means the parameters are followed by the fu
 
 A clear example of how everything in wlang is an array is the code `1 3 add 8 OUTPUT`. In the code first `1` and `3` would be consumed by `add` and replaced with `4` which then leaves us with the code `4 8 OUTPUT`. The `OUTPUT` function is much like a `print` command in any other programming language and would write to the stdout `4 8` as `OUTPUT` display all the infomation that comes before it and then only consumes it's self such that you could chain the `OUTPUT` followed by a function or container which may look like `1 2 add 8 OUTPUT mul` which would print `4 8` then evaluate to `32` because it multiplys `4` and `8`.
 
+## Common Patterns
+
+There are no for/while loops in wlang. All loops can be done through container recursion. This may look like the following:
+
+```
+x <- { #0 1 add OUTPUT x } { #0 1 add OUTPUT } ( #0 10 eq ) if-else
+0 x
+```
+
+This code would output the numbers 1 to 11. It achieves the recursion by calling x from within it's self an increments the parameter by 1 which is then checked if it equals 10 and the if-else provides different paths of code for the language based on the value of the first parameter. 
