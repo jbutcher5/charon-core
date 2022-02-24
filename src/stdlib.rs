@@ -100,13 +100,14 @@ fn if_else(mut data: WTokens) -> WTokens {
         _ => parameters.2,
     };
 
-    let convered = match selected {
-        ContainerLiteral(x) => Container(x),
-        FunctionLiteral(x) => Function(x),
-        _ => selected,
+    let mut convered = match selected {
+        Group(x) => x,
+        ContainerLiteral(x) => vec![Container(x)],
+        FunctionLiteral(x) => vec![Function(x)],
+        _ => vec![selected],
     };
 
-    data.push(convered);
+    data.append(&mut convered);
     data
 }
 
