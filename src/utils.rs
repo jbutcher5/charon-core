@@ -1,6 +1,5 @@
-use crate::evaluator::eval;
-use crate::models::{FunctionParameter, Token, WFuncVariant, WTokens};
-use std::collections::HashMap;
+use crate::evaluator::WEval;
+use crate::models::{FunctionParameter, State, Token, WFuncVariant, WTokens};
 
 type WFuncPair = (Option<(usize, WFuncVariant)>, Option<(usize, WFuncVariant)>);
 
@@ -54,24 +53,28 @@ pub fn bundle_groups(mut arr: WTokens) -> WTokens {
     let first = first_special_instance("{".to_string(), &arr);
     let second = match first {
         Some(initial_pos) => special_pairs(("{".to_string(), "}".to_string()), &arr, &initial_pos),
-        None => None
+        None => None,
     };
 
     match (first, second) {
         (Some(x), Some(y)) => {
-            let token_group = Token::Group(arr[x+1..y].to_vec());
-            arr.splice(x..y+1, vec![token_group]);
+            let token_group = Token::Group(arr[x + 1..y].to_vec());
+            arr.splice(x..y + 1, vec![token_group]);
             match first_special_instance("{".to_string(), &arr) {
                 Some(_) => bundle_groups(arr),
-                None => arr
+                None => arr,
             }
         }
         (None, None) => arr,
-        _ => panic!("Invalid grouping!")
+        _ => panic!("Invalid grouping!"),
     }
 }
 
-pub fn special_pairs(tokens: (String, String), arr: &WTokens, initial_pos: &usize) -> Option<usize> {
+pub fn special_pairs(
+    tokens: (String, String),
+    arr: &WTokens,
+    initial_pos: &usize,
+) -> Option<usize> {
     let mut counter = 0;
     let mut next_open = 0;
 
@@ -127,70 +130,83 @@ pub fn first_special_instance(special: String, arr: &WTokens) -> Option<usize> {
     None
 }
 
-pub fn wfunc(function: &WTokens, arr: &WTokens, state: &HashMap<String, WTokens>) -> WTokens {
-    fn release_groups(arr: &WTokens) -> WTokens {
-        let mut released = arr.clone();
+pub trait WFunc {
+    fn apply(&self, function: &WTokens, arr: &WTokens) -> WTokens;
+}
 
-        for (i, token) in arr.iter().enumerate() {
-            if let Token::Group(group) = token {
-                released.splice(i..i+1, group.clone());
-                release_groups(&released);
+impl WFunc for State {
+    fn apply(&self, function: &WTokens, arr: &WTokens) -> WTokens {
+        fn release_groups(arr: &WTokens) -> WTokens {
+            let mut released = arr.clone();
+
+            for (i, token) in arr.iter().enumerate() {
+                if let Token::Group(group) = token {
+                    released.splice(i..i + 1, group.clone());
+                    release_groups(&released);
+                }
             }
+
+            released
         }
 
-        released
-    }
+        let released_function = release_groups(function);
 
-    let released_function = release_groups(function);
+        let has_remaining_param = released_function.iter().any(|x| match x {
+            Token::Parameter(FunctionParameter::Remaining) => true,
+            _ => false,
+        });
 
-    let has_remaining_param = released_function.iter().any(|x| match x {
-        Token::Parameter(FunctionParameter::Remaining) => true,
-        _ => false,
-    });
-
-    let max_param: usize = released_function.iter().fold(0, |acc, x| match x {
-        Token::Parameter(FunctionParameter::Exact(x)) => {
-            if acc < x + 1 {
-                x + 1
-            } else {
-                acc
+        let max_param: usize = released_function.iter().fold(0, |acc, x| match x {
+            Token::Parameter(FunctionParameter::Exact(x)) => {
+                if acc < x + 1 {
+                    x + 1
+                } else {
+                    acc
+                }
             }
-        }
-        _ => acc,
-    });
+            _ => acc,
+        });
 
-    fn map_parameters(mut buffer: WTokens, function: &WTokens, arr: &WTokens, max_param: usize) -> WTokens {
-        for token in function {
-            match token {
-                Token::Parameter(FunctionParameter::Exact(x)) => buffer.push(match arr.get(*x) {
-                    Some(y) => y.clone(),
-                    None => continue,
-                }),
-                Token::Parameter(FunctionParameter::Remaining) => {
-                    buffer.append(&mut arr[max_param..].to_vec())
-                },
-                Token::Group(x) => {
-                    buffer.push(Token::Group(map_parameters(vec![], x, arr, max_param)))
-                },
-                _ => buffer.push(token.clone()),
+        fn map_parameters(
+            mut buffer: WTokens,
+            function: &WTokens,
+            arr: &WTokens,
+            max_param: usize,
+        ) -> WTokens {
+            for token in function {
+                match token {
+                    Token::Parameter(FunctionParameter::Exact(x)) => {
+                        buffer.push(match arr.get(*x) {
+                            Some(y) => y.clone(),
+                            None => continue,
+                        })
+                    }
+                    Token::Parameter(FunctionParameter::Remaining) => {
+                        buffer.append(&mut arr[max_param..].to_vec())
+                    }
+                    Token::Group(x) => {
+                        buffer.push(Token::Group(map_parameters(vec![], x, arr, max_param)))
+                    }
+                    _ => buffer.push(token.clone()),
+                }
             }
+
+            buffer
         }
 
-        buffer
-    }
+        let buffer = map_parameters(vec![], function, arr, max_param);
 
-    let buffer = map_parameters(vec![], function, arr, max_param);
+        let mut result = self.eval(buffer);
 
-    let mut result = eval(buffer, &state);
-
-    if has_remaining_param {
-        result
-    } else {
-        let mut untouched = arr.clone();
-        for _ in 0..max_param {
-            untouched.pop();
+        if has_remaining_param {
+            result
+        } else {
+            let mut untouched = arr.clone();
+            for _ in 0..max_param {
+                untouched.pop();
+            }
+            untouched.append(&mut result);
+            untouched
         }
-        untouched.append(&mut result);
-        untouched
     }
 }

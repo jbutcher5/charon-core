@@ -15,7 +15,8 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
         };
     }
 
-    let annotated = code.split(' ')
+    let annotated = code
+        .split(' ')
         .map(|x| match x.parse::<f64>() {
             Ok(n) => Token::Value(n),
             Err(_) => {

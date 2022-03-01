@@ -10,7 +10,7 @@ pub enum Token {
     Parameter(FunctionParameter),
     Atom(String),
     Special(String),
-    Group(Vec<Token>)
+    Group(Vec<Token>),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

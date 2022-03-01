@@ -4,10 +4,11 @@ mod models;
 mod stdlib;
 mod utils;
 
-use crate::evaluator::wsection_eval;
+use crate::evaluator::WEval;
 use crate::lexer::lexer;
-use crate::models::WTokens;
+use crate::models::{State, WTokens};
 
 pub fn eval(code: &str) -> Vec<WTokens> {
-    wsection_eval(lexer(code))
+    let mut state = State::new();
+    state.wsection_eval(lexer(code))
 }

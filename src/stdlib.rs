@@ -51,7 +51,7 @@ fn output(data: WTokens) -> WTokens {
                 }
                 Parameter(FunctionParameter::Exact(index)) => format!("{} #{}", acc, index),
                 Parameter(FunctionParameter::Remaining) => format!("{} #n", acc),
-                _ => format!("{} {:?}", acc, token)
+                _ => format!("{} {:?}", acc, token),
             }
         });
 
