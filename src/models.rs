@@ -22,7 +22,8 @@ pub enum FunctionParameter {
 #[derive(Debug, Clone)]
 pub struct WCode {
     pub container: Option<String>,
-    pub code: WTokens,
+    pub cases: Option<(WTokens, WTokens)>,
+    pub default_case: WTokens,
 }
 
 #[derive(Debug, Clone)]
