@@ -65,10 +65,32 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
 
 pub fn lexer(code: &str) -> Vec<WCode> {
     lazy_static! {
-        static ref RE: Regex = Regex::new(" <- ").unwrap();
+        static ref RE: Vec<Regex> = [" <- ", " <-|", " -> "]
+            .iter()
+            .map(|x| Regex::new(x).unwrap())
+            .collect();
     }
 
     let mut containers = vec![];
+
+    let mut section_buffer: String;
+    let mut sectioned_code: Vec<String>;
+
+    for line in code.split('\n') {
+        let re_result: Vec<bool> = RE.iter().map(|x| x.is_match(line)).collect();
+
+        if re_result[1] && section_buffer.len() == 0 {
+            section_buffer.push_str(line);
+        } else if re_result[2] && section_buffer.len() > 0 {
+            section_buffer.push_str(line);
+        } else {
+            if section_buffer.len() > 0 {
+                sectioned_code.push(section_buffer);
+                section_buffer = String::new();
+            }
+            sectioned_code.push(line.to_string());
+        }
+    }
 
     code.split('\n')
         .filter(|&x| x.trim() != "" && x != "\n")
