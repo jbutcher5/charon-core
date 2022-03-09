@@ -91,23 +91,27 @@ pub fn lexer(code: &str) -> Vec<WCode> {
             sectioned_code.push(line.to_string());
         }
     }
+    sectioned_code.push(section_buffer);
 
-    code.split('\n')
+    sectioned_code
+        .iter()
         .filter(|&x| x.trim() != "" && x != "\n")
-        .map(|line| match RE.find(line) {
-            Some(pos) => {
-                let container = line[..pos.start()].to_string();
-                let code = line[pos.end()..].to_string();
+        .map(|block| match RE.iter().map(|x| x.find(block)).collect::<Vec<Option<regex::Match>>>().as_slice() {
+            &[Some(pos), None, None] => {
+                let container = block[..pos.start()].to_string();
+                let code = block[pos.end()..].to_string();
                 containers.push(container.clone());
 
                 WCode {
                     container: Some(container),
-                    code: annotate(&code, &containers),
+                    cases: None,
+                    default_case: annotate(&code, &containers),
                 }
             }
-            None => WCode {
+            _ => WCode {
                 container: None,
-                code: annotate(line, &containers),
+                cases: None,
+                default_case: annotate(line, &containers),
             },
         })
         .collect()
