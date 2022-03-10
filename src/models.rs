@@ -22,7 +22,7 @@ pub enum FunctionParameter {
 #[derive(Debug, Clone)]
 pub struct WCode {
     pub container: Option<String>,
-    pub cases: Option<(WTokens, WTokens)>,
+    pub cases: Option<Vec<(WTokens, WTokens)>>,
     pub default_case: WTokens,
 }
 
