@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-
 use crate::models::{FunctionParameter, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
 use lazy_static::lazy_static;
