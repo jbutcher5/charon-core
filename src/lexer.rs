@@ -124,7 +124,7 @@ pub fn lexer(code: &str) -> Vec<WCode> {
                         .filter(|x| !RE[1].is_match(x))
                         .collect();
 
-                    let default = cases.pop();
+                    let default: String = cases.pop().unwrap();
 
                     let other_cases: Vec<(WTokens, WTokens)> = cases
                         .iter()
@@ -139,7 +139,7 @@ pub fn lexer(code: &str) -> Vec<WCode> {
                     WCode {
                         container: Some(container),
                         cases: Some(other_cases),
-                        default_case: annotate(&code, &containers),
+                        default_case: annotate(&default, &containers),
                     }
                 }
                 _ => WCode {
