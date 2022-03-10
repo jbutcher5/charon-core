@@ -1,3 +1,5 @@
+use std::borrow::Borrow;
+
 use crate::models::{FunctionParameter, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
 use lazy_static::lazy_static;
@@ -96,23 +98,58 @@ pub fn lexer(code: &str) -> Vec<WCode> {
     sectioned_code
         .iter()
         .filter(|&x| x.trim() != "" && x != "\n")
-        .map(|block| match RE.iter().map(|x| x.find(block)).collect::<Vec<Option<regex::Match>>>().as_slice() {
-            &[Some(pos), None, None] => {
-                let container = block[..pos.start()].to_string();
-                let code = block[pos.end()..].to_string();
-                containers.push(container.clone());
+        .map(|block| {
+            match RE
+                .iter()
+                .map(|x| x.find(block))
+                .collect::<Vec<Option<regex::Match>>>()
+                .as_slice()
+            {
+                &[Some(pos), None, None] => {
+                    let container = block[..pos.start()].to_string();
+                    let code = block[pos.end()..].to_string();
+                    containers.push(container.clone());
 
-                WCode {
-                    container: Some(container),
-                    cases: None,
-                    default_case: annotate(&code, &containers),
+                    WCode {
+                        container: Some(container),
+                        cases: None,
+                        default_case: annotate(&code, &containers),
+                    }
                 }
+                &[None, Some(match_begin), _] => {
+                    let container = block[..match_begin.start()].to_string();
+                    containers.push(container.clone());
+
+                    let mut cases: Vec<String> = block[match_begin.end()..]
+                        .split('\n')
+                        .map(String::from)
+                        .filter(|x| !RE[1].is_match(x))
+                        .collect();
+
+                    let default = cases.pop();
+
+                    let other_cases: Vec<(WTokens, WTokens)> = cases
+                        .iter()
+                        .map(|x| {
+                            let sep: Vec<WTokens> =
+                                x.split("->").map(|y| annotate(y, &containers)).collect();
+
+                            (sep[0], sep[1])
+                        })
+                        .collect();
+
+                    WCode {
+                        container: Some(container),
+                        cases: Some(other_cases),
+                        default_case: annotate(&code, &containers),
+                    }
+                }
+                _ => WCode {
+                    container: None,
+                    cases: None,
+                    default_case: annotate(block, &containers),
+                },
             }
-            _ => WCode {
-                container: None,
-                cases: None,
-                default_case: annotate(line, &containers),
-            },
         })
         .collect()
 }
