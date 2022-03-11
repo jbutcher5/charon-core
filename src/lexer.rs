@@ -2,7 +2,6 @@ use crate::models::{FunctionParameter, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
 use lazy_static::lazy_static;
 use phf::phf_set;
-use regex::Regex;
 use substring::Substring;
 
 fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
@@ -64,20 +63,15 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
 }
 
 pub fn lexer(code: &str) -> Vec<WCode> {
-    lazy_static! {
-        static ref RE: Vec<Regex> = [" <- ", " <-|", " -> "]
-            .iter()
-            .map(|x| Regex::new(x).unwrap())
-            .collect();
-    }
+    let container_symbols = [" <- ", " <-|", " -> "];
 
     let mut containers = vec![];
 
-    let mut section_buffer: String;
-    let mut sectioned_code: Vec<String>;
+    let mut section_buffer: String = "".to_string();
+    let mut sectioned_code: Vec<String> = vec![];
 
     for line in code.split('\n') {
-        let re_result: Vec<bool> = RE.iter().map(|x| x.is_match(line)).collect();
+        let re_result: Vec<bool> = container_symbols.iter().map(|x| line.contains(x)).collect();
 
         if re_result[1] && section_buffer.len() == 0 {
             section_buffer.push_str(line);
@@ -97,15 +91,20 @@ pub fn lexer(code: &str) -> Vec<WCode> {
         .iter()
         .filter(|&x| x.trim() != "" && x != "\n")
         .map(|block| {
-            match RE
+            let find_results = container_symbols
                 .iter()
-                .map(|x| x.find(block))
-                .collect::<Vec<Option<regex::Match>>>()
-                .as_slice()
-            {
-                &[Some(pos), None, None] => {
-                    let container = block[..pos.start()].to_string();
-                    let code = block[pos.end()..].to_string();
+                .map(|x| match block.find(x) {
+                    Some(start) => Some(start..x.len()+1),
+                    None => None
+                })
+                .collect::<Vec<Option<std::ops::Range<usize>>>>();
+
+            let find_slice = find_results.as_slice();
+
+            match find_slice {
+                [Some(pos), None, None] => {
+                    let container = block[..pos.start].to_string();
+                    let code = block[pos.end..].to_string();
                     containers.push(container.clone());
 
                     WCode {
@@ -114,14 +113,14 @@ pub fn lexer(code: &str) -> Vec<WCode> {
                         default_case: annotate(&code, &containers),
                     }
                 }
-                &[None, Some(match_begin), _] => {
-                    let container = block[..match_begin.start()].to_string();
+                [None, Some(match_begin), _] => {
+                    let container = block[..match_begin.start].to_string();
                     containers.push(container.clone());
 
-                    let mut cases: Vec<String> = block[match_begin.end()..]
+                    let mut cases: Vec<String> = block[match_begin.end..]
                         .split('\n')
                         .map(String::from)
-                        .filter(|x| !RE[1].is_match(x))
+                        .filter(|x| !x.contains(container_symbols[1]))
                         .collect();
 
                     let default: String = cases.pop().unwrap();
@@ -132,7 +131,7 @@ pub fn lexer(code: &str) -> Vec<WCode> {
                             let sep: Vec<WTokens> =
                                 x.split("->").map(|y| annotate(y, &containers)).collect();
 
-                            (sep[0], sep[1])
+                            (sep[0].clone(), sep[1].clone())
                         })
                         .collect();
 
