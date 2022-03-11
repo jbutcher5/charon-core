@@ -124,7 +124,8 @@ pub fn lexer(code: &str) -> Vec<WCode> {
 
                     let mut cases: Vec<String> = block[match_begin.end..]
                         .split('\n')
-                        .map(String::from)
+                        .filter(|&x| x.trim() != "" && x != "\n")
+                        .map(|x| String::from(x.trim()))
                         .filter(|x| !x.contains(container_symbols[1]))
                         .collect();
 
@@ -134,7 +135,7 @@ pub fn lexer(code: &str) -> Vec<WCode> {
                         .iter()
                         .map(|x| {
                             let sep: Vec<WTokens> =
-                                x.split("->").map(|y| annotate(y, &containers)).collect();
+                                x.split(container_symbols[2]).map(|y| annotate(y, &containers)).collect();
 
                             (sep[0].clone(), sep[1].clone())
                         })
