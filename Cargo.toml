@@ -12,5 +12,4 @@ license = "MIT"
 [dependencies]
 substring = "1.4.5"
 phf = { version = "0.10.1", features = ["macros"] }
-regex = "1.5.4"
 lazy_static = "1.4.0"
