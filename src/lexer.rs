@@ -70,22 +70,27 @@ pub fn lexer(code: &str) -> Vec<WCode> {
     let mut section_buffer: String = "".to_string();
     let mut sectioned_code: Vec<String> = vec![];
 
-    for line in code.split('\n') {
+    for line in code.split('\n').filter(|&x| x.trim() != "") {
         let re_result: Vec<bool> = container_symbols.iter().map(|x| line.contains(x)).collect();
 
         if re_result[1] && section_buffer.len() == 0 {
             section_buffer.push_str(line);
         } else if re_result[2] && section_buffer.len() > 0 {
-            section_buffer.push_str(line);
+            section_buffer.push_str(format!("\n{}", line).as_str());
         } else {
             if section_buffer.len() > 0 {
+                section_buffer.push_str(format!("\n{}", line).as_str());
                 sectioned_code.push(section_buffer);
                 section_buffer = String::new();
+            } else {
+                sectioned_code.push(line.to_string());
             }
-            sectioned_code.push(line.to_string());
         }
     }
-    sectioned_code.push(section_buffer);
+
+    if section_buffer.len() > 0 {
+        sectioned_code.push(section_buffer);
+    }
 
     sectioned_code
         .iter()
