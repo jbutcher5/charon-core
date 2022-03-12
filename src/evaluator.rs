@@ -1,4 +1,4 @@
-use crate::models::{State, WCode, WFuncVariant, WTokens};
+use crate::models::{State, WCode, WFuncVariant, WTokens, Token};
 use crate::utils::{first_special_instance, outter_function, special_pairs, WFunc};
 
 pub trait WEval {
@@ -13,9 +13,15 @@ impl WEval for State {
         for section in data {
             match section.container {
                 Some(container) => {
-                    self.insert(container, section.code);
+                    let mut cases = vec![(vec![Token::Value(1.0)], section.default_case)];
+
+                    if let Some(container_cases) = section.cases {
+                        cases.append(&mut container_cases)
+                    }
+
+                    self.insert(container, cases);
                 }
-                None => result.push(self.eval(section.code)),
+                None => result.push(self.eval(section.default_case)),
             }
         }
 
