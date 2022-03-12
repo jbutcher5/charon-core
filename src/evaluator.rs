@@ -58,7 +58,18 @@ impl WEval for State {
                 let result = self.eval(match func {
                     WFuncVariant::Function(func) => func(code_to_evaluate),
                     WFuncVariant::Container(x) => {
-                        self.apply(self.get(&x).unwrap(), &code_to_evaluate)
+                        let mut case: WTokens = vec![];
+
+                        for container_case in self.get(&x).unwrap() {
+                            let case_prefix = self.apply(&container_case.0, &code_to_evaluate);
+
+                            if case_prefix[0] != Token::Value(0.0) {
+                                case = container_case.1.clone();
+                                break;
+                            }
+                        }
+
+                        self.apply(&case, &code_to_evaluate)
                     }
                 });
 
