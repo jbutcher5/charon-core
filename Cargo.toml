@@ -1,6 +1,6 @@
 [package]
 name = "wcore"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 authors = ["James Butcher <jamesbutcher167@gmail.com>"]
 repository = "https://github.com/Wlanguage/core"
@@ -12,5 +12,4 @@ license = "MIT"
 [dependencies]
 substring = "1.4.5"
 phf = { version = "0.10.1", features = ["macros"] }
-regex = "1.5.4"
 lazy_static = "1.4.0"
