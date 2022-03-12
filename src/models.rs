@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Value(f64),
     Function(fn(WTokens) -> WTokens),
@@ -34,4 +34,4 @@ pub enum WFuncVariant {
 
 pub type WTokens = Vec<Token>;
 pub type WFunc = fn(WTokens) -> WTokens;
-pub type State = HashMap<String, WTokens>;
+pub type State = HashMap<String, Vec<(WTokens, WTokens)>>;
