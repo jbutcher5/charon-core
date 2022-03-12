@@ -13,11 +13,13 @@ impl WEval for State {
         for section in data {
             match section.container {
                 Some(container) => {
-                    let mut cases = vec![(vec![Token::Value(1.0)], section.default_case)];
+                    let mut cases = vec![];
 
                     if let Some(container_cases) = section.cases {
-                        cases.append(&mut container_cases)
+                        cases.append(&mut container_cases.clone())
                     }
+
+                    cases.push((vec![Token::Value(1.0)], section.default_case));
 
                     self.insert(container, cases);
                 }
