@@ -131,11 +131,11 @@ pub fn first_special_instance(special: String, arr: &WTokens) -> Option<usize> {
 }
 
 pub trait WFunc {
-    fn apply(&self, function: &WTokens, arr: &WTokens) -> WTokens;
+    fn apply(&self, function: &WTokens, arr: &WTokens, all_tokens_used: &WTokens) -> WTokens;
 }
 
 impl WFunc for State {
-    fn apply(&self, function: &WTokens, arr: &WTokens) -> WTokens {
+    fn apply(&self, function: &WTokens, arr: &WTokens, all_tokens_used: &WTokens) -> WTokens {
         fn release_groups(arr: &WTokens) -> WTokens {
             let mut released = arr.clone();
 
@@ -149,23 +149,18 @@ impl WFunc for State {
             released
         }
 
-        let released_function = release_groups(function);
-
-        let has_remaining_param = released_function.iter().any(|x| match x {
-            Token::Parameter(FunctionParameter::Remaining) => true,
-            _ => false,
-        });
-
-        let max_param: usize = released_function.iter().fold(0, |acc, x| match x {
-            Token::Parameter(FunctionParameter::Exact(x)) => {
-                if acc < x + 1 {
-                    x + 1
-                } else {
-                    acc
+        fn parameters_used(arr: &WTokens) -> usize {
+            arr.iter().fold(0, |acc, x| match x {
+                Token::Parameter(FunctionParameter::Exact(x)) => {
+                    if acc < x + 1 {
+                        x + 1
+                    } else {
+                        acc
+                    }
                 }
-            }
-            _ => acc,
-        });
+                _ => acc,
+            })
+        }
 
         fn map_parameters(
             mut buffer: WTokens,
@@ -194,6 +189,15 @@ impl WFunc for State {
             buffer
         }
 
+        let released_function = release_groups(function);
+
+        let has_remaining_param = released_function.iter().any(|x| match x {
+            Token::Parameter(FunctionParameter::Remaining) => true,
+            _ => false,
+        });
+
+        let max_param: usize = parameters_used(&released_function);
+
         let buffer = map_parameters(vec![], function, arr, max_param);
 
         let mut result = self.eval(buffer);
@@ -202,7 +206,10 @@ impl WFunc for State {
             result
         } else {
             let mut untouched = arr.clone();
-            for _ in 0..max_param {
+
+            let total_param = parameters_used(all_tokens_used);
+
+            for _ in 0..total_param {
                 untouched.pop();
             }
             untouched.append(&mut result);
