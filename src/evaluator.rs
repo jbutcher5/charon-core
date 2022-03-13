@@ -59,9 +59,14 @@ impl WEval for State {
                     WFuncVariant::Function(func) => func(code_to_evaluate),
                     WFuncVariant::Container(x) => {
                         let mut case: WTokens = vec![];
+                        let mut container_acc: WTokens = vec![];
 
                         for container_case in self.get(&x).unwrap() {
-                            let case_prefix = self.apply(&container_case.0, &code_to_evaluate);
+                            let mut joined = container_case.0.clone();
+                            joined.append(&mut container_case.1.clone());
+                            container_acc.append(&mut joined);
+
+                            let case_prefix = self.apply(&container_case.0, &code_to_evaluate, &container_acc);
 
                             if case_prefix[0] != Token::Value(0.0) {
                                 case = container_case.1.clone();
@@ -69,7 +74,7 @@ impl WEval for State {
                             }
                         }
 
-                        self.apply(&case, &code_to_evaluate)
+                        self.apply(&case, &code_to_evaluate, &container_acc)
                     }
                 });
 
