@@ -99,8 +99,8 @@ pub fn lexer(code: &str) -> Vec<WCode> {
             let find_results = container_symbols
                 .iter()
                 .map(|x| match block.find(x) {
-                    Some(start) => Some(start..(start+x.len())),
-                    None => None
+                    Some(start) => Some(start..(start + x.len())),
+                    None => None,
                 })
                 .collect::<Vec<Option<std::ops::Range<usize>>>>();
 
@@ -136,8 +136,10 @@ pub fn lexer(code: &str) -> Vec<WCode> {
                     let other_cases: Vec<(WTokens, WTokens)> = cases
                         .iter()
                         .map(|x| {
-                            let sep: Vec<WTokens> =
-                                x.split(container_symbols[2]).map(|y| annotate(y, &containers)).collect();
+                            let sep: Vec<WTokens> = x
+                                .split(container_symbols[2])
+                                .map(|y| annotate(y, &containers))
+                                .collect();
 
                             (sep[0].clone(), sep[1].clone())
                         })

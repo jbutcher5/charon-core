@@ -197,8 +197,10 @@ impl WFunc for State {
         });
 
         let max_param: usize = parameters_used(&released_function);
+        let mut reversed_arr = arr.clone();
+        reversed_arr.reverse();
 
-        let buffer = map_parameters(vec![], function, arr, max_param);
+        let buffer = map_parameters(vec![], function, &reversed_arr, max_param);
 
         let mut result = self.eval(buffer);
 
