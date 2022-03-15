@@ -39,6 +39,11 @@ fn len(data: WTokens) -> WTokens {
     vec![Value(length)]
 }
 
+fn reverse(mut data: WTokens) -> WTokens {
+    data.reverse();
+    return data;
+}
+
 fn output(data: WTokens) -> WTokens {
     let result = data
         .clone()
@@ -139,6 +144,7 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "/" => div,
     "||" => or,
     "len" => len,
+    "reverse" => reverse,
     "OUTPUT" => output,
     "eq" => eq,
     "or" => or,
