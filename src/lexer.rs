@@ -1,8 +1,10 @@
-use crate::models::{FunctionParameter, Token, WCode, WTokens};
+use crate::models::{Range, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
 use lazy_static::lazy_static;
 use phf::phf_set;
 use substring::Substring;
+use regex::Regex;
+
 
 fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
     lazy_static! {
@@ -12,6 +14,9 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
             "}",
             "{"
         };
+        static ref FULL: Regex = Regex::new(r"(\d+)..(\d+)").unwrap();
+        static ref TO: Regex = Regex::new(r"..(\d+)").unwrap();
+        static ref FROM: Regex = Regex::new(r"(\d+)..").unwrap();
     }
 
     let annotated = code
@@ -25,10 +30,37 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
                 if containers.iter().any(|name| *name == cleared) {
                     Token::Container(cleared)
                 } else if cleared.len() > 1 && chars.nth(0).unwrap() == '$' {
-                    if let Ok(index) = cleared[1..].parse::<usize>() {
-                        Token::Parameter(FunctionParameter::Exact(index))
-                    } else if chars.nth(0).unwrap() == 'n' && cleared.len() == 2 {
-                        Token::Parameter(FunctionParameter::Remaining)
+                    if let Some(captures) = FULL.captures(&cleared) {
+                        let caps: Vec<usize> = [0, 1]
+                            .iter()
+                            .map(|&x| captures
+                                 .get(x)
+                                 .unwrap()
+                                 .as_str()
+                                 .parse::<usize>()
+                                 .unwrap()
+                            )
+                            .collect();
+
+                        Token::Parameter(Range::Full(caps[0]..caps[1]))
+                    } else if let Some(captures) = TO.captures(&cleared) {
+                        let cap = captures
+                            .get(0)
+                            .unwrap()
+                            .as_str()
+                            .parse::<usize>()
+                            .unwrap();
+
+                        Token::Parameter(Range::To(..cap))
+                    } else if let Some(captures) = FROM.captures(&cleared) {
+                        let cap = captures
+                            .get(0)
+                            .unwrap()
+                            .as_str()
+                            .parse::<usize>()
+                            .unwrap();
+
+                        Token::Parameter(Range::From(cap..))
                     } else {
                         Token::Atom(cleared)
                     }
