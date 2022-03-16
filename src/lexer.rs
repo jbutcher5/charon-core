@@ -17,6 +17,7 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
         static ref FULL: Regex = Regex::new(r"(\d+)..(\d+)").unwrap();
         static ref FROM: Regex = Regex::new(r"..(\d+)").unwrap();
         static ref TO: Regex = Regex::new(r"(\d+)..").unwrap();
+        static ref EXACT: Regex = Regex::new(r"(\d+)").unwrap();
     }
 
     let annotated = code
@@ -42,7 +43,7 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
                             )
                             .collect();
 
-                        Token::Parameter(Range::Full(caps[0]..caps[1]))
+                        Token::Parameter(Range::Full(caps[1]..=caps[0]))
                     } else if let Some(captures) = TO.captures(&cleared) {
                         let cap = captures
                             .get(1)
@@ -51,7 +52,7 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
                             .parse::<usize>()
                             .unwrap();
 
-                        Token::Parameter(Range::To(cap..))
+                        Token::Parameter(Range::From(..cap))
                     } else if let Some(captures) = FROM.captures(&cleared) {
                         let cap = captures
                             .get(1)
@@ -60,7 +61,11 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
                             .parse::<usize>()
                             .unwrap();
 
-                        Token::Parameter(Range::From(..cap))
+                        Token::Parameter(Range::To(cap..))
+                    } else if let Some(captures) = EXACT.captures(&cleared) {
+                        let value = captures.get(1).unwrap().as_str().parse::<usize>().unwrap();
+
+                        Token::Parameter(Range::Full(value..=value))
                     } else {
                         Token::Atom(cleared)
                     }
