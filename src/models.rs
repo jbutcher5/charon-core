@@ -7,16 +7,10 @@ pub enum Token {
     FunctionLiteral(fn(WTokens) -> WTokens),
     Container(String),
     ContainerLiteral(String),
-    Parameter(FunctionParameter),
+    Parameter(Range),
     Atom(String),
     Special(String),
     Group(Vec<Token>),
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub enum FunctionParameter {
-    Exact(usize),
-    Remaining,
 }
 
 #[derive(Debug, Clone)]
@@ -24,6 +18,14 @@ pub struct WCode {
     pub container: Option<String>,
     pub cases: Option<Vec<(WTokens, WTokens)>>,
     pub default_case: WTokens,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Range {
+    Full(std::ops::RangeInclusive<usize>),
+    To(std::ops::RangeFrom<usize>),
+    From(std::ops::RangeTo<usize>),
+    Exact(usize)
 }
 
 #[derive(Debug, Clone)]
