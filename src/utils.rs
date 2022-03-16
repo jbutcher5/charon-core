@@ -1,5 +1,5 @@
 use crate::evaluator::WEval;
-use crate::models::{FunctionParameter, State, Token, WFuncVariant, WTokens};
+use crate::models::{Range, State, Token, WFuncVariant, WTokens};
 
 type WFuncPair = (Option<(usize, WFuncVariant)>, Option<(usize, WFuncVariant)>);
 
@@ -136,52 +136,36 @@ pub trait WFunc {
 
 impl WFunc for State {
     fn apply(&self, function: &WTokens, arr: &WTokens, all_tokens_used: &WTokens) -> WTokens {
-        fn release_groups(arr: &WTokens) -> WTokens {
-            let mut released = arr.clone();
+        fn map_parameters(mut buffer: WTokens, function: &WTokens, arr: &WTokens) -> WTokens {
+            let reversed: WTokens = arr.iter().cloned().rev().collect();
 
-            for (i, token) in arr.iter().enumerate() {
-                if let Token::Group(group) = token {
-                    released.splice(i..i + 1, group.clone());
-                    release_groups(&released);
-                }
-            }
-
-            released
-        }
-
-        fn parameters_used(arr: &WTokens) -> usize {
-            arr.iter().fold(0, |acc, x| match x {
-                Token::Parameter(FunctionParameter::Exact(x)) => {
-                    if acc < x + 1 {
-                        x + 1
-                    } else {
-                        acc
-                    }
-                }
-                _ => acc,
-            })
-        }
-
-        fn map_parameters(
-            mut buffer: WTokens,
-            function: &WTokens,
-            arr: &WTokens,
-            max_param: usize,
-        ) -> WTokens {
             for token in function {
                 match token {
-                    Token::Parameter(FunctionParameter::Exact(x)) => {
-                        buffer.push(match arr.get(*x) {
-                            Some(y) => y.clone(),
-                            None => continue,
-                        })
+                    Token::Parameter(Range::Exact(x)) => buffer.push(match reversed.get(*x) {
+                        Some(y) => y.clone(),
+                        None => continue,
+                    }),
+                    Token::Parameter(range) => {
+                        let mut slice = match range {
+                            Range::From(from) => {
+                                reversed[*from].iter().cloned().rev().collect::<WTokens>()
+                            }
+                            Range::To(to) => reversed[to.clone()]
+                                .iter()
+                                .cloned()
+                                .rev()
+                                .collect::<WTokens>(),
+                            Range::Full(full) => reversed[full.clone()]
+                                .iter()
+                                .cloned()
+                                .rev()
+                                .collect::<WTokens>(),
+                            _ => unimplemented!(),
+                        };
+
+                        buffer.append(&mut slice);
                     }
-                    Token::Parameter(FunctionParameter::Remaining) => {
-                        buffer.append(&mut arr[max_param..].to_vec())
-                    }
-                    Token::Group(x) => {
-                        buffer.push(Token::Group(map_parameters(vec![], x, arr, max_param)))
-                    }
+                    Token::Group(x) => buffer.push(Token::Group(map_parameters(vec![], x, &arr))),
                     _ => buffer.push(token.clone()),
                 }
             }
@@ -189,33 +173,24 @@ impl WFunc for State {
             buffer
         }
 
-        let released_function = release_groups(function);
-
-        let has_remaining_param = released_function.iter().any(|x| match x {
-            Token::Parameter(FunctionParameter::Remaining) => true,
-            _ => false,
+        let buffer = map_parameters(vec![], function, &arr);
+        let mut result = self.eval(buffer);
+        let mut untouched = arr.clone();
+        let total_param = all_tokens_used.iter().fold(0, |acc, x| match x {
+            Token::Parameter(Range::Exact(x)) => {
+                if acc < x + 1 {
+                    x + 1
+                } else {
+                    acc
+                }
+            }
+            _ => acc,
         });
 
-        let max_param: usize = parameters_used(&released_function);
-        let mut reversed_arr = arr.clone();
-        reversed_arr.reverse();
-
-        let buffer = map_parameters(vec![], function, &reversed_arr, max_param);
-
-        let mut result = self.eval(buffer);
-
-        if has_remaining_param {
-            result
-        } else {
-            let mut untouched = arr.clone();
-
-            let total_param = parameters_used(all_tokens_used);
-
-            for _ in 0..total_param {
-                untouched.pop();
-            }
-            untouched.append(&mut result);
-            untouched
+        for _ in 0..total_param {
+            untouched.pop();
         }
+        untouched.append(&mut result);
+        untouched
     }
 }
