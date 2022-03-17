@@ -13,3 +13,5 @@ license = "MIT"
 substring = "1.4.5"
 phf = { version = "0.10.1", features = ["macros"] }
 lazy_static = "1.4.0"
+regex = "1.5.5"
+itertools = "0.10.3"
