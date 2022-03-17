@@ -1,5 +1,6 @@
-use crate::models::{State, WCode, WFuncVariant, WTokens, Token};
+use crate::models::{Range, State, Token, WCode, WFuncVariant, WTokens};
 use crate::utils::{first_special_instance, outter_function, special_pairs, WFunc};
+use itertools::Itertools;
 
 pub trait WEval {
     fn wsection_eval(&mut self, data: Vec<WCode>) -> Vec<WTokens>;
@@ -52,11 +53,15 @@ impl WEval for State {
         let funcs = outter_function(&new_code);
 
         match funcs {
-            (Some((second_func_pos, _)), Some((first_func_pos, func))) => {
+            (Some((_, _)), Some((first_func_pos, func))) => {
                 let code_to_evaluate: WTokens = new_code[..first_func_pos].to_vec();
 
-                let result = self.eval(match func {
-                    WFuncVariant::Function(func) => func(code_to_evaluate),
+                self.eval(match func {
+                    WFuncVariant::Function(func) => {
+                        let result = func(code_to_evaluate);
+                        new_code.splice(..first_func_pos + 1, result);
+                        new_code.clone()
+                    }
                     WFuncVariant::Container(x) => {
                         let mut case: WTokens = vec![];
                         let mut container_acc: WTokens = vec![];
@@ -66,7 +71,7 @@ impl WEval for State {
                             joined.append(&mut container_case.1.clone());
                             container_acc.append(&mut joined);
 
-                            let case_prefix = self.apply(&container_case.0, &code_to_evaluate, &container_acc);
+                            let case_prefix = self.apply(&container_case.0, &code_to_evaluate);
 
                             if case_prefix[0] != Token::Value(0.0) {
                                 case = container_case.1.clone();
@@ -74,17 +79,40 @@ impl WEval for State {
                             }
                         }
 
-                        self.apply(&case, &code_to_evaluate, &container_acc)
+                        let expanded_range = container_acc
+                            .iter()
+                            .filter(|x| match x {
+                                Token::Parameter(_) => true,
+                                _ => false,
+                            })
+                            .map(|range| match range {
+                                Token::Parameter(Range::Full(full)) => {
+                                    full.clone().collect::<Vec<_>>()
+                                }
+                                Token::Parameter(Range::From(from)) => {
+                                    (0..=from.end).collect::<Vec<_>>()
+                                }
+                                Token::Parameter(Range::To(to)) => {
+                                    (to.start..=code_to_evaluate.len() - 1).collect::<Vec<_>>()
+                                }
+                                _ => unimplemented!(),
+                            })
+                            .flatten()
+                            .unique()
+                            .map(|wlang_index| code_to_evaluate.len() - (wlang_index + 1))
+                            .collect::<Vec<usize>>();
+
+                        let result = self.apply(&case, &code_to_evaluate);
+
+                        new_code.splice(first_func_pos..=first_func_pos, result.clone());
+
+                        for n in expanded_range {
+                            new_code.remove(n);
+                        }
+
+                        new_code.clone()
                     }
-                });
-
-                new_code.splice(..first_func_pos + 1, result);
-
-                if first_func_pos != second_func_pos {
-                    new_code = self.eval(new_code);
-                }
-
-                new_code
+                })
             }
             _ => new_code,
         }
