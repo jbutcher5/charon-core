@@ -1,4 +1,4 @@
-use crate::models::{FunctionParameter, Token::*, WFunc, WTokens};
+use crate::models::{Token::*, WFunc, WTokens};
 use crate::utils::{as_nums, as_wcode};
 use phf::phf_map;
 
@@ -54,8 +54,6 @@ fn output(data: WTokens) -> WTokens {
                 Atom(x) | Special(x) | Container(x) | ContainerLiteral(x) => {
                     format!("{} {}", acc, x)
                 }
-                Parameter(FunctionParameter::Exact(index)) => format!("{} #{}", acc, index),
-                Parameter(FunctionParameter::Remaining) => format!("{} #n", acc),
                 _ => format!("{} {:?}", acc, token),
             }
         });
