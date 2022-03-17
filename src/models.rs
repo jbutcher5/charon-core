@@ -24,8 +24,7 @@ pub struct WCode {
 pub enum Range {
     Full(std::ops::RangeInclusive<usize>),
     To(std::ops::RangeFrom<usize>),
-    From(std::ops::RangeTo<usize>),
-    Exact(usize)
+    From(std::ops::RangeTo<usize>)
 }
 
 #[derive(Debug, Clone)]
