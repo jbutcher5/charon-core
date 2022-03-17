@@ -131,20 +131,16 @@ pub fn first_special_instance(special: String, arr: &WTokens) -> Option<usize> {
 }
 
 pub trait WFunc {
-    fn apply(&self, function: &WTokens, arr: &WTokens, all_tokens_used: &WTokens) -> WTokens;
+    fn apply(&self, function: &WTokens, arr: &WTokens) -> WTokens;
 }
 
 impl WFunc for State {
-    fn apply(&self, function: &WTokens, arr: &WTokens, all_tokens_used: &WTokens) -> WTokens {
+    fn apply(&self, function: &WTokens, arr: &WTokens) -> WTokens {
         fn map_parameters(mut buffer: WTokens, function: &WTokens, arr: &WTokens) -> WTokens {
             let reversed: WTokens = arr.iter().cloned().rev().collect();
 
             for token in function {
                 match token {
-                    Token::Parameter(Range::Exact(x)) => buffer.push(match reversed.get(*x) {
-                        Some(y) => y.clone(),
-                        None => continue,
-                    }),
                     Token::Parameter(range) => {
                         let mut slice = match range {
                             Range::From(from) => {
@@ -173,24 +169,8 @@ impl WFunc for State {
             buffer
         }
 
-        let buffer = map_parameters(vec![], function, &arr);
-        let mut result = self.eval(buffer);
-        let mut untouched = arr.clone();
-        let total_param = all_tokens_used.iter().fold(0, |acc, x| match x {
-            Token::Parameter(Range::Exact(x)) => {
-                if acc < x + 1 {
-                    x + 1
-                } else {
-                    acc
-                }
-            }
-            _ => acc,
-        });
 
-        for _ in 0..total_param {
-            untouched.pop();
-        }
-        untouched.append(&mut result);
-        untouched
+        let buffer = map_parameters(vec![], function, &arr);
+        self.eval(buffer)
     }
 }

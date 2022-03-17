@@ -53,7 +53,7 @@ impl WEval for State {
         let funcs = outter_function(&new_code);
 
         match funcs {
-            (Some((_, _)), Some((first_func_pos, func))) => {
+            (_, Some((first_func_pos, func))) => {
                 let code_to_evaluate: WTokens = new_code[..first_func_pos].to_vec();
 
                 self.eval(match func {
@@ -103,7 +103,6 @@ impl WEval for State {
                             .collect::<Vec<usize>>();
 
                         let result = self.apply(&case, &code_to_evaluate);
-
                         new_code.splice(first_func_pos..=first_func_pos, result.clone());
 
                         for n in expanded_range {
