@@ -1,5 +1,5 @@
 use crate::models::{Range, State, Token, WCode, WFuncVariant, WTokens};
-use crate::utils::{first_special_instance, outter_function, special_pairs, WFunc};
+use crate::utils::{first_special_instance, last_function, special_pairs, WFunc};
 use itertools::Itertools;
 
 pub trait WEval {
@@ -50,10 +50,10 @@ impl WEval for State {
             }
         }
 
-        let funcs = outter_function(&new_code);
+        let funcs = last_function(&new_code);
 
         match funcs {
-            (_, Some((first_func_pos, func))) => {
+            Some((first_func_pos, func)) => {
                 let code_to_evaluate: WTokens = new_code[..first_func_pos].to_vec();
 
                 self.eval(match func {
@@ -106,7 +106,9 @@ impl WEval for State {
 
                         let result = self.apply(&case, &code_to_evaluate);
                         new_code.splice(first_func_pos..=first_func_pos, result.clone());
-                        for n in expanded_range { new_code.remove(n); }
+                        for n in expanded_range {
+                            new_code.remove(n);
+                        }
 
                         new_code.clone()
                     }

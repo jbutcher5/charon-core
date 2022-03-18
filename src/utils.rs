@@ -1,8 +1,6 @@
 use crate::evaluator::WEval;
 use crate::models::{Range, State, Token, WFuncVariant, WTokens};
 
-type WFuncPair = (Option<(usize, WFuncVariant)>, Option<(usize, WFuncVariant)>);
-
 pub fn as_nums(arr: WTokens) -> Vec<f64> {
     arr.iter()
         .map(|value| match value.clone() {
@@ -16,28 +14,18 @@ pub fn as_wcode(arr: Vec<f64>) -> WTokens {
     arr.iter().map(|&value| Token::Value(value)).collect()
 }
 
-pub fn outter_function(arr: &WTokens) -> WFuncPair {
+pub fn last_function(arr: &WTokens) -> Option<(usize, WFuncVariant)> {
     let reversed = arr.iter().rev();
 
-    let mut results: WFuncPair = (None, None);
-
-    for (i, token) in arr.iter().enumerate() {
-        match token {
-            Token::Function(value) => results.0 = Some((i, WFuncVariant::Function(*value))),
-            Token::Container(value) => {
-                results.0 = Some((i, WFuncVariant::Container(value.to_string())))
-            }
-            _ => continue,
-        }
-    }
+    let mut results: Option<(usize, WFuncVariant)> = None;
 
     for (i, token) in reversed.enumerate() {
         match token {
             Token::Function(value) => {
-                results.1 = Some((arr.len() - (i + 1), WFuncVariant::Function(*value)))
+                results = Some((arr.len() - (i + 1), WFuncVariant::Function(*value)))
             }
             Token::Container(value) => {
-                results.1 = Some((
+                results = Some((
                     arr.len() - (i + 1),
                     WFuncVariant::Container(value.to_string()),
                 ))
@@ -155,7 +143,7 @@ impl WFunc for State {
                                 .iter()
                                 .cloned()
                                 .rev()
-                                .collect::<WTokens>()
+                                .collect::<WTokens>(),
                         };
 
                         buffer.append(&mut slice);
