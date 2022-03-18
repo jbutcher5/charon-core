@@ -155,8 +155,7 @@ impl WFunc for State {
                                 .iter()
                                 .cloned()
                                 .rev()
-                                .collect::<WTokens>(),
-                            _ => unimplemented!(),
+                                .collect::<WTokens>()
                         };
 
                         buffer.append(&mut slice);
