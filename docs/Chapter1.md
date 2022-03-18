@@ -4,7 +4,7 @@ This is the first chapter of the W programming language.
 
 ## Container
 
-A container is what is known as a function is many other programming languages. However, the core difference is that it's functions, prodeduce and variable. This means that it's extremely loose and generic to write. Building on that, this means that we can use a clear operator to show "storing" code in a container. This operator is `<-`. This means that we can write `x <- 5` to store 5 in the container x. Likewise, we can write `y <- 5 OUTPUT` to output 5 everytime we use the y container. Example code of this would be:
+A container is what is known as a function in many other programming languages. However, the core difference is that it's functions, prodeduce and variable. This means that it's extremely loose and generic to write. Building on that, this means that we can use a clear operator to show "storing" code in a container. This operator is `<-`. This means that we can write `x <- 5` to store 5 in the container x. Likewise, we can write `y <- 5 OUTPUT` to output 5 everytime we use the y container. Example code of this would be:
 
 ```
 y <- 5 OUTPUT
@@ -64,8 +64,23 @@ f <- $0 $2 add
 3 6 4 f OUTPUT
 ```
 
-This is becase the values 4 and 3 are deleted and then replaced (at the point where the function is called) with 7 which when outputed results in `6 7`.
+This is because the values 4 and 3 are deleted and then replaced (at the point where the function is called) with 7 which when outputed results in `6 7`.
 
 ### Ephemeral Containers
 
-An ephemeral container is a container that does not modify the arguments it comes into contact with. You can not write an ephemeral container in W, you must write it in rust as to get around the evaluator deleteing parameters used by a container where you are able to add your own implmentation and have much more flexibilty in rust functions. An example of an ephemeral container is the OUTPUT container. When the container is used by the evaluator it does not interact with any of the parameters that come after it. For example `3 OUTPUT` implies `3` because the OUTPUT is deleted without a trace which therefore means that you can embed it into your code with little interference, this would look like: `2 3 OUTPUT sub OUTPUT` which would first output `2 3` and then the first output would delete it's self and then it would subtract 3 from 2 and result in -1 then output -1 through the final output.
+An ephemeral container is a container that does not modify the arguments it comes into contact with. You can not write an ephemeral container in W, you must write it in rust as to get around the evaluator deleting parameters used by a container where you are able to add your own implementation and have much more flexibility in rust functions. An example of an ephemeral container is the OUTPUT container. When the container is used by the evaluator it does not interact with any of the parameters that come after it. For example `3 OUTPUT` implies `3` because the OUTPUT is deleted without a trace which therefore means that you can embed it into your code with little interference, this would look like: `2 3 OUTPUT sub OUTPUT` which would first output `2 3` and then the first output would delete it's self and then it would subtract 3 from 2 and result in -1 then output -1 through the final output.
+
+### Boolean Guards
+
+A boolean guard provides different "pathways" for the code to follow, all containers that have a boolean guard *MUST* have a default case. An example of a boolean guard in action would look like this:
+
+```
+f <-|
+  $0 1 eq -> $2 $1 mul
+  $2 $1 div
+  
+2 3 1 f OUTPUT
+2 3 0 f OUTPUT
+```
+
+In the example we have a single case and a default case, if the first case is not true it will move down all of the cases until it reaches the default. `$0 1 eq` is the case and `$2 $1 mul` is the corresponding code and `$2 $1 div` is our default case.
