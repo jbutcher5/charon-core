@@ -100,14 +100,13 @@ impl WEval for State {
                             .flatten()
                             .unique()
                             .map(|wlang_index| code_to_evaluate.len() - (wlang_index + 1))
+                            .sorted()
+                            .rev()
                             .collect::<Vec<usize>>();
 
                         let result = self.apply(&case, &code_to_evaluate);
                         new_code.splice(first_func_pos..=first_func_pos, result.clone());
-
-                        for n in expanded_range {
-                            new_code.remove(n);
-                        }
+                        for n in expanded_range { new_code.remove(n); }
 
                         new_code.clone()
                     }
