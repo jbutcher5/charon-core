@@ -58,7 +58,7 @@ fn output(data: WTokens) -> WTokens {
             }
         });
 
-    println!("{}", result);
+    println!("{}", result.trim());
     data
 }
 
