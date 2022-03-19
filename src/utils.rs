@@ -72,14 +72,16 @@ pub fn special_pairs(
                 if value == &tokens.1 {
                     return Some(initial_pos + i + 1);
                 } else if value == &tokens.0 {
-                    next_open = initial_pos + i;
+                    next_open = initial_pos + i + 1;
                     counter += 1;
                     break;
                 }
             }
             _ => continue,
         }
+
     }
+
 
     for (i, token) in arr[next_open..].iter().enumerate() {
         match token {
