@@ -1,10 +1,10 @@
 use crate::models::{Range, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
+use crate::preprocessor::expand_bracket;
 use lazy_static::lazy_static;
 use phf::phf_set;
 use substring::Substring;
 use regex::Regex;
-
 
 fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
     lazy_static! {
@@ -100,6 +100,8 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
 }
 
 pub fn lexer(code: &str) -> Vec<WCode> {
+    let cleaned = expand_bracket(code.to_string());
+
     let container_symbols = [" <- ", " <-|", " -> "];
 
     let mut containers = vec![];
@@ -107,7 +109,7 @@ pub fn lexer(code: &str) -> Vec<WCode> {
     let mut section_buffer: String = "".to_string();
     let mut sectioned_code: Vec<String> = vec![];
 
-    for line in code.split('\n').filter(|&x| x.trim() != "") {
+    for line in cleaned.split('\n').filter(|&x| x.trim() != "") {
         let re_result: Vec<bool> = container_symbols.iter().map(|x| line.contains(x)).collect();
 
         if re_result[1] && section_buffer.len() == 0 {

@@ -3,6 +3,7 @@ mod lexer;
 mod models;
 mod stdlib;
 mod utils;
+mod preprocessor;
 
 use crate::evaluator::WEval;
 use crate::lexer::lexer;
