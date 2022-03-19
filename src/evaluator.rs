@@ -1,6 +1,7 @@
 use crate::models::{Range, State, Token, WCode, WFuncVariant, WTokens};
 use crate::utils::{first_special_instance, last_function, special_pairs, WFunc};
 use itertools::Itertools;
+use rayon::prelude::*;
 
 pub trait WEval {
     fn wsection_eval(&mut self, data: Vec<WCode>) -> Vec<WTokens>;
@@ -80,7 +81,7 @@ impl WEval for State {
                         }
 
                         let expanded_range = container_acc
-                            .iter()
+                            .par_iter()
                             .filter(|x| match x {
                                 Token::Parameter(_) => true,
                                 _ => false,
@@ -98,6 +99,8 @@ impl WEval for State {
                                 _ => unimplemented!(),
                             })
                             .flatten()
+                            .collect::<Vec<_>>()
+                            .iter()
                             .unique()
                             .map(|wlang_index| code_to_evaluate.len() - (wlang_index + 1))
                             .sorted()

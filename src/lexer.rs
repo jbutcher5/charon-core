@@ -5,6 +5,7 @@ use lazy_static::lazy_static;
 use phf::phf_set;
 use substring::Substring;
 use regex::Regex;
+use rayon::prelude::*;
 
 fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
     lazy_static! {
@@ -22,6 +23,8 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
 
     let annotated = code
         .split(' ')
+        .collect::<Vec<_>>()
+        .par_iter()
         .map(|x| match x.parse::<f64>() {
             Ok(n) => Token::Value(n),
             Err(_) => {
