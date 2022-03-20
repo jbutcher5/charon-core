@@ -99,6 +99,22 @@ fn or(mut data: WTokens) -> WTokens {
     data
 }
 
+fn and(mut data: WTokens) -> WTokens {
+    let parameters = (data.pop().unwrap(), data.pop().unwrap());
+
+    let token = Value(match parameters {
+        (Value(x), Value(y)) => match (x != 0.0) && (y != 0.0) {
+            true => 1.0,
+            _ => 0.0,
+        },
+        _ => 0.0,
+    });
+
+    data.push(token);
+    data
+}
+
+
 fn greater(mut data: WTokens) -> WTokens {
     let parameters = (data.pop().unwrap(), data.pop().unwrap());
 
@@ -172,10 +188,12 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     ">" => greater,
     "<" => less,
     "||" => or,
+    "or" => or,
+    "&&" => and,
+    "and" => and,
     "len" => len,
     "reverse" => reverse,
     "OUTPUT" => output,
     "eq" => eq,
-    "or" => or,
     "if-else" => if_else
 };
