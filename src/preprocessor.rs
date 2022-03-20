@@ -1,38 +1,41 @@
-use regex::Regex;
 use lazy_static::lazy_static;
+use regex::Regex;
 
 pub fn expand_bracket(text: String) -> String {
     lazy_static! {
-        static ref OPEN: Regex = Regex::new(r"(\S+)\((.*)|(.*)\((\S+)").unwrap();
-        static ref CLOSE: Regex = Regex::new(r"(\S+)\)(.*)|(.*)\)(\S+)").unwrap();
+        static ref RE: Vec<Regex> = [
+            r"(\S+)\((.*)|(.*)\((\S+)",
+            r"(\S+)\)(.*)|(.*)\)(\S+)",
+            r"(\S+)\{(.*)|(.*)\{(\S+)",
+            r"(\S+)\}(.*)|(.*)\}(\S+)"
+        ]
+        .iter()
+        .map(|x| Regex::new(x).unwrap())
+        .collect();
     }
 
-    if let Some(captures) = OPEN.captures(&text) {
-        let groups: Vec<String> = [1, 2].iter().map(|&x| {
-            let range = match captures.get(x) {
-                Some(y) => y,
-                None => captures.get(x+2).unwrap()
-            };
-            text[range.start()..range.end()].to_string()
-        }).collect();
+    let results = ["(", ")", "{", "}"]
+        .iter()
+        .zip(RE.iter())
+        .map(|symbol| (symbol.0, symbol.1.captures(&text)))
+        .filter(|result| result.1.is_some())
+        .map(|result| (result.0, result.1.unwrap()))
+        .collect::<Vec<_>>();
 
-        let result = format!("{} ( {}", groups[0], groups[1]);
-        let match_range = captures.get(0).unwrap();
-        let mut new_text = text.clone();
-        new_text.replace_range(match_range.start()..match_range.end(), &result);
+    if let Some(captures) = results.get(0) {
+        let groups: Vec<String> = [1, 2]
+            .iter()
+            .map(|&x| {
+                let range = match captures.1.get(x) {
+                    Some(y) => y,
+                    None => captures.1.get(x + 2).unwrap(),
+                };
+                text[range.start()..range.end()].to_string()
+            })
+            .collect();
 
-        expand_bracket(new_text)
-    } else if let Some(captures) = CLOSE.captures(&text) {
-        let groups: Vec<String> = [1, 2].iter().map(|&x| {
-            let range = match captures.get(x) {
-                Some(y) => y,
-                None => captures.get(x+2).unwrap()
-            };
-            text[range.start()..range.end()].to_string()
-        }).collect();
-
-        let result = format!("{} ) {}", groups[0], groups[1]);
-        let match_range = captures.get(0).unwrap();
+        let result = format!("{} {} {}", groups[0], captures.0, groups[1]);
+        let match_range = captures.1.get(0).unwrap();
         let mut new_text = text.clone();
         new_text.replace_range(match_range.start()..match_range.end(), &result);
 
