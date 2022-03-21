@@ -57,7 +57,7 @@ fn annotate(code: &str, containers: &[String]) -> WTokens {
                         Token::Atom(cleared)
                     }
                 } else if cleared.len() > 2
-                    && chars.nth(0).unwrap() == '`'
+                    && chars.next().unwrap() == '`'
                     && chars.last().unwrap() == '`'
                 {
                     let slice = cleared.substring(1, cleared.len() - 1);
