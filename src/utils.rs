@@ -158,7 +158,7 @@ impl WFunc for State {
             buffer
         }
 
-        let buffer = map_parameters(vec![], function, &arr);
+        let buffer = map_parameters(vec![], function, arr);
         self.eval(buffer)
     }
 }
