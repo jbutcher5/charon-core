@@ -107,7 +107,7 @@ impl WEval for State {
                             .collect::<Vec<usize>>();
 
                         let result = self.apply(&case, &code_to_evaluate);
-                        new_code.splice(first_func_pos..=first_func_pos, result.clone());
+                        new_code.splice(first_func_pos..=first_func_pos, result);
                         for n in expanded_range {
                             new_code.remove(n);
                         }
