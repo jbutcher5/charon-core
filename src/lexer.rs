@@ -7,7 +7,7 @@ use rayon::prelude::*;
 use regex::Regex;
 use substring::Substring;
 
-fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
+fn annotate(code: &str, containers: &[String]) -> WTokens {
     lazy_static! {
         static ref SPECIALS: phf::Set<&'static str> = phf_set! {
             ")",
