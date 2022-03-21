@@ -66,7 +66,7 @@ pub fn special_pairs(
     let mut counter = 0;
     let mut next_open = 0;
 
-    for (i, token) in arr[initial_pos.clone() + 1..].iter().enumerate() {
+    for (i, token) in arr[*initial_pos + 1..].iter().enumerate() {
         match token {
             Token::Special(value) => {
                 if value == &tokens.1 {
