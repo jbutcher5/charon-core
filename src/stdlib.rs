@@ -39,9 +39,8 @@ fn len(data: WTokens) -> WTokens {
     vec![Value(length)]
 }
 
-fn reverse(mut data: WTokens) -> WTokens {
-    data.reverse();
-    return data;
+fn reverse(data: WTokens) -> WTokens {
+    data.iter().rev().cloned().collect::<Vec<_>>()
 }
 
 fn output(data: WTokens) -> WTokens {
