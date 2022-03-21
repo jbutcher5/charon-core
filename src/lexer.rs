@@ -1,11 +1,11 @@
 use crate::models::{Range, Token, WCode, WTokens};
-use crate::stdlib::FUNCTIONS;
 use crate::preprocessor::expand_bracket;
+use crate::stdlib::FUNCTIONS;
 use lazy_static::lazy_static;
 use phf::phf_set;
-use substring::Substring;
-use regex::Regex;
 use rayon::prelude::*;
+use regex::Regex;
+use substring::Substring;
 
 fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
     lazy_static! {
@@ -37,32 +37,16 @@ fn annotate(code: &str, containers: &Vec<String>) -> WTokens {
                     if let Some(captures) = FULL.captures(&cleared) {
                         let caps: Vec<usize> = [1, 2]
                             .iter()
-                            .map(|&x| captures
-                                 .get(x)
-                                 .unwrap()
-                                 .as_str()
-                                 .parse::<usize>()
-                                 .unwrap()
-                            )
+                            .map(|&x| captures.get(x).unwrap().as_str().parse::<usize>().unwrap())
                             .collect();
 
                         Token::Parameter(Range::Full(caps[1]..=caps[0]))
                     } else if let Some(captures) = TO.captures(&cleared) {
-                        let cap = captures
-                            .get(1)
-                            .unwrap()
-                            .as_str()
-                            .parse::<usize>()
-                            .unwrap();
+                        let cap = captures.get(1).unwrap().as_str().parse::<usize>().unwrap();
 
                         Token::Parameter(Range::From(..cap))
                     } else if let Some(captures) = FROM.captures(&cleared) {
-                        let cap = captures
-                            .get(1)
-                            .unwrap()
-                            .as_str()
-                            .parse::<usize>()
-                            .unwrap();
+                        let cap = captures.get(1).unwrap().as_str().parse::<usize>().unwrap();
 
                         Token::Parameter(Range::To(cap..))
                     } else if let Some(captures) = EXACT.captures(&cleared) {
@@ -119,14 +103,12 @@ pub fn lexer(code: &str) -> Vec<WCode> {
             section_buffer.push_str(line);
         } else if re_result[2] && section_buffer.len() > 0 {
             section_buffer.push_str(format!("\n{}", line).as_str());
+        } else if section_buffer.len() > 0 {
+            section_buffer.push_str(format!("\n{}", line).as_str());
+            sectioned_code.push(section_buffer);
+            section_buffer = String::new();
         } else {
-            if section_buffer.len() > 0 {
-                section_buffer.push_str(format!("\n{}", line).as_str());
-                sectioned_code.push(section_buffer);
-                section_buffer = String::new();
-            } else {
-                sectioned_code.push(line.to_string());
-            }
+            sectioned_code.push(line.to_string());
         }
     }
 
