@@ -33,7 +33,7 @@ fn annotate(code: &str, containers: &[String]) -> WTokens {
 
                 if containers.iter().any(|name| *name == cleared) {
                     Token::Container(cleared)
-                } else if cleared.len() > 1 && chars.nth(0).unwrap() == '$' {
+                } else if cleared.len() > 1 && chars.next().unwrap() == '$' {
                     if let Some(captures) = FULL.captures(&cleared) {
                         let caps: Vec<usize> = [1, 2]
                             .iter()
