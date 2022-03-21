@@ -45,7 +45,6 @@ fn reverse(data: WTokens) -> WTokens {
 
 fn output(data: WTokens) -> WTokens {
     let result = data
-        .clone()
         .iter()
         .fold(String::new(), |acc, token| -> String {
             match token {
