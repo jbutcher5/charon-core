@@ -122,10 +122,7 @@ pub fn lexer(code: &str) -> Vec<WCode> {
         .map(|block| {
             let find_results = container_symbols
                 .iter()
-                .map(|x| match block.find(x) {
-                    Some(start) => Some(start..(start + x.len())),
-                    None => None,
-                })
+                .map(|x| block.find(x).map(|start| start..(start + x.len())))
                 .collect::<Vec<Option<std::ops::Range<usize>>>>();
 
             let find_slice = find_results.as_slice();
