@@ -41,8 +41,7 @@ impl WEval for State {
             None => None,
         };
 
-        if first.is_some() && second.is_some() {
-            let (x, y) = (first.unwrap(), second.unwrap());
+        if let (Some(x), Some(y)) = (first, second) {
             let bracket_code = &data[x + 1..y];
             new_code.splice(x..y + 1, self.eval(bracket_code.to_vec()));
 
