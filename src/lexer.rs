@@ -99,9 +99,9 @@ pub fn lexer(code: &str) -> Vec<WCode> {
     for line in cleaned.split('\n').filter(|&x| x.trim() != "") {
         let re_result: Vec<bool> = container_symbols.iter().map(|x| line.contains(x)).collect();
 
-        if re_result[1] && section_buffer.len() == 0 {
+        if re_result[1] && section_buffer.is_empty() {
             section_buffer.push_str(line);
-        } else if re_result[2] && section_buffer.len() > 0 {
+        } else if re_result[2] && !section_buffer.is_empty() {
             section_buffer.push_str(format!("\n{}", line).as_str());
         } else if section_buffer.len() > 0 {
             section_buffer.push_str(format!("\n{}", line).as_str());
