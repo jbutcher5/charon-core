@@ -150,7 +150,7 @@ impl WFunc for State {
 
                         buffer.append(&mut slice);
                     }
-                    Token::Group(x) => buffer.push(Token::Group(map_parameters(vec![], x, &arr))),
+                    Token::Group(x) => buffer.push(Token::Group(map_parameters(vec![], x, arr))),
                     _ => buffer.push(token.clone()),
                 }
             }
