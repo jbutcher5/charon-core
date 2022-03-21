@@ -81,10 +81,7 @@ impl WEval for State {
 
                         let expanded_range = container_acc
                             .par_iter()
-                            .filter(|x| match x {
-                                Token::Parameter(_) => true,
-                                _ => false,
-                            })
+                            .filter(|x| matches!(x, Token::Parameter(_)))
                             .map(|range| match range {
                                 Token::Parameter(Range::Full(full)) => {
                                     full.clone().collect::<Vec<_>>()
