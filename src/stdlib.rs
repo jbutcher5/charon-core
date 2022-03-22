@@ -173,6 +173,24 @@ fn if_else(mut data: WTokens) -> WTokens {
     data
 }
 
+fn expand(mut data: WTokens) -> WTokens {
+    let parameters = (
+        data.pop().unwrap(),
+        data.pop().unwrap()
+    );
+
+    match parameters {
+        (Value(n), Group(group)) => {
+            for _ in 0..n as usize {
+                data.append(&mut group.clone())
+            }
+        }
+        _ => panic!("Incorrect types")
+    }
+
+    data
+}
+
 pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "sum" => sum,
     "add" => add,
@@ -193,5 +211,6 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "reverse" => reverse,
     "OUTPUT" => output,
     "eq" => eq,
-    "if-else" => if_else
+    "if-else" => if_else,
+    "expand" => expand
 };
