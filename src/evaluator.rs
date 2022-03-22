@@ -93,7 +93,7 @@ impl WEval for State {
                                 Token::Parameter(Range::To(to)) => {
                                     (to.start..=code_to_evaluate.len() - 1).collect::<Vec<_>>()
                                 }
-                                _ => unimplemented!(),
+                                _ => panic!(),
                             })
                             .flatten()
                             .collect::<Vec<_>>()
