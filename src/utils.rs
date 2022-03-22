@@ -1,4 +1,3 @@
-use crate::evaluator::WEval;
 use crate::models::{Range, State, Token, WFuncVariant, WTokens};
 
 pub fn as_nums(arr: WTokens) -> Vec<f64> {
@@ -79,9 +78,7 @@ pub fn special_pairs(
             }
             _ => continue,
         }
-
     }
-
 
     for (i, token) in arr[next_open..].iter().enumerate() {
         match token {
@@ -126,39 +123,35 @@ pub trait WFunc {
 
 impl WFunc for State {
     fn apply(&self, function: &WTokens, arr: &WTokens) -> WTokens {
-        fn map_parameters(mut buffer: WTokens, function: &WTokens, arr: &WTokens) -> WTokens {
-            let reversed: WTokens = arr.iter().cloned().rev().collect();
+        let mut buffer = vec![];
+        let reversed: WTokens = arr.iter().cloned().rev().collect();
 
-            for token in function {
-                match token {
-                    Token::Parameter(range) => {
-                        let mut slice = match range {
-                            Range::From(from) => {
-                                reversed[*from].iter().cloned().rev().collect::<WTokens>()
-                            }
-                            Range::To(to) => reversed[to.clone()]
-                                .iter()
-                                .cloned()
-                                .rev()
-                                .collect::<WTokens>(),
-                            Range::Full(full) => reversed[full.clone()]
-                                .iter()
-                                .cloned()
-                                .rev()
-                                .collect::<WTokens>(),
-                        };
+        for token in function {
+            match token {
+                Token::Parameter(range) => {
+                    let mut slice = match range {
+                        Range::From(from) => {
+                            reversed[*from].iter().cloned().rev().collect::<WTokens>()
+                        }
+                        Range::To(to) => reversed[to.clone()]
+                            .iter()
+                            .cloned()
+                            .rev()
+                            .collect::<WTokens>(),
+                        Range::Full(full) => reversed[full.clone()]
+                            .iter()
+                            .cloned()
+                            .rev()
+                            .collect::<WTokens>(),
+                    };
 
-                        buffer.append(&mut slice);
-                    }
-                    Token::Group(x) => buffer.push(Token::Group(map_parameters(vec![], x, arr))),
-                    _ => buffer.push(token.clone()),
+                    buffer.append(&mut slice);
                 }
+                Token::Group(x) => buffer.push(Token::Group(self.apply(x, arr))),
+                _ => buffer.push(token.clone()),
             }
-
-            buffer
         }
 
-        let buffer = map_parameters(vec![], function, arr);
-        self.eval(buffer)
+        buffer
     }
 }

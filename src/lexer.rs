@@ -103,7 +103,7 @@ pub fn lexer(code: &str) -> Vec<WCode> {
             section_buffer.push_str(line);
         } else if re_result[2] && !section_buffer.is_empty() {
             section_buffer.push_str(format!("\n{}", line).as_str());
-        } else if !section_buffer.is_empty() {
+        } else if section_buffer.len() > 0 {
             section_buffer.push_str(format!("\n{}", line).as_str());
             sectioned_code.push(section_buffer);
             section_buffer = String::new();
@@ -112,7 +112,7 @@ pub fn lexer(code: &str) -> Vec<WCode> {
         }
     }
 
-    if !section_buffer.is_empty() {
+    if section_buffer.len() > 0 {
         sectioned_code.push(section_buffer);
     }
 

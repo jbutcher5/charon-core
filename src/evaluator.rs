@@ -71,7 +71,8 @@ impl WEval for State {
                             joined.append(&mut container_case.1.clone());
                             container_acc.append(&mut joined);
 
-                            let case_prefix = self.apply(&container_case.0, &code_to_evaluate);
+                            let case_prefix =
+                                self.eval(self.apply(&container_case.0, &code_to_evaluate));
 
                             if case_prefix[0] != Token::Value(0.0) {
                                 case = container_case.1.clone();
@@ -103,7 +104,7 @@ impl WEval for State {
                             .rev()
                             .collect::<Vec<usize>>();
 
-                        let result = self.apply(&case, &code_to_evaluate);
+                        let result = self.eval(self.apply(&case, &code_to_evaluate));
                         new_code.splice(first_func_pos..=first_func_pos, result);
                         for n in expanded_range {
                             new_code.remove(n);
