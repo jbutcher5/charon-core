@@ -34,7 +34,24 @@ pub fn expand_bracket(text: String) -> String {
             })
             .collect();
 
-        let result = format!("{} {} {}", groups[0], captures.0, groups[1]);
+        let mut whitespace = ("", "");
+
+        if let Some(suffix) = groups[0].chars().last() {
+            if !suffix.is_whitespace() {
+                whitespace.0 = " ";
+            }
+        }
+
+        if let Some(prefix) = groups[1].chars().next() {
+            if !prefix.is_whitespace() {
+                whitespace.1 = " ";
+            }
+        }
+
+        let result = format!(
+            "{}{}{}{}{}",
+            groups[0], whitespace.0, captures.0, whitespace.1, groups[1]
+        );
         let match_range = captures.1.get(0).unwrap();
         let mut new_text = text.clone();
         new_text.replace_range(match_range.start()..match_range.end(), &result);
