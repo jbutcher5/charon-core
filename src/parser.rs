@@ -1,5 +1,5 @@
 use crate::models::{Range, Token, WCode, WTokens};
-use crate::lexer::expand_bracket;
+use crate::lexer::{expand_bracket, expand_string};
 use crate::stdlib::FUNCTIONS;
 use lazy_static::lazy_static;
 use phf::phf_set;
@@ -87,7 +87,9 @@ fn annotate(code: &str, containers: &[String]) -> WTokens {
 }
 
 pub fn parser(code: &str) -> Vec<WCode> {
-    let cleaned = expand_bracket(code.to_string());
+    let cleaned = expand_string(expand_bracket(code.to_string()));
+
+    println!("{}", cleaned);
 
     let container_symbols = [" <- ", " <-|", " -> "];
 
