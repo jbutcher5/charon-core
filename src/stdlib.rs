@@ -191,6 +191,21 @@ fn expand(mut data: WTokens) -> WTokens {
     data
 }
 
+fn release(mut data: WTokens) -> WTokens {
+    let parameters = data.pop().unwrap();
+
+    match parameters {
+        Group(group) => data.append(&mut group.clone()),
+        _ => panic!("Incorrect types")
+    };
+
+    data
+}
+
+fn bundle(data: WTokens) -> WTokens {
+    vec![Group(data)]
+}
+
 pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "sum" => sum,
     "add" => add,
@@ -212,5 +227,7 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "OUTPUT" => output,
     "eq" => eq,
     "if-else" => if_else,
-    "expand" => expand
+    "expand" => expand,
+    "release" => release,
+    "bundle" => bundle
 };
