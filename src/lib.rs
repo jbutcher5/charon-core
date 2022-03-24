@@ -1,9 +1,9 @@
 mod evaluator;
 mod lexer;
-mod models;
 mod stdlib;
 mod utils;
 mod parser;
+pub mod models;
 
 use crate::evaluator::WEval;
 use crate::models::{State, WTokens};
