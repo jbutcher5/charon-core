@@ -1,5 +1,19 @@
 use lazy_static::lazy_static;
-use regex::Regex;
+use regex::{Captures, Regex};
+
+pub fn expand_string(text: String) -> String {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r#"(.*)"(.*)"(.*)"#).unwrap();
+    }
+
+    RE.replace_all(&text, |caps: &Captures| {
+        let collection = caps[2]
+            .chars()
+            .fold("".to_string(), |acc, x| format!("{} {}", acc, x));
+        format!("{}{{ {} }}{}", &caps[1], &collection[1..], &caps[3])
+    })
+    .to_string()
+}
 
 pub fn expand_bracket(text: String) -> String {
     lazy_static! {
