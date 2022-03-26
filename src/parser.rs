@@ -89,8 +89,6 @@ fn annotate(code: &str, containers: &[String]) -> WTokens {
 pub fn parser(code: &str) -> Vec<WCode> {
     let cleaned = expand_string(expand_bracket(code.to_string()));
 
-    println!("{}", cleaned);
-
     let container_symbols = [" <- ", " <-|", " -> "];
 
     let mut containers = vec![];
