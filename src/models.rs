@@ -14,7 +14,7 @@ pub enum Token {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct WCode {
+pub struct WCode {
     pub container: Option<String>,
     pub cases: Option<Vec<(WTokens, WTokens)>>,
     pub default_case: WTokens,
@@ -28,11 +28,11 @@ pub enum Range {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) enum WFuncVariant {
+pub enum WFuncVariant {
     Container(String),
     Function(WFunc),
 }
 
 pub type WTokens = Vec<Token>;
-pub type WFunc = fn(WTokens) -> WTokens;
+pub(crate) type WFunc = fn(WTokens) -> WTokens;
 pub(crate) type State = HashMap<String, Vec<(WTokens, WTokens)>>;
