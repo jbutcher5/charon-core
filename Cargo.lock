@@ -332,7 +332,7 @@ checksum = "fd6fbd9a79829dd1ad0cc20627bf1ed606756a7f77edff7b66b7064f9cb327c6"
 
 [[package]]
 name = "wcore"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "itertools",
  "lazy_static",
