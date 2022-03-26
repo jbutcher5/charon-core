@@ -45,7 +45,7 @@ pub fn bundle_groups(mut arr: WTokens) -> WTokens {
 
     match (first, second) {
         (Some(x), Some(y)) => {
-            let token_group = Token::Group(arr[x + 1..y].to_vec());
+            let token_group = Token::Group(bundle_groups(arr[x + 1..y].to_vec()));
             arr.splice(x..y + 1, vec![token_group]);
             match first_special_instance("{".to_string(), &arr) {
                 Some(_) => bundle_groups(arr),
