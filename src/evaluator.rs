@@ -35,32 +35,22 @@ impl WEval for State {
     fn eval(&self, data: WTokens) -> WTokens {
         let mut new_code = data.clone();
 
-        let first = first_special_instance("(".to_string(), &new_code);
-        let second = match first {
-            Some(x) => special_pairs(("(".to_string(), ")".to_string()), &new_code, &x),
-            None => None,
-        };
+        while let Some((first_func_pos, func)) = last_function(&new_code) {
+            let first = first_special_instance("(".to_string(), &new_code);
+            let second = match first {
+                Some(x) => special_pairs(("(".to_string(), ")".to_string()), &new_code, &x),
+                None => None,
+            };
 
-        if let (Some(x), Some(y)) = (first, second) {
-            let bracket_code = &data[x + 1..y];
-            new_code.splice(x..y + 1, self.eval(bracket_code.to_vec()));
-
-            if first_special_instance("(".to_string(), &new_code).is_some() {
-                new_code = self.eval(new_code)
-            }
-        }
-
-        let funcs = last_function(&new_code);
-
-        match funcs {
-            Some((first_func_pos, func)) => {
+            if let (Some(x), Some(y)) = (first, second) {
+                new_code.splice(x..=y, self.eval(new_code[x+1..y].to_vec()));
+            } else {
                 let code_to_evaluate: WTokens = new_code[..first_func_pos].to_vec();
 
-                self.eval(match func {
+                match func {
                     WFuncVariant::Function(func) => {
                         let result = func(code_to_evaluate);
                         new_code.splice(..first_func_pos + 1, result);
-                        new_code.clone()
                     }
                     WFuncVariant::Container(x) => {
                         let mut case: WTokens = vec![];
@@ -104,17 +94,16 @@ impl WEval for State {
                             .rev()
                             .collect::<Vec<usize>>();
 
-                        let result = self.eval(self.apply(&case, &code_to_evaluate));
+                        let result = self.apply(&case, &code_to_evaluate);
                         new_code.splice(first_func_pos..=first_func_pos, result);
                         for n in expanded_range {
                             new_code.remove(n);
                         }
-
-                        new_code.clone()
                     }
-                })
+                }
             }
-            _ => new_code,
         }
+
+        new_code
     }
 }
