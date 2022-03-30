@@ -1,5 +1,5 @@
 use crate::models::{Range, State, Token, WCode, WFuncVariant, WTokens};
-use crate::utils::{first_special_instance, last_function, special_pairs, WFunc};
+use crate::utils::{skin_content, first_special_instance, last_function, special_pairs, WFunc};
 use itertools::Itertools;
 
 pub trait WEval {
@@ -47,6 +47,7 @@ impl WEval for State {
                 if let Some((first_func_pos, func)) = last_function(&result) {
                     let code_to_evaluate = result[..first_func_pos].to_vec();
                     self.dissolve(&mut result, func, first_func_pos, code_to_evaluate);
+                    skin_content(&mut result);
                     new_code.splice(x + 1..y, result);
                 } else {
                     new_code.splice(x..=y, result);

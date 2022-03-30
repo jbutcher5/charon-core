@@ -13,6 +13,19 @@ pub fn as_wcode(arr: Vec<f64>) -> WTokens {
     arr.iter().map(|&value| Token::Value(value)).collect()
 }
 
+pub fn get_par(n: usize, arr: &mut WTokens) -> WTokens {
+    let mut result = vec![];
+
+    for _ in 0..n {
+        result.push(match arr.pop() {
+            Some(content) => content,
+            None => panic!("Too few arguments in {:?} where {} arguments were expected!", arr, n)
+        })
+    }
+
+    result
+}
+
 pub fn last_function(arr: &WTokens) -> Option<(usize, WFuncVariant)> {
     let reversed = arr.iter().rev();
 
@@ -115,6 +128,25 @@ pub fn first_special_instance(special: String, arr: &WTokens) -> Option<usize> {
     }
 
     None
+}
+
+pub fn skin_content(arr: &mut WTokens) {
+    if matches!((arr.first(), arr.last()), (Some(Token::Special(_)), Some(Token::Special(_)))) {
+        let bracket_acc = arr.iter().fold(0, |acc, x| {
+            if matches!(x, Token::Special(y) if y == "(") {
+                acc + 1
+            } else if matches!(x, Token::Special(y) if y == ")") {
+                acc - 1
+            } else {
+                acc
+            }
+        });
+
+        if bracket_acc == 0 {
+            arr.remove(0);
+            arr.pop();
+        }
+    }
 }
 
 pub trait WFunc {
