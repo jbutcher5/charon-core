@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags: [ "v[0-9]+.*" ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          title: $version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-assets:
+    runs-on: ${{ matrix.os }}
+    needs: create-release
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: taiki-e/upload-rust-binary-action@v1
+        with:
+          tar: unix
+          zip: windows
+          bin: simple_status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_PROFILE_RELEASE_LTO: true
