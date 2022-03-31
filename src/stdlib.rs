@@ -1,5 +1,6 @@
-use crate::models::{Token::*, WFunc, WTokens};
-use crate::utils::{as_nums, as_wcode};
+use crate::models::{Token, Token::*, WFunc, WTokens};
+use crate::utils::{as_nums, as_wcode, get_par};
+use itertools::Itertools;
 use phf::phf_map;
 
 fn sum(data: WTokens) -> WTokens {
@@ -8,28 +9,43 @@ fn sum(data: WTokens) -> WTokens {
 }
 
 fn add(mut data: WTokens) -> WTokens {
-    let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
-    data.push(Value(x.iter().sum()));
+    let x = get_par(2, &mut data);
+    data.push(Value(x.iter().map(|value| match value {
+        Value(content) => content,
+        _ => panic!("Incorrect type found. Found {:?} but expected Value", data)
+    }).sum()));
     data
 }
 
 fn sub(mut data: WTokens) -> WTokens {
-    let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
-    let result = x[1] - x[0];
+    let x = get_par(2, &mut data);
+    let y = x.iter().map(|value| match value {
+        Value(content) => content,
+        _ => panic!("Incorrect type found. Found {:?} but expected Value", data)
+    }).collect::<Vec<_>>();
+    let result = y[1] - y[0];
     data.push(Value(result));
     data
 }
 
 fn mul(mut data: WTokens) -> WTokens {
-    let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
-    let result = x[1] * x[0];
+    let x = get_par(2, &mut data);
+    let y = x.iter().map(|value| match value {
+        Value(content) => content,
+        _ => panic!("Incorrect type found. Found {:?} but expected Value", data)
+    }).collect::<Vec<_>>();
+    let result = y[1] * y[0];
     data.push(Value(result));
     data
 }
 
 fn div(mut data: WTokens) -> WTokens {
-    let x = as_nums(vec![data.pop().unwrap(), data.pop().unwrap()]);
-    let result = x[1] / x[0];
+    let x = get_par(2, &mut data);
+    let y = x.iter().map(|value| match value {
+        Value(content) => content,
+        _ => panic!("Incorrect type found. Found {:?} but expected Value", data)
+    }).collect::<Vec<_>>();
+    let result = y[1] / y[0];
     data.push(Value(result));
     data
 }
@@ -61,7 +77,8 @@ fn output(data: WTokens) -> WTokens {
 }
 
 fn eq(mut data: WTokens) -> WTokens {
-    let parameters = (data.pop().unwrap(), data.pop().unwrap());
+    let par_arr = get_par(2, &mut data);
+    let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let result = match parameters {
         (Value(x), Value(y)) => x == y,
@@ -83,7 +100,8 @@ fn eq(mut data: WTokens) -> WTokens {
 }
 
 fn or(mut data: WTokens) -> WTokens {
-    let parameters = (data.pop().unwrap(), data.pop().unwrap());
+    let par_arr = get_par(2, &mut data);
+    let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let token = Value(match parameters {
         (Value(x), Value(y)) => match (x != 0.0) || (y != 0.0) {
@@ -98,7 +116,8 @@ fn or(mut data: WTokens) -> WTokens {
 }
 
 fn and(mut data: WTokens) -> WTokens {
-    let parameters = (data.pop().unwrap(), data.pop().unwrap());
+    let par_arr = get_par(2, &mut data);
+    let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let token = Value(match parameters {
         (Value(x), Value(y)) => match (x != 0.0) && (y != 0.0) {
@@ -114,7 +133,8 @@ fn and(mut data: WTokens) -> WTokens {
 
 
 fn greater(mut data: WTokens) -> WTokens {
-    let parameters = (data.pop().unwrap(), data.pop().unwrap());
+    let par_arr = get_par(2, &mut data);
+    let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let token = Value(match parameters {
         (Value(x), Value(y)) => match y > x {
@@ -129,7 +149,8 @@ fn greater(mut data: WTokens) -> WTokens {
 }
 
 fn less(mut data: WTokens) -> WTokens {
-    let parameters = (data.pop().unwrap(), data.pop().unwrap());
+    let par_arr = get_par(2, &mut data);
+    let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let token = Value(match parameters {
         (Value(x), Value(y)) => match y < x {
@@ -144,11 +165,8 @@ fn less(mut data: WTokens) -> WTokens {
 }
 
 fn if_else(mut data: WTokens) -> WTokens {
-    let parameters = (
-        data.pop().unwrap(),
-        data.pop().unwrap(),
-        data.pop().unwrap(),
-    );
+    let par_arr = get_par(3, &mut data);
+    let parameters: (Token, Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let selected = match parameters.0 {
         Value(x) => {
@@ -174,10 +192,8 @@ fn if_else(mut data: WTokens) -> WTokens {
 }
 
 fn expand(mut data: WTokens) -> WTokens {
-    let parameters = (
-        data.pop().unwrap(),
-        data.pop().unwrap()
-    );
+    let par_arr = get_par(2, &mut data);
+    let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     match parameters {
         (Value(n), Group(group)) => {
@@ -185,18 +201,19 @@ fn expand(mut data: WTokens) -> WTokens {
                 data.append(&mut group.clone())
             }
         }
-        _ => panic!("Incorrect types")
+        _ => panic!("Incorrect type found. Found {:?} but expected (Value, Group)", data)
     }
 
     data
 }
 
 fn release(mut data: WTokens) -> WTokens {
-    let parameters = data.pop().unwrap();
+    let par_arr = get_par(1, &mut data);
+    let parameters = &par_arr[0];
 
     match parameters {
         Group(group) => data.append(&mut group.clone()),
-        _ => panic!("Incorrect types")
+        _ => panic!("Incorrect type found. Found {:?} but expected Group", data)
     };
 
     data
