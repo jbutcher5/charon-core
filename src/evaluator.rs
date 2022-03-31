@@ -1,14 +1,19 @@
 use crate::models::{Range, State, Token, WCode, WFuncVariant, WTokens};
-use crate::utils::{skin_content, first_special_instance, last_function, special_pairs, WFunc};
+use crate::utils::{first_special_instance, last_function, skin_content, special_pairs, WFunc};
 use itertools::Itertools;
 
 pub trait WEval {
+    fn apply(&mut self, code: &str) -> Vec<WTokens>;
     fn wsection_eval(&mut self, data: Vec<WCode>) -> Vec<WTokens>;
     fn eval(&self, data: WTokens) -> WTokens;
     fn dissolve(&self, code: &mut WTokens, func: WFuncVariant, first_func_pos: usize, arr: WTokens);
 }
 
 impl WEval for State {
+    fn apply(&mut self, code: &str) -> Vec<WTokens> {
+        self.wsection_eval(crate::parser::parser(code))
+    }
+
     fn wsection_eval(&mut self, data: Vec<WCode>) -> Vec<WTokens> {
         let mut result: Vec<WTokens> = Vec::new();
 

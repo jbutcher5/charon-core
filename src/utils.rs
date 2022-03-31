@@ -19,7 +19,10 @@ pub fn get_par(n: usize, arr: &mut WTokens) -> WTokens {
     for _ in 0..n {
         result.push(match arr.pop() {
             Some(content) => content,
-            None => panic!("Too few arguments in {:?} where {} arguments were expected!", arr, n)
+            None => panic!(
+                "Too few arguments in {:?} where {} arguments were expected!",
+                arr, n
+            ),
         })
     }
 
@@ -131,7 +134,10 @@ pub fn first_special_instance(special: String, arr: &WTokens) -> Option<usize> {
 }
 
 pub fn skin_content(arr: &mut WTokens) {
-    if matches!((arr.first(), arr.last()), (Some(Token::Special(_)), Some(Token::Special(_)))) {
+    if matches!(
+        (arr.first(), arr.last()),
+        (Some(Token::Special(_)), Some(Token::Special(_)))
+    ) {
         let bracket_acc = arr.iter().fold(0, |acc, x| {
             if matches!(x, Token::Special(y) if y == "(") {
                 acc + 1

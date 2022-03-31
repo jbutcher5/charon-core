@@ -10,19 +10,26 @@ fn sum(data: WTokens) -> WTokens {
 
 fn add(mut data: WTokens) -> WTokens {
     let x = get_par(2, &mut data);
-    data.push(Value(x.iter().map(|value| match value {
-        Value(content) => content,
-        _ => panic!("Incorrect type found. Found {:?} but expected Value", data)
-    }).sum()));
+    data.push(Value(
+        x.iter()
+            .map(|value| match value {
+                Value(content) => content,
+                _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
+            })
+            .sum(),
+    ));
     data
 }
 
 fn sub(mut data: WTokens) -> WTokens {
     let x = get_par(2, &mut data);
-    let y = x.iter().map(|value| match value {
-        Value(content) => content,
-        _ => panic!("Incorrect type found. Found {:?} but expected Value", data)
-    }).collect::<Vec<_>>();
+    let y = x
+        .iter()
+        .map(|value| match value {
+            Value(content) => content,
+            _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
+        })
+        .collect::<Vec<_>>();
     let result = y[1] - y[0];
     data.push(Value(result));
     data
@@ -30,10 +37,13 @@ fn sub(mut data: WTokens) -> WTokens {
 
 fn mul(mut data: WTokens) -> WTokens {
     let x = get_par(2, &mut data);
-    let y = x.iter().map(|value| match value {
-        Value(content) => content,
-        _ => panic!("Incorrect type found. Found {:?} but expected Value", data)
-    }).collect::<Vec<_>>();
+    let y = x
+        .iter()
+        .map(|value| match value {
+            Value(content) => content,
+            _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
+        })
+        .collect::<Vec<_>>();
     let result = y[1] * y[0];
     data.push(Value(result));
     data
@@ -41,10 +51,13 @@ fn mul(mut data: WTokens) -> WTokens {
 
 fn div(mut data: WTokens) -> WTokens {
     let x = get_par(2, &mut data);
-    let y = x.iter().map(|value| match value {
-        Value(content) => content,
-        _ => panic!("Incorrect type found. Found {:?} but expected Value", data)
-    }).collect::<Vec<_>>();
+    let y = x
+        .iter()
+        .map(|value| match value {
+            Value(content) => content,
+            _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
+        })
+        .collect::<Vec<_>>();
     let result = y[1] / y[0];
     data.push(Value(result));
     data
@@ -60,17 +73,15 @@ fn reverse(data: WTokens) -> WTokens {
 }
 
 fn output(data: WTokens) -> WTokens {
-    let result = data
-        .iter()
-        .fold(String::new(), |acc, token| -> String {
-            match token {
-                Value(x) => format!("{} {}", acc, x),
-                Atom(x) | Special(x) | Container(x) | ContainerLiteral(x) => {
-                    format!("{} {}", acc, x)
-                }
-                _ => format!("{} {:?}", acc, token),
+    let result = data.iter().fold(String::new(), |acc, token| -> String {
+        match token {
+            Value(x) => format!("{} {}", acc, x),
+            Atom(x) | Special(x) | Container(x) | ContainerLiteral(x) => {
+                format!("{} {}", acc, x)
             }
-        });
+            _ => format!("{} {:?}", acc, token),
+        }
+    });
 
     println!("{}", result.trim());
     data
@@ -130,7 +141,6 @@ fn and(mut data: WTokens) -> WTokens {
     data.push(token);
     data
 }
-
 
 fn greater(mut data: WTokens) -> WTokens {
     let par_arr = get_par(2, &mut data);
@@ -201,7 +211,10 @@ fn expand(mut data: WTokens) -> WTokens {
                 data.append(&mut group.clone())
             }
         }
-        _ => panic!("Incorrect type found. Found {:?} but expected (Value, Group)", data)
+        _ => panic!(
+            "Incorrect type found. Found {:?} but expected (Value, Group)",
+            data
+        ),
     }
 
     data
@@ -213,7 +226,7 @@ fn release(mut data: WTokens) -> WTokens {
 
     match parameters {
         Group(group) => data.append(&mut group.clone()),
-        _ => panic!("Incorrect type found. Found {:?} but expected Group", data)
+        _ => panic!("Incorrect type found. Found {:?} but expected Group", data),
     };
 
     data

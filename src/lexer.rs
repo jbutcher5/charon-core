@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
-use regex::{Captures, Regex};
 use phf::phf_map;
+use regex::{Captures, Regex};
 
 static MACROS: phf::Map<&'static str, &'static str> = phf_map! {
     "TRUE" => "1",
@@ -12,12 +12,11 @@ pub fn macros(text: String) -> String {
         static ref RE: Regex = Regex::new(r"(\S*)").unwrap();
     }
 
-    RE.replace_all(&text, |caps: &Captures| {
-        match MACROS.get(&caps[0]) {
-            Some(value) => value.to_string(),
-            _ => caps[0].to_string()
-        }
-    }).to_string()
+    RE.replace_all(&text, |caps: &Captures| match MACROS.get(&caps[0]) {
+        Some(value) => value.to_string(),
+        _ => caps[0].to_string(),
+    })
+    .to_string()
 }
 
 pub fn expand_string(text: String) -> String {

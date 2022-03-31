@@ -24,7 +24,7 @@ pub struct WCode {
 pub enum Range {
     Full(std::ops::RangeInclusive<usize>),
     To(std::ops::RangeFrom<usize>),
-    From(std::ops::RangeTo<usize>)
+    From(std::ops::RangeTo<usize>),
 }
 
 #[derive(Debug, Clone)]
@@ -35,4 +35,4 @@ pub enum WFuncVariant {
 
 pub type WTokens = Vec<Token>;
 pub(crate) type WFunc = fn(WTokens) -> WTokens;
-pub(crate) type State = HashMap<String, Vec<(WTokens, WTokens)>>;
+pub type State = HashMap<String, Vec<(WTokens, WTokens)>>;

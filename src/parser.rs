@@ -1,5 +1,5 @@
-use crate::models::{Range, Token, WCode, WTokens};
 use crate::lexer::{expand_bracket, expand_string, macros};
+use crate::models::{Range, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
 use lazy_static::lazy_static;
 use phf::phf_set;
