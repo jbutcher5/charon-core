@@ -9,6 +9,7 @@ pub enum Token {
     ContainerLiteral(String),
     Parameter(Range),
     Atom(String),
+    Char(char),
     Special(String),
     Group(Vec<Token>),
 }
