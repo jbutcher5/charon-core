@@ -1,5 +1,15 @@
 use crate::models::{Range, State, Token, WFuncVariant, WTokens};
 
+pub trait Utils {
+    fn get_par(&mut self, n: usize) -> WTokens;
+    fn as_nums(&self) -> Vec<f64>;
+    fn last_function(&self) -> Option<(usize, WFuncVariant)>;
+    fn bundle_groups(&mut self) -> WTokens;
+    fn special_pairs(&self, tokens: (String, String), initial_pos: &usize) -> Option<usize>;
+    fn first_special_instance(&self, special: String) -> Option<usize>;
+    fn skin_content(&mut self);
+}
+
 pub fn as_nums(arr: WTokens) -> Vec<f64> {
     arr.iter()
         .map(|value| match value.clone() {
