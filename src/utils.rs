@@ -35,26 +35,21 @@ pub fn as_nums(&self) -> Vec<f64> {
         })
         .collect()
 }
-}
-
-pub fn as_wcode(arr: Vec<f64>) -> WTokens {
-    arr.iter().map(|&value| Token::Value(value)).collect()
-}
 
 
-pub fn last_function(arr: &WTokens) -> Option<(usize, WFuncVariant)> {
-    let reversed = arr.iter().rev();
+pub fn last_function(&self) -> Option<(usize, WFuncVariant)> {
+    let reversed = self.iter().rev();
 
     let mut results: Option<(usize, WFuncVariant)> = None;
 
     for (i, token) in reversed.enumerate() {
         match token {
             Token::Function(value) => {
-                results = Some((arr.len() - (i + 1), WFuncVariant::Function(*value)))
+                results = Some((self.len() - (i + 1), WFuncVariant::Function(*value)))
             }
             Token::Container(value) => {
                 results = Some((
-                    arr.len() - (i + 1),
+                    self.len() - (i + 1),
                     WFuncVariant::Container(value.to_string()),
                 ))
             }
@@ -64,6 +59,13 @@ pub fn last_function(arr: &WTokens) -> Option<(usize, WFuncVariant)> {
 
     results
 }
+
+}
+
+pub fn as_wcode(arr: Vec<f64>) -> WTokens {
+    arr.iter().map(|&value| Token::Value(value)).collect()
+}
+
 
 pub fn bundle_groups(mut arr: WTokens) -> WTokens {
     let first = first_special_instance("{".to_string(), &arr);
