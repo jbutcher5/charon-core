@@ -11,164 +11,159 @@ pub trait Utils {
 }
 
 impl Utils for WTokens {
-fn get_par(&mut self, n: usize) -> WTokens {
-    let mut result = vec![];
+    fn get_par(&mut self, n: usize) -> WTokens {
+        let mut result = vec![];
 
-    for _ in 0..n {
-        result.push(match self.pop() {
-            Some(content) => content,
-            None => panic!(
-                "Too few arguments in {:?} where {} arguments were expected!",
-                self, n
-            ),
-        })
-    }
-
-    result
-}
-
-fn as_nums(&self) -> Vec<f64> {
-    self.iter()
-        .map(|value| match value.clone() {
-            Token::Value(n) => n,
-            _ => 1.0,
-        })
-        .collect()
-}
-
-
-fn last_function(&self) -> Option<(usize, WFuncVariant)> {
-    let reversed = self.iter().rev();
-
-    let mut results: Option<(usize, WFuncVariant)> = None;
-
-    for (i, token) in reversed.enumerate() {
-        match token {
-            Token::Function(value) => {
-                results = Some((self.len() - (i + 1), WFuncVariant::Function(*value)))
-            }
-            Token::Container(value) => {
-                results = Some((
-                    self.len() - (i + 1),
-                    WFuncVariant::Container(value.to_string()),
-                ))
-            }
-            _ => continue,
+        for _ in 0..n {
+            result.push(match self.pop() {
+                Some(content) => content,
+                None => panic!(
+                    "Too few arguments in {:?} where {} arguments were expected!",
+                    self, n
+                ),
+            })
         }
+
+        result
     }
 
-    results
-}
+    fn as_nums(&self) -> Vec<f64> {
+        self.iter()
+            .map(|value| match value.clone() {
+                Token::Value(n) => n,
+                _ => 1.0,
+            })
+            .collect()
+    }
 
-fn bundle_groups(&mut self) -> WTokens {
-    let first = self.first_special_instance("{".to_string());
-    let second = match first {
-        Some(initial_pos) => self.special_pairs(("{".to_string(), "}".to_string()), &initial_pos),
-        None => None,
-    };
+    fn last_function(&self) -> Option<(usize, WFuncVariant)> {
+        let reversed = self.iter().rev();
 
-    match (first, second) {
-        (Some(x), Some(y)) => {
-            let token_group = Token::Group(self[x + 1..y].to_vec().bundle_groups());
-            self.splice(x..y + 1, vec![token_group]);
-            match self.first_special_instance("{".to_string()) {
-                Some(_) => self.bundle_groups(),
-                None => *self,
+        let mut results: Option<(usize, WFuncVariant)> = None;
+
+        for (i, token) in reversed.enumerate() {
+            match token {
+                Token::Function(value) => {
+                    results = Some((self.len() - (i + 1), WFuncVariant::Function(*value)))
+                }
+                Token::Container(value) => {
+                    results = Some((
+                        self.len() - (i + 1),
+                        WFuncVariant::Container(value.to_string()),
+                    ))
+                }
+                _ => continue,
             }
         }
-        (None, None) => *self,
-        _ => panic!("Invalid grouping!"),
+
+        results
     }
-}
 
-fn special_pairs(
-    &self,
-    tokens: (String, String),
-    initial_pos: &usize,
-) -> Option<usize> {
-    let mut counter = 0;
-    let mut next_open = 0;
+    fn bundle_groups(&mut self) -> WTokens {
+        let first = self.first_special_instance("{".to_string());
+        let second = match first {
+            Some(initial_pos) => {
+                self.special_pairs(("{".to_string(), "}".to_string()), &initial_pos)
+            }
+            None => None,
+        };
 
-    for (i, token) in self[*initial_pos + 1..].iter().enumerate() {
-        match token {
-            Token::Special(value) => {
-                if value == &tokens.1 {
-                    return Some(initial_pos + i + 1);
-                } else if value == &tokens.0 {
-                    next_open = initial_pos + i + 1;
-                    counter += 1;
-                    break;
+        match (first, second) {
+            (Some(x), Some(y)) => {
+                let token_group = Token::Group(self[x + 1..y].to_vec().bundle_groups());
+                self.splice(x..y + 1, vec![token_group]);
+                match self.first_special_instance("{".to_string()) {
+                    Some(_) => self.bundle_groups(),
+                    None => *self,
                 }
             }
-            _ => continue,
+            (None, None) => *self,
+            _ => panic!("Invalid grouping!"),
         }
     }
 
-    for (i, token) in self[next_open..].iter().enumerate() {
-        match token {
-            Token::Special(value) => {
-                if value == &tokens.0 {
-                    counter += 1;
-                } else if value == &tokens.1 {
-                    counter -= 1;
-                }
+    fn special_pairs(&self, tokens: (String, String), initial_pos: &usize) -> Option<usize> {
+        let mut counter = 0;
+        let mut next_open = 0;
 
-                if counter == 0 {
-                    return Some(i + next_open);
+        for (i, token) in self[*initial_pos + 1..].iter().enumerate() {
+            match token {
+                Token::Special(value) => {
+                    if value == &tokens.1 {
+                        return Some(initial_pos + i + 1);
+                    } else if value == &tokens.0 {
+                        next_open = initial_pos + i + 1;
+                        counter += 1;
+                        break;
+                    }
                 }
+                _ => continue,
             }
-            _ => continue,
         }
+
+        for (i, token) in self[next_open..].iter().enumerate() {
+            match token {
+                Token::Special(value) => {
+                    if value == &tokens.0 {
+                        counter += 1;
+                    } else if value == &tokens.1 {
+                        counter -= 1;
+                    }
+
+                    if counter == 0 {
+                        return Some(i + next_open);
+                    }
+                }
+                _ => continue,
+            }
+        }
+
+        None
     }
 
-    None
-}
+    fn first_special_instance(&self, special: String) -> Option<usize> {
+        for (i, token) in self.iter().enumerate() {
+            match token {
+                Token::Special(value) => {
+                    if value == &special {
+                        return Some(i);
+                    } else {
+                        continue;
+                    }
+                }
+                _ => continue,
+            }
+        }
 
-fn first_special_instance(&self, special: String) -> Option<usize> {
-    for (i, token) in self.iter().enumerate() {
-        match token {
-            Token::Special(value) => {
-                if value == &special {
-                    return Some(i);
+        None
+    }
+
+    fn skin_content(&mut self) {
+        if matches!(
+            (self.first(), self.last()),
+            (Some(Token::Special(_)), Some(Token::Special(_)))
+        ) {
+            let bracket_acc = self.iter().fold(0, |acc, x| {
+                if matches!(x, Token::Special(y) if y == "(") {
+                    acc + 1
+                } else if matches!(x, Token::Special(y) if y == ")") {
+                    acc - 1
                 } else {
-                    continue;
+                    acc
                 }
+            });
+
+            if bracket_acc == 0 {
+                self.remove(0);
+                self.pop();
             }
-            _ => continue,
         }
     }
-
-    None
-}
-
-fn skin_content(&mut self) {
-    if matches!(
-        (self.first(), self.last()),
-        (Some(Token::Special(_)), Some(Token::Special(_)))
-    ) {
-        let bracket_acc = self.iter().fold(0, |acc, x| {
-            if matches!(x, Token::Special(y) if y == "(") {
-                acc + 1
-            } else if matches!(x, Token::Special(y) if y == ")") {
-                acc - 1
-            } else {
-                acc
-            }
-        });
-
-        if bracket_acc == 0 {
-            self.remove(0);
-            self.pop();
-        }
-    }
-}
-
 }
 
 pub fn as_wcode(arr: Vec<f64>) -> WTokens {
     arr.iter().map(|&value| Token::Value(value)).collect()
 }
-
 
 pub trait WFunc {
     fn apply(&self, function: &WTokens, arr: &WTokens) -> WTokens;
