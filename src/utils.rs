@@ -61,7 +61,7 @@ fn last_function(&self) -> Option<(usize, WFuncVariant)> {
 }
 
 fn bundle_groups(&mut self) -> WTokens {
-    let first = first_special_instance("{".to_string(), self);
+    let first = self.first_special_instance("{".to_string());
     let second = match first {
         Some(initial_pos) => self.special_pairs(("{".to_string(), "}".to_string()), &initial_pos),
         None => None,
@@ -71,7 +71,7 @@ fn bundle_groups(&mut self) -> WTokens {
         (Some(x), Some(y)) => {
             let token_group = Token::Group(self[x + 1..y].to_vec().bundle_groups());
             self.splice(x..y + 1, vec![token_group]);
-            match first_special_instance("{".to_string(), self) {
+            match self.first_special_instance("{".to_string()) {
                 Some(_) => self.bundle_groups(),
                 None => *self,
             }
@@ -141,19 +141,12 @@ fn first_special_instance(&self, special: String) -> Option<usize> {
     None
 }
 
-
-}
-
-pub fn as_wcode(arr: Vec<f64>) -> WTokens {
-    arr.iter().map(|&value| Token::Value(value)).collect()
-}
-
-pub fn skin_content(arr: &mut WTokens) {
+fn skin_content(&mut self) {
     if matches!(
-        (arr.first(), arr.last()),
+        (self.first(), self.last()),
         (Some(Token::Special(_)), Some(Token::Special(_)))
     ) {
-        let bracket_acc = arr.iter().fold(0, |acc, x| {
+        let bracket_acc = self.iter().fold(0, |acc, x| {
             if matches!(x, Token::Special(y) if y == "(") {
                 acc + 1
             } else if matches!(x, Token::Special(y) if y == ")") {
@@ -164,11 +157,18 @@ pub fn skin_content(arr: &mut WTokens) {
         });
 
         if bracket_acc == 0 {
-            arr.remove(0);
-            arr.pop();
+            self.remove(0);
+            self.pop();
         }
     }
 }
+
+}
+
+pub fn as_wcode(arr: Vec<f64>) -> WTokens {
+    arr.iter().map(|&value| Token::Value(value)).collect()
+}
+
 
 pub trait WFunc {
     fn apply(&self, function: &WTokens, arr: &WTokens) -> WTokens;
