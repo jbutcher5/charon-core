@@ -74,10 +74,10 @@ impl Utils for WTokens {
                 self.splice(x..y + 1, vec![token_group]);
                 match self.first_special_instance("{".to_string()) {
                     Some(_) => self.bundle_groups(),
-                    None => *self,
+                    None => self.to_owned(),
                 }
             }
-            (None, None) => *self,
+            (None, None) => self.to_owned(),
             _ => panic!("Invalid grouping!"),
         }
     }
