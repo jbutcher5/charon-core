@@ -1,6 +1,7 @@
 use crate::lexer::{expand_bracket, expand_string, macros};
 use crate::models::{Range, State, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
+use crate::utils::Utils;
 use lazy_static::lazy_static;
 use phf::phf_set;
 use rayon::prelude::*;
@@ -25,7 +26,7 @@ fn annotate(code: &str, containers: &[String]) -> WTokens {
         static ref EXACT: Regex = Regex::new(r"(\d+)").unwrap();
     }
 
-    let annotated = code
+    let mut annotated: WTokens = code
         .split(' ')
         .collect::<Vec<_>>()
         .par_iter()
@@ -92,7 +93,7 @@ fn annotate(code: &str, containers: &[String]) -> WTokens {
         })
         .collect();
 
-    crate::utils::bundle_groups(annotated)
+    annotated.bundle_groups()
 }
 
 impl WParser for State {
