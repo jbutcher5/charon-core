@@ -26,15 +26,15 @@ pub fn get_par(&mut self, n: usize) -> WTokens {
 
     result
 }
-}
 
-pub fn as_nums(arr: WTokens) -> Vec<f64> {
-    arr.iter()
+pub fn as_nums(&self) -> Vec<f64> {
+    self.iter()
         .map(|value| match value.clone() {
             Token::Value(n) => n,
             _ => 1.0,
         })
         .collect()
+}
 }
 
 pub fn as_wcode(arr: Vec<f64>) -> WTokens {
