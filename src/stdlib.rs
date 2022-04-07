@@ -1,15 +1,15 @@
 use crate::models::{Token, Token::*, WFunc, WTokens};
-use crate::utils::{as_nums, as_wcode, get_par};
+use crate::utils::{Utils, as_wcode};
 use itertools::Itertools;
 use phf::phf_map;
 
 fn sum(data: WTokens) -> WTokens {
-    let nums = as_nums(data);
+    let nums = data.as_nums();
     as_wcode(vec![nums.iter().sum()])
 }
 
 fn add(mut data: WTokens) -> WTokens {
-    let x = get_par(2, &mut data);
+    let x = data.get_par(2);
     data.push(Value(
         x.iter()
             .map(|value| match value {
@@ -22,7 +22,7 @@ fn add(mut data: WTokens) -> WTokens {
 }
 
 fn sub(mut data: WTokens) -> WTokens {
-    let x = get_par(2, &mut data);
+    let x = data.get_par(2);
     let y = x
         .iter()
         .map(|value| match value {
@@ -36,7 +36,7 @@ fn sub(mut data: WTokens) -> WTokens {
 }
 
 fn mul(mut data: WTokens) -> WTokens {
-    let x = get_par(2, &mut data);
+    let x = data.get_par(2);
     let y = x
         .iter()
         .map(|value| match value {
@@ -50,7 +50,7 @@ fn mul(mut data: WTokens) -> WTokens {
 }
 
 fn div(mut data: WTokens) -> WTokens {
-    let x = get_par(2, &mut data);
+    let x = data.get_par(2);
     let y = x
         .iter()
         .map(|value| match value {
@@ -88,7 +88,7 @@ fn output(data: WTokens) -> WTokens {
 }
 
 fn eq(mut data: WTokens) -> WTokens {
-    let par_arr = get_par(2, &mut data);
+    let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let result = match parameters {
@@ -111,7 +111,7 @@ fn eq(mut data: WTokens) -> WTokens {
 }
 
 fn or(mut data: WTokens) -> WTokens {
-    let par_arr = get_par(2, &mut data);
+    let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let token = Value(match parameters {
@@ -127,7 +127,7 @@ fn or(mut data: WTokens) -> WTokens {
 }
 
 fn and(mut data: WTokens) -> WTokens {
-    let par_arr = get_par(2, &mut data);
+    let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let token = Value(match parameters {
@@ -143,7 +143,7 @@ fn and(mut data: WTokens) -> WTokens {
 }
 
 fn greater(mut data: WTokens) -> WTokens {
-    let par_arr = get_par(2, &mut data);
+    let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let token = Value(match parameters {
@@ -159,7 +159,7 @@ fn greater(mut data: WTokens) -> WTokens {
 }
 
 fn less(mut data: WTokens) -> WTokens {
-    let par_arr = get_par(2, &mut data);
+    let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let token = Value(match parameters {
@@ -175,7 +175,7 @@ fn less(mut data: WTokens) -> WTokens {
 }
 
 fn if_else(mut data: WTokens) -> WTokens {
-    let par_arr = get_par(3, &mut data);
+    let par_arr = data.get_par(3);
     let parameters: (Token, Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let selected = match parameters.0 {
@@ -202,7 +202,7 @@ fn if_else(mut data: WTokens) -> WTokens {
 }
 
 fn expand(mut data: WTokens) -> WTokens {
-    let par_arr = get_par(2, &mut data);
+    let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     match parameters {
@@ -221,7 +221,7 @@ fn expand(mut data: WTokens) -> WTokens {
 }
 
 fn release(mut data: WTokens) -> WTokens {
-    let par_arr = get_par(1, &mut data);
+    let par_arr = data.get_par(1);
     let parameters = &par_arr[0];
 
     match parameters {

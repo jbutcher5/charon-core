@@ -1,6 +1,7 @@
 use crate::lexer::{expand_bracket, expand_string, macros};
 use crate::models::{Range, State, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
+use crate::utils::Utils;
 use lazy_static::lazy_static;
 use phf::phf_set;
 use rayon::prelude::*;
@@ -25,7 +26,7 @@ fn annotate(code: &str, containers: &[String]) -> WTokens {
         static ref EXACT: Regex = Regex::new(r"(\d+)").unwrap();
     }
 
-    let annotated = code
+    let mut annotated: WTokens = code
         .split(' ')
         .collect::<Vec<_>>()
         .par_iter()
@@ -33,11 +34,11 @@ fn annotate(code: &str, containers: &[String]) -> WTokens {
             Ok(n) => Token::Value(n),
             Err(_) => {
                 let cleared = x.chars().filter(|&x| x != '\n').collect::<String>();
-                let mut chars = cleared.chars();
+                let chars = cleared.chars();
 
                 if containers.iter().any(|name| *name == cleared) {
                     Token::Container(cleared)
-                } else if cleared.len() > 1 && chars.next().unwrap() == '$' {
+                } else if cleared.len() > 1 && chars.clone().next().unwrap() == '$' {
                     if let Some(captures) = FULL.captures(&cleared) {
                         let caps: Vec<usize> = [1, 2]
                             .iter()
@@ -61,8 +62,8 @@ fn annotate(code: &str, containers: &[String]) -> WTokens {
                         Token::Atom(cleared)
                     }
                 } else if cleared.len() > 2
-                    && chars.next().unwrap() == '`'
-                    && chars.last().unwrap() == '`'
+                    && chars.clone().next().unwrap() == '`'
+                    && chars.clone().last().unwrap() == '`'
                 {
                     let slice = cleared.substring(1, cleared.len() - 1);
 
@@ -75,6 +76,11 @@ fn annotate(code: &str, containers: &[String]) -> WTokens {
                                 .unwrap_or_else(|| panic!("Unknown function: {:?}", slice)),
                         )
                     }
+                } else if cleared.len() == 3
+                    && chars.clone().next().unwrap() == '\''
+                    && chars.clone().last().unwrap() == '\''
+                {
+                    Token::Char(chars.clone().nth(1).unwrap())
                 } else if SPECIALS.contains(&cleared) {
                     Token::Special(cleared)
                 } else {
@@ -87,7 +93,7 @@ fn annotate(code: &str, containers: &[String]) -> WTokens {
         })
         .collect();
 
-    crate::utils::bundle_groups(annotated)
+    annotated.bundle_groups()
 }
 
 impl WParser for State {
