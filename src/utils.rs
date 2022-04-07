@@ -11,7 +11,7 @@ pub trait Utils {
 }
 
 impl Utils for WTokens {
-pub fn get_par(&mut self, n: usize) -> WTokens {
+fn get_par(&mut self, n: usize) -> WTokens {
     let mut result = vec![];
 
     for _ in 0..n {
@@ -27,7 +27,7 @@ pub fn get_par(&mut self, n: usize) -> WTokens {
     result
 }
 
-pub fn as_nums(&self) -> Vec<f64> {
+fn as_nums(&self) -> Vec<f64> {
     self.iter()
         .map(|value| match value.clone() {
             Token::Value(n) => n,
@@ -37,7 +37,7 @@ pub fn as_nums(&self) -> Vec<f64> {
 }
 
 
-pub fn last_function(&self) -> Option<(usize, WFuncVariant)> {
+fn last_function(&self) -> Option<(usize, WFuncVariant)> {
     let reversed = self.iter().rev();
 
     let mut results: Option<(usize, WFuncVariant)> = None;
