@@ -10,6 +10,24 @@ pub trait Utils {
     fn skin_content(&mut self);
 }
 
+impl Utils for WTokens {
+pub fn get_par(&mut self, n: usize) -> WTokens {
+    let mut result = vec![];
+
+    for _ in 0..n {
+        result.push(match self.pop() {
+            Some(content) => content,
+            None => panic!(
+                "Too few arguments in {:?} where {} arguments were expected!",
+                self, n
+            ),
+        })
+    }
+
+    result
+}
+}
+
 pub fn as_nums(arr: WTokens) -> Vec<f64> {
     arr.iter()
         .map(|value| match value.clone() {
@@ -23,21 +41,6 @@ pub fn as_wcode(arr: Vec<f64>) -> WTokens {
     arr.iter().map(|&value| Token::Value(value)).collect()
 }
 
-pub fn get_par(n: usize, arr: &mut WTokens) -> WTokens {
-    let mut result = vec![];
-
-    for _ in 0..n {
-        result.push(match arr.pop() {
-            Some(content) => content,
-            None => panic!(
-                "Too few arguments in {:?} where {} arguments were expected!",
-                arr, n
-            ),
-        })
-    }
-
-    result
-}
 
 pub fn last_function(arr: &WTokens) -> Option<(usize, WFuncVariant)> {
     let reversed = arr.iter().rev();
