@@ -124,15 +124,8 @@ fn special_pairs(
     None
 }
 
-}
-
-pub fn as_wcode(arr: Vec<f64>) -> WTokens {
-    arr.iter().map(|&value| Token::Value(value)).collect()
-}
-
-
-pub fn first_special_instance(special: String, arr: &WTokens) -> Option<usize> {
-    for (i, token) in arr.iter().enumerate() {
+fn first_special_instance(&self, special: String) -> Option<usize> {
+    for (i, token) in self.iter().enumerate() {
         match token {
             Token::Special(value) => {
                 if value == &special {
@@ -146,6 +139,13 @@ pub fn first_special_instance(special: String, arr: &WTokens) -> Option<usize> {
     }
 
     None
+}
+
+
+}
+
+pub fn as_wcode(arr: Vec<f64>) -> WTokens {
+    arr.iter().map(|&value| Token::Value(value)).collect()
 }
 
 pub fn skin_content(arr: &mut WTokens) {
