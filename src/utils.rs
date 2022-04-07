@@ -60,43 +60,36 @@ fn last_function(&self) -> Option<(usize, WFuncVariant)> {
     results
 }
 
-}
-
-pub fn as_wcode(arr: Vec<f64>) -> WTokens {
-    arr.iter().map(|&value| Token::Value(value)).collect()
-}
-
-
-pub fn bundle_groups(mut arr: WTokens) -> WTokens {
-    let first = first_special_instance("{".to_string(), &arr);
+fn bundle_groups(&mut self) -> WTokens {
+    let first = first_special_instance("{".to_string(), self);
     let second = match first {
-        Some(initial_pos) => special_pairs(("{".to_string(), "}".to_string()), &arr, &initial_pos),
+        Some(initial_pos) => self.special_pairs(("{".to_string(), "}".to_string()), &initial_pos),
         None => None,
     };
 
     match (first, second) {
         (Some(x), Some(y)) => {
-            let token_group = Token::Group(bundle_groups(arr[x + 1..y].to_vec()));
-            arr.splice(x..y + 1, vec![token_group]);
-            match first_special_instance("{".to_string(), &arr) {
-                Some(_) => bundle_groups(arr),
-                None => arr,
+            let token_group = Token::Group(self[x + 1..y].to_vec().bundle_groups());
+            self.splice(x..y + 1, vec![token_group]);
+            match first_special_instance("{".to_string(), self) {
+                Some(_) => self.bundle_groups(),
+                None => *self,
             }
         }
-        (None, None) => arr,
+        (None, None) => *self,
         _ => panic!("Invalid grouping!"),
     }
 }
 
-pub fn special_pairs(
+fn special_pairs(
+    &self,
     tokens: (String, String),
-    arr: &WTokens,
     initial_pos: &usize,
 ) -> Option<usize> {
     let mut counter = 0;
     let mut next_open = 0;
 
-    for (i, token) in arr[*initial_pos + 1..].iter().enumerate() {
+    for (i, token) in self[*initial_pos + 1..].iter().enumerate() {
         match token {
             Token::Special(value) => {
                 if value == &tokens.1 {
@@ -111,7 +104,7 @@ pub fn special_pairs(
         }
     }
 
-    for (i, token) in arr[next_open..].iter().enumerate() {
+    for (i, token) in self[next_open..].iter().enumerate() {
         match token {
             Token::Special(value) => {
                 if value == &tokens.0 {
@@ -130,6 +123,13 @@ pub fn special_pairs(
 
     None
 }
+
+}
+
+pub fn as_wcode(arr: Vec<f64>) -> WTokens {
+    arr.iter().map(|&value| Token::Value(value)).collect()
+}
+
 
 pub fn first_special_instance(special: String, arr: &WTokens) -> Option<usize> {
     for (i, token) in arr.iter().enumerate() {
