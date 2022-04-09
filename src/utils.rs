@@ -10,6 +10,26 @@ pub trait Utils {
     fn skin_content(&mut self);
 }
 
+impl Token {
+    fn is_string(&self) -> Option<String> {
+        match self {
+            Token::Group(contents) => {
+                let mut result = String::new();
+
+                for token in contents {
+                    match token {
+                        Token::Char(y) => result.push_str(&y.to_string()),
+                        _ => return None,
+                    }
+                }
+
+                Some(result)
+            }
+            _ => None,
+        }
+    }
+}
+
 impl Utils for WTokens {
     fn get_par(&mut self, n: usize) -> WTokens {
         let mut result = vec![];
