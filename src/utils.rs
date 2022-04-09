@@ -8,6 +8,7 @@ pub trait Utils {
     fn special_pairs(&self, tokens: (String, String), initial_pos: &usize) -> Option<usize>;
     fn first_special_instance(&self, special: String) -> Option<usize>;
     fn skin_content(&mut self);
+    fn literal(&self) -> String;
 }
 
 impl Token {
@@ -178,6 +179,25 @@ impl Utils for WTokens {
                 self.pop();
             }
         }
+    }
+
+    fn literal(&self) -> String {
+        fn convert(token: &Token) -> String {
+            match token {
+                Token::Value(x) => x.to_string(),
+                Token::Atom(x)
+                | Token::Special(x)
+                | Token::Container(x)
+                | Token::ContainerLiteral(x) => x.to_string(),
+                Token::Group(contents) => match token.is_string() {
+                    Some(x) => x,
+                    _ => format!("{{{}}}", contents.literal()),
+                }
+                _ => format!("{:?}", token),
+            }
+        }
+
+        self.iter().fold(String::new(), |acc, x| format!("{} {}", acc, convert(x))).trim().to_string()
     }
 }
 
