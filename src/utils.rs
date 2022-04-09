@@ -192,12 +192,15 @@ impl Utils for WTokens {
                 Token::Group(contents) => match token.is_string() {
                     Some(x) => x,
                     _ => format!("{{{}}}", contents.literal()),
-                }
+                },
                 _ => format!("{:?}", token),
             }
         }
 
-        self.iter().fold(String::new(), |acc, x| format!("{} {}", acc, convert(x))).trim().to_string()
+        self.iter()
+            .fold(String::new(), |acc, x| format!("{} {}", acc, convert(x)))
+            .trim()
+            .to_string()
     }
 }
 

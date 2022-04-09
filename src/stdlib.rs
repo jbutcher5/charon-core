@@ -141,7 +141,7 @@ fn not(mut data: WTokens) -> WTokens {
                 0.0
             }
         }
-        _ => panic!("Incorrect type found. Found {:?} but expected Value", par)
+        _ => panic!("Incorrect type found. Found {:?} but expected Value", par),
     });
 
     data.push(token);
@@ -255,7 +255,7 @@ fn release(mut data: WTokens) -> WTokens {
 }
 
 fn axe(data: WTokens) -> WTokens {
-    data[..data.len()-1].to_vec()
+    data[..data.len() - 1].to_vec()
 }
 
 fn bundle(data: WTokens) -> WTokens {
