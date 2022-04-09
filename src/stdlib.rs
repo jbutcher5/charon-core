@@ -1,5 +1,5 @@
 use crate::models::{Token, Token::*, WFunc, WTokens};
-use crate::utils::{Utils, as_wcode};
+use crate::utils::{as_wcode, Utils};
 use itertools::Itertools;
 use phf::phf_map;
 
@@ -73,17 +73,7 @@ fn reverse(data: WTokens) -> WTokens {
 }
 
 fn output(data: WTokens) -> WTokens {
-    let result = data.iter().fold(String::new(), |acc, token| -> String {
-        match token {
-            Value(x) => format!("{} {}", acc, x),
-            Atom(x) | Special(x) | Container(x) | ContainerLiteral(x) => {
-                format!("{} {}", acc, x)
-            }
-            _ => format!("{} {:?}", acc, token),
-        }
-    });
-
-    println!("{}", result.trim());
+    println!("{}", data.literal());
     data
 }
 
