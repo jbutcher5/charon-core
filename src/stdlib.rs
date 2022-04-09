@@ -254,6 +254,10 @@ fn release(mut data: WTokens) -> WTokens {
     data
 }
 
+fn axe(data: WTokens) -> WTokens {
+    data[..data.len()-1].to_vec()
+}
+
 fn bundle(data: WTokens) -> WTokens {
     vec![Group(data)]
 }
@@ -284,5 +288,6 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "if" => if_else,
     "expand" => expand,
     "release" => release,
+    "axe" => axe,
     "bundle" => bundle
 };
