@@ -130,6 +130,24 @@ fn or(mut data: WTokens) -> WTokens {
     data
 }
 
+fn not(mut data: WTokens) -> WTokens {
+    let par = &data.get_par(1)[0];
+
+    let token = Value(match par {
+        Value(x) => {
+            if *x == 0.0 {
+                1.0
+            } else {
+                0.0
+            }
+        }
+        _ => panic!("Incorrect type found. Found {:?} but expected Value", par)
+    });
+
+    data.push(token);
+    data
+}
+
 fn and(mut data: WTokens) -> WTokens {
     let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
@@ -258,6 +276,7 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "or" => or,
     "&&" => and,
     "and" => and,
+    "not" => not,
     "len" => len,
     "reverse" => reverse,
     "OUTPUT" => output,
