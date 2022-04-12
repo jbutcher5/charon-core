@@ -80,25 +80,16 @@ impl Utils for WTokens {
     }
 
     fn bundle_groups(&mut self) -> WTokens {
-        let first = self.first_special_instance("{".to_string());
-        let second = match first {
-            Some(initial_pos) => {
-                self.special_pairs(("{".to_string(), "}".to_string()), &initial_pos)
-            }
-            None => None,
-        };
-
-        match (first, second) {
-            (Some(x), Some(y)) => {
+        match self.special_pairs("{", "}") {
+            Some((x, y)) => {
                 let token_group = Token::Group(self[x + 1..y].to_vec().bundle_groups());
                 self.splice(x..y + 1, vec![token_group]);
-                match self.first_special_instance("{".to_string()) {
+                match self.special_pairs("{", "}") {
                     Some(_) => self.bundle_groups(),
                     None => self.to_owned(),
                 }
             }
-            (None, None) => self.to_owned(),
-            _ => panic!("Invalid grouping!"),
+            None => self.to_owned(),
         }
     }
 
