@@ -5,8 +5,7 @@ pub trait Utils {
     fn as_nums(&self) -> Vec<f64>;
     fn last_function(&self) -> Option<(usize, WFuncVariant)>;
     fn bundle_groups(&mut self) -> WTokens;
-    fn special_pairs(&self, tokens: (String, String), initial_pos: &usize) -> Option<usize>;
-    fn first_special_instance(&self, special: String) -> Option<usize>;
+    fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)>;
     fn skin_content(&mut self);
     fn literal(&self) -> String;
 }
@@ -103,60 +102,55 @@ impl Utils for WTokens {
         }
     }
 
-    fn special_pairs(&self, tokens: (String, String), initial_pos: &usize) -> Option<usize> {
-        let mut counter = 0;
-        let mut next_open = 0;
+    fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)> {
+        let mut result = (0, 0);
+        let mut found = 0;
 
-        for (i, token) in self[*initial_pos + 1..].iter().enumerate() {
-            match token {
-                Token::Special(value) => {
-                    if value == &tokens.1 {
-                        return Some(initial_pos + i + 1);
-                    } else if value == &tokens.0 {
-                        next_open = initial_pos + i + 1;
-                        counter += 1;
-                        break;
+        let uneven = self
+            .iter()
+            .fold(0, |acc, x| {
+                if let Token::Special(value) = x {
+                    match x {
+                        first => acc + 1,
+                        second => acc - 1,
+                        _ => acc
                     }
                 }
-                _ => continue,
-            }
+            });
+
+        if uneven != 0 {
+            panic!("Unbalenced brackets in expression {}", self.literal());
         }
 
-        for (i, token) in self[next_open..].iter().enumerate() {
-            match token {
-                Token::Special(value) => {
-                    if value == &tokens.0 {
-                        counter += 1;
-                    } else if value == &tokens.1 {
-                        counter -= 1;
-                    }
-
-                    if counter == 0 {
-                        return Some(i + next_open);
-                    }
-                }
-                _ => continue,
-            }
-        }
-
-        None
-    }
-
-    fn first_special_instance(&self, special: String) -> Option<usize> {
         for (i, token) in self.iter().enumerate() {
-            match token {
-                Token::Special(value) => {
-                    if value == &special {
-                        return Some(i);
-                    } else {
-                        continue;
-                    }
+            if let Token::Special(value) = token {
+                if value == &first {
+                    result.0 = i;
+                    found+=1;
+                    break;
+                } else if value == &second {
+                    return None
                 }
-                _ => continue,
             }
         }
 
-        None
+        for (i, token) in self.iter().rev().enumerate() {
+            if let Token::Special(value) = token {
+                if value == &first {
+                    result.1 = i;
+                    found+=1;
+                    break;
+                } else if value == &second {
+                    return None
+                }
+            }
+        }
+
+        return if found == 2 {
+            Some(result)
+        } else {
+            None
+        };
     }
 
     fn skin_content(&mut self) {
