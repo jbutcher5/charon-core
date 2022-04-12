@@ -101,11 +101,15 @@ impl Utils for WTokens {
             .iter()
             .fold(0, |acc, x| {
                 if let Token::Special(value) = x {
-                    match x {
-                        first => acc + 1,
-                        second => acc - 1,
-                        _ => acc
+                    if value == first {
+                        acc + 1
+                    } else if value == second {
+                        acc - 1
+                    } else {
+                        acc
                     }
+                } else {
+                    acc
                 }
             });
 
