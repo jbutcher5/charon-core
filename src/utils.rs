@@ -97,21 +97,19 @@ impl Utils for WTokens {
         let mut result = (0, 0);
         let mut found = 0;
 
-        let uneven = self
-            .iter()
-            .fold(0, |acc, x| {
-                if let Token::Special(value) = x {
-                    if value == first {
-                        acc + 1
-                    } else if value == second {
-                        acc - 1
-                    } else {
-                        acc
-                    }
+        let uneven = self.iter().fold(0, |acc, x| {
+            if let Token::Special(value) = x {
+                if value == first {
+                    acc + 1
+                } else if value == second {
+                    acc - 1
                 } else {
                     acc
                 }
-            });
+            } else {
+                acc
+            }
+        });
 
         if uneven != 0 {
             panic!("Unbalenced brackets in expression {}", self.literal());
@@ -119,33 +117,33 @@ impl Utils for WTokens {
 
         for (i, token) in self.iter().enumerate() {
             if let Token::Special(value) = token {
-                if value == &first {
+                if value == first {
                     result.0 = i;
-                    found+=1;
+                    found += 1;
                     break;
-                } else if value == &second {
-                    return None
+                } else if value == second {
+                    return None;
                 }
             }
         }
 
         for (i, token) in self.iter().rev().enumerate() {
             if let Token::Special(value) = token {
-                if value == &first {
+                if value == first {
                     result.1 = i;
-                    found+=1;
+                    found += 1;
                     break;
-                } else if value == &second {
-                    return None
+                } else if value == second {
+                    return None;
                 }
             }
         }
 
-        return if found == 2 {
+        if found == 2 {
             Some(result)
         } else {
             None
-        };
+        }
     }
 
     fn skin_content(&mut self) {
