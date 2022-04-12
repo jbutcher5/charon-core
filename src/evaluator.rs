@@ -39,16 +39,10 @@ impl WEval for State {
     }
 
     fn eval(&self, data: WTokens) -> WTokens {
-        let mut new_code = data.clone();
+        let mut new_code = data;
 
         while let Some((first_func_pos, func)) = new_code.last_function() {
-            let first = new_code.first_special_instance("(".to_string());
-            let second = match first {
-                Some(x) => new_code.special_pairs(("(".to_string(), ")".to_string()), &x),
-                None => None,
-            };
-
-            if let (Some(x), Some(y)) = (first, second) {
+            if let Some((x, y)) = new_code.special_pairs("(", ")") {
                 let mut result = new_code[x + 1..y].to_vec();
                 if let Some((first_func_pos, func)) = result.last_function() {
                     let code_to_evaluate = result[..first_func_pos].to_vec();
@@ -99,7 +93,7 @@ impl WEval for State {
                 let expanded_range = container_acc
                     .iter()
                     .filter(|x| matches!(x, Token::Parameter(_)))
-                    .map(|range| match range {
+                    .flat_map(|range| match range {
                         Token::Parameter(Range::Full(full)) => full.clone().collect::<Vec<_>>(),
                         Token::Parameter(Range::From(from)) => (0..=from.end).collect::<Vec<_>>(),
                         Token::Parameter(Range::To(to)) => {
@@ -107,7 +101,6 @@ impl WEval for State {
                         }
                         _ => panic!(),
                     })
-                    .flatten()
                     .unique()
                     .map(|wlang_index| arr.len() - (wlang_index + 1))
                     .sorted()
