@@ -121,7 +121,7 @@ impl Utils for WTokens {
                     result.0 = i;
                     found += 1;
                     break;
-                } else if value == second {
+                } if value == second {
                     return None;
                 }
             }
@@ -129,7 +129,7 @@ impl Utils for WTokens {
 
         for (i, token) in self.iter().rev().enumerate() {
             if let Token::Special(value) = token {
-                if value == first {
+                if value == second {
                     result.1 = self.len() - i;
                     found += 1;
                     break;
