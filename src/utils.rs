@@ -3,7 +3,7 @@ use crate::models::{Range, State, Token, WFuncVariant, WTokens};
 pub trait Utils {
     fn get_par(&mut self, n: usize) -> WTokens;
     fn as_nums(&self) -> Vec<f64>;
-    fn last_function(&self) -> Option<(usize, WFuncVariant)>;
+    fn last_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)>;
     fn bundle_groups(&mut self) -> WTokens;
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)>;
     fn skin_content(&mut self);
@@ -56,21 +56,30 @@ impl Utils for WTokens {
             .collect()
     }
 
-    fn last_function(&self) -> Option<(usize, WFuncVariant)> {
+    fn last_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)> {
         let reversed = self.iter().rev();
 
-        let mut results: Option<(usize, WFuncVariant)> = None;
+        let mut results: Option<(std::ops::Range<usize>, WFuncVariant)> = None;
 
         for (i, token) in reversed.enumerate() {
             match token {
                 Token::Function(value) => {
-                    results = Some((self.len() - (i + 1), WFuncVariant::Function(*value)))
+                    results = Some((0..self.len() - (i + 1), WFuncVariant::Function(*value)));
                 }
                 Token::Container(value) => {
                     results = Some((
-                        self.len() - (i + 1),
+                        0..self.len() - (i + 1),
                         WFuncVariant::Container(value.to_string()),
-                    ))
+                    ));
+                }
+                Token::Special(special) => {
+                    if special == "(" {
+                        if let Some((range, func)) = &results {
+                            if range.start == 0 {
+                                results = Some((self.len() - i..range.end, func.clone()))
+                            }
+                        }
+                    }
                 }
                 _ => continue,
             }
