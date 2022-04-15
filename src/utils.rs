@@ -119,13 +119,11 @@ impl Utils for WTokens {
                 } else if Token::Special(second.to_string()) == *value {
                     count -= 1;
                 }
-            } else {
-                if Token::Special(first.to_string()) == *value {
-                    count += 1;
-                } else if Token::Special(second.to_string()) == *value {
-                    second_index = Some(index + first_index?);
-                    break;
-                }
+            } else if Token::Special(first.to_string()) == *value {
+                count += 1;
+            } else if Token::Special(second.to_string()) == *value {
+                second_index = Some(index + first_index?);
+                break;
             }
         }
 
