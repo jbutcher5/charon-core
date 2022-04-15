@@ -70,9 +70,7 @@ impl Utils for WTokens {
             }
         }
 
-        if let None = results {
-            return None;
-        }
+        results.as_ref()?;
 
         let mut count: i32 = 0;
 
@@ -121,9 +119,7 @@ impl Utils for WTokens {
             }
         }
 
-        if let None = first_index {
-            return None;
-        }
+        first_index?;
 
         let mut count: i32 = 0;
 
