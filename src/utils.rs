@@ -103,53 +103,41 @@ impl Utils for WTokens {
     }
 
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)> {
-        let mut result = (0, 0);
-        let mut found = 0;
+        let mut first_index: Option<usize> = None;
+        let mut second_index: Option<usize> = None;
 
-        let uneven = self.iter().fold(0, |acc, x| {
-            if let Token::Special(value) = x {
-                if value == first {
-                    acc + 1
-                } else if value == second {
-                    acc - 1
-                } else {
-                    acc
+        for (index, value) in self.iter().enumerate() {
+            if Token::Special(first.to_string()) == *value {
+                first_index = Some(index);
+                break;
+            }
+        }
+
+        if let None = first_index {
+            return None;
+        }
+
+        let mut count: i32 = 0;
+
+        for (index, value) in self[first_index?..].iter().enumerate() {
+            if count != 0 {
+                if Token::Special(first.to_string()) == *value {
+                    count += 1;
+                } else if Token::Special(second.to_string()) == *value {
+                    count -= 1;
                 }
             } else {
-                acc
-            }
-        });
-
-        if uneven != 0 {
-            panic!("Unbalenced brackets in expression {}", self.literal());
-        }
-
-        for (i, token) in self.iter().enumerate() {
-            if let Token::Special(value) = token {
-                if value == first {
-                    result.0 = i;
-                    found += 1;
+                if Token::Special(first.to_string()) == *value {
+                    count += 1;
+                } else if Token::Special(second.to_string()) == *value {
+                    second_index = Some(index+first_index?);
                     break;
-                } if value == second {
-                    return None;
                 }
             }
         }
 
-        for (i, token) in self.iter().rev().enumerate() {
-            if let Token::Special(value) = token {
-                if value == second {
-                    result.1 = self.len() - i;
-                    found += 1;
-                    break;
-                } else if value == second {
-                    return None;
-                }
-            }
-        }
-
-        if found == 2 {
-            Some(result)
+        if let Some(second_index) = second_index {
+            Some((first_index?, second_index))
         } else {
             None
         }
