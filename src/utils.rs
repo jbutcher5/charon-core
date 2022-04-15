@@ -57,11 +57,9 @@ impl Utils for WTokens {
     }
 
     fn first_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)> {
-        let reversed = self.iter().rev();
-
         let mut results: Option<(std::ops::Range<usize>, WFuncVariant)> = None;
 
-        for (i, token) in reversed.enumerate() {
+        for (i, token) in self.iter().rev().enumerate() {
             if let Token::Function(value) = token {
                 results = Some((0..self.len() - (i + 1), WFuncVariant::Function(*value)));
             } else if let Token::Container(value) = token {
