@@ -67,14 +67,29 @@ impl Utils for WTokens {
                     0..self.len() - (i + 1),
                     WFuncVariant::Container(value.to_string()),
                 ));
-            } else if let Token::Special(special) = token {
-                if special == "(" {
-                    if let Some((range, func)) = &results {
-                        if range.start == 0 {
-                            results = Some((self.len() - i..range.end, func.clone()))
-                        }
-                    }
+            }
+        }
+
+        if let None = results {
+            return None;
+        }
+
+        let mut count: i32 = 0;
+
+        for (i, token) in self[..results.clone()?.0.end].iter().rev().enumerate() {
+            if count != 0 {
+                if Token::Special("(".to_string()) == *token {
+                    count += 1;
+                } else if Token::Special(")".to_string()) == *token {
+                    count -= 1;
                 }
+            } else if Token::Special("(".to_string()) == *token {
+                results = Some((
+                    self.len() - i - 2..results.clone()?.0.end,
+                    results.clone()?.1,
+                ))
+            } else if Token::Special(")".to_string()) == *token {
+                count -= 1;
             }
         }
 
