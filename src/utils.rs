@@ -62,26 +62,21 @@ impl Utils for WTokens {
         let mut results: Option<(std::ops::Range<usize>, WFuncVariant)> = None;
 
         for (i, token) in reversed.enumerate() {
-            match token {
-                Token::Function(value) => {
-                    results = Some((0..self.len() - (i + 1), WFuncVariant::Function(*value)));
-                }
-                Token::Container(value) => {
-                    results = Some((
-                        0..self.len() - (i + 1),
-                        WFuncVariant::Container(value.to_string()),
-                    ));
-                }
-                Token::Special(special) => {
-                    if special == "(" {
-                        if let Some((range, func)) = &results {
-                            if range.start == 0 {
-                                results = Some((self.len() - i..range.end, func.clone()))
-                            }
+            if let Token::Function(value) = token {
+                results = Some((0..self.len() - (i + 1), WFuncVariant::Function(*value)));
+            } else if let Token::Container(value) = token {
+                results = Some((
+                    0..self.len() - (i + 1),
+                    WFuncVariant::Container(value.to_string()),
+                ));
+            } else if let Token::Special(special) = token {
+                if special == "(" {
+                    if let Some((range, func)) = &results {
+                        if range.start == 0 {
+                            results = Some((self.len() - i..range.end, func.clone()))
                         }
                     }
                 }
-                _ => continue,
             }
         }
 
@@ -130,7 +125,7 @@ impl Utils for WTokens {
                 if Token::Special(first.to_string()) == *value {
                     count += 1;
                 } else if Token::Special(second.to_string()) == *value {
-                    second_index = Some(index+first_index?);
+                    second_index = Some(index + first_index?);
                     break;
                 }
             }
