@@ -3,7 +3,7 @@ use crate::models::{Range, State, Token, WFuncVariant, WTokens};
 pub trait Utils {
     fn get_par(&mut self, n: usize) -> WTokens;
     fn as_nums(&self) -> Vec<f64>;
-    fn last_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)>;
+    fn first_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)>;
     fn bundle_groups(&mut self) -> WTokens;
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)>;
     fn skin_content(&mut self);
@@ -56,7 +56,7 @@ impl Utils for WTokens {
             .collect()
     }
 
-    fn last_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)> {
+    fn first_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)> {
         let reversed = self.iter().rev();
 
         let mut results: Option<(std::ops::Range<usize>, WFuncVariant)> = None;
