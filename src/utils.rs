@@ -121,20 +121,16 @@ impl Utils for WTokens {
 
         first_index?;
 
-        let mut count: i32 = 0;
+        let mut count: i32 = 1;
 
-        for (index, value) in self[first_index?..].iter().enumerate() {
-            if count != 0 {
-                if Token::Special(first.to_string()) == *value {
-                    count += 1;
-                } else if Token::Special(second.to_string()) == *value {
-                    count -= 1;
-                }
+        for (index, value) in self[first_index? + 1..].iter().enumerate() {
+            if count == 0 {
+                second_index = Some(index + first_index?);
+                break;
             } else if Token::Special(first.to_string()) == *value {
                 count += 1;
             } else if Token::Special(second.to_string()) == *value {
-                second_index = Some(index + first_index?);
-                break;
+                count -= 1;
             }
         }
 
