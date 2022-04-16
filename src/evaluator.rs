@@ -7,7 +7,13 @@ pub trait WEval {
     fn apply(&mut self, code: &str) -> Vec<WTokens>;
     fn wsection_eval(&mut self, data: Vec<WCode>) -> Vec<WTokens>;
     fn eval(&self, data: WTokens) -> WTokens;
-    fn dissolve(&self, code: &mut WTokens, func: WFuncVariant, argument_range: &std::ops::Range<usize>, arr: WTokens);
+    fn dissolve(
+        &self,
+        code: &mut WTokens,
+        func: WFuncVariant,
+        argument_range: &std::ops::Range<usize>,
+        arr: WTokens,
+    );
 }
 
 impl WEval for State {
@@ -43,15 +49,8 @@ impl WEval for State {
 
         while let Some((argument_range, func)) = new_code.first_function() {
             if let Some((x, y)) = new_code.special_pairs("(", ")") {
-                let mut result = new_code[x + 1..y - 1].to_vec();
-
-                if let Some((argument_range, func)) = result.first_function() {
-                    let code_to_evaluate = result[argument_range.clone()].to_vec();
-                    self.dissolve(&mut result, func, &argument_range, code_to_evaluate);
-                    new_code.splice(x + 1..y - 1, result);
-                } else {
-                    new_code.splice(x..=y, result);
-                }
+                let result = new_code[x + 1..y].to_vec();
+                new_code.splice(x..=y, self.eval(result));
             } else {
                 let code_to_evaluate: WTokens = new_code[argument_range.clone()].to_vec();
                 self.dissolve(&mut new_code, func, &argument_range, code_to_evaluate);
@@ -70,7 +69,6 @@ impl WEval for State {
     ) {
         match func {
             WFuncVariant::Function(func) => {
-                println!("{:?}", arr);
                 let result = func(arr);
                 code.splice(argument_range.start..argument_range.end + 1, result);
             }
