@@ -7,7 +7,13 @@ pub trait WEval {
     fn apply(&mut self, code: &str) -> Vec<WTokens>;
     fn wsection_eval(&mut self, data: Vec<WCode>) -> Vec<WTokens>;
     fn eval(&self, data: WTokens) -> WTokens;
-    fn dissolve(&self, code: &mut WTokens, func: WFuncVariant, first_func_pos: usize, arr: WTokens);
+    fn dissolve(
+        &self,
+        code: &mut WTokens,
+        func: WFuncVariant,
+        argument_range: &std::ops::Range<usize>,
+        arr: WTokens,
+    );
 }
 
 impl WEval for State {
@@ -39,28 +45,15 @@ impl WEval for State {
     }
 
     fn eval(&self, data: WTokens) -> WTokens {
-        let mut new_code = data.clone();
+        let mut new_code = data;
 
-        while let Some((first_func_pos, func)) = new_code.last_function() {
-            let first = new_code.first_special_instance("(".to_string());
-            let second = match first {
-                Some(x) => new_code.special_pairs(("(".to_string(), ")".to_string()), &x),
-                None => None,
-            };
-
-            if let (Some(x), Some(y)) = (first, second) {
-                let mut result = new_code[x + 1..y].to_vec();
-                if let Some((first_func_pos, func)) = result.last_function() {
-                    let code_to_evaluate = result[..first_func_pos].to_vec();
-                    self.dissolve(&mut result, func, first_func_pos, code_to_evaluate);
-                    result.skin_content();
-                    new_code.splice(x + 1..y, result);
-                } else {
-                    new_code.splice(x..=y, result);
-                }
+        while let Some((argument_range, func)) = new_code.first_function() {
+            if let Some((x, y)) = new_code.special_pairs("(", ")") {
+                let result = new_code[x + 1..y].to_vec();
+                new_code.splice(x..=y, self.eval(result));
             } else {
-                let code_to_evaluate: WTokens = new_code[..first_func_pos].to_vec();
-                self.dissolve(&mut new_code, func, first_func_pos, code_to_evaluate);
+                let code_to_evaluate: WTokens = new_code[argument_range.clone()].to_vec();
+                self.dissolve(&mut new_code, func, &argument_range, code_to_evaluate);
             }
         }
 
@@ -71,13 +64,13 @@ impl WEval for State {
         &self,
         code: &mut WTokens,
         func: WFuncVariant,
-        first_func_pos: usize,
+        argument_range: &std::ops::Range<usize>,
         arr: WTokens,
     ) {
         match func {
             WFuncVariant::Function(func) => {
                 let result = func(arr);
-                code.splice(..first_func_pos + 1, result);
+                code.splice(argument_range.start..argument_range.end + 1, result);
             }
             WFuncVariant::Container(x) => {
                 let mut case: WTokens = vec![];
@@ -99,7 +92,7 @@ impl WEval for State {
                 let expanded_range = container_acc
                     .iter()
                     .filter(|x| matches!(x, Token::Parameter(_)))
-                    .map(|range| match range {
+                    .flat_map(|range| match range {
                         Token::Parameter(Range::Full(full)) => full.clone().collect::<Vec<_>>(),
                         Token::Parameter(Range::From(from)) => (0..=from.end).collect::<Vec<_>>(),
                         Token::Parameter(Range::To(to)) => {
@@ -107,7 +100,6 @@ impl WEval for State {
                         }
                         _ => panic!(),
                     })
-                    .flatten()
                     .unique()
                     .map(|wlang_index| arr.len() - (wlang_index + 1))
                     .sorted()
@@ -115,7 +107,7 @@ impl WEval for State {
                     .collect::<Vec<usize>>();
 
                 let result = self.apply(&case, &arr);
-                code.splice(first_func_pos..=first_func_pos, result);
+                code.splice(argument_range.end..=argument_range.end, result);
                 for n in expanded_range {
                     code.remove(n);
                 }

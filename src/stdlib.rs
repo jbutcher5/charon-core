@@ -1,5 +1,5 @@
 use crate::models::{Token, Token::*, WFunc, WTokens};
-use crate::utils::{Utils, as_wcode};
+use crate::utils::{as_wcode, Utils};
 use itertools::Itertools;
 use phf::phf_map;
 
@@ -63,6 +63,20 @@ fn div(mut data: WTokens) -> WTokens {
     data
 }
 
+fn modulo(mut data: WTokens) -> WTokens {
+    let x = data.get_par(2);
+    let y = x
+        .iter()
+        .map(|value| match value {
+            Value(content) => content,
+            _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
+        })
+        .collect::<Vec<_>>();
+    let result = y[1] % y[0];
+    data.push(Value(result));
+    data
+}
+
 fn len(data: WTokens) -> WTokens {
     let length = data.len() as f64;
     vec![Value(length)]
@@ -73,17 +87,7 @@ fn reverse(data: WTokens) -> WTokens {
 }
 
 fn output(data: WTokens) -> WTokens {
-    let result = data.iter().fold(String::new(), |acc, token| -> String {
-        match token {
-            Value(x) => format!("{} {}", acc, x),
-            Atom(x) | Special(x) | Container(x) | ContainerLiteral(x) => {
-                format!("{} {}", acc, x)
-            }
-            _ => format!("{} {:?}", acc, token),
-        }
-    });
-
-    println!("{}", result.trim());
+    println!("{}", data.literal());
     data
 }
 
@@ -120,6 +124,24 @@ fn or(mut data: WTokens) -> WTokens {
             _ => 0.0,
         },
         _ => 0.0,
+    });
+
+    data.push(token);
+    data
+}
+
+fn not(mut data: WTokens) -> WTokens {
+    let par = &data.get_par(1)[0];
+
+    let token = Value(match par {
+        Value(x) => {
+            if *x == 0.0 {
+                1.0
+            } else {
+                0.0
+            }
+        }
+        _ => panic!("Incorrect type found. Found {:?} but expected Value", par),
     });
 
     data.push(token);
@@ -232,6 +254,10 @@ fn release(mut data: WTokens) -> WTokens {
     data
 }
 
+fn axe(data: WTokens) -> WTokens {
+    data[..data.len() - 1].to_vec()
+}
+
 fn bundle(data: WTokens) -> WTokens {
     vec![Group(data)]
 }
@@ -242,16 +268,19 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "sub" => sub,
     "mul" => mul,
     "div" => div,
+    "mod" => modulo,
     "+" => add,
     "-" => sub,
     "*" => mul,
     "/" => div,
+    "%" => modulo,
     ">" => greater,
     "<" => less,
     "||" => or,
     "or" => or,
     "&&" => and,
     "and" => and,
+    "not" => not,
     "len" => len,
     "reverse" => reverse,
     "OUTPUT" => output,
@@ -259,5 +288,6 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "if" => if_else,
     "expand" => expand,
     "release" => release,
+    "axe" => axe,
     "bundle" => bundle
 };
