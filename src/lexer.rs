@@ -1,4 +1,6 @@
+use crate::models::Token;
 use lazy_static::lazy_static;
+use logos::{Lexer, Logos};
 use phf::phf_map;
 use regex::{Captures, Regex};
 
@@ -92,4 +94,47 @@ pub fn expand_bracket(text: String) -> String {
     } else {
         text
     }
+}
+
+fn string(lex: &mut Lexer<LexerToken>) -> Token {
+    let slice = lex.slice();
+
+    println!("\n\n{} {}\n\n", slice, &slice[1..slice.len() - 1]);
+
+    Token::Group(
+        slice[1..slice.len() - 1]
+            .chars()
+            .map(Token::Char)
+            .collect::<Vec<_>>(),
+    )
+
+}
+
+#[derive(Logos, Debug, Clone, PartialEq)]
+pub enum LexerToken {
+    #[token("  ")]
+    Indent,
+
+    #[token(" ")]
+    Seperator,
+
+    #[token("\n")]
+    Newline,
+
+    #[token("<-|")]
+    BooleanGuard,
+
+    #[token("->")]
+    GuardOption,
+
+    #[token("<-")]
+    Assignment,
+
+    #[regex("\"[^\"]*\"", string)]
+    #[regex(r"-?\d+(\.\d+)?", |number| Token::Value(number.slice().parse().unwrap()))]
+    #[regex("'.'", |character| Token::Char(character.slice().chars().nth(1).unwrap()))]
+    Token(Token),
+
+    #[error]
+    Error,
 }
