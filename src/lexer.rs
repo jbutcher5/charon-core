@@ -99,15 +99,20 @@ pub fn expand_bracket(text: String) -> String {
 fn string(lex: &mut Lexer<LexerToken>) -> Token {
     let slice = lex.slice();
 
-    println!("\n\n{} {}\n\n", slice, &slice[1..slice.len() - 1]);
-
     Token::Group(
         slice[1..slice.len() - 1]
             .chars()
             .map(Token::Char)
             .collect::<Vec<_>>(),
     )
+}
 
+fn container_literal(lex: &mut Lexer<LexerToken>) -> Token {
+    let slice = lex.slice();
+
+    Token::ContainerLiteral(
+        slice[1..slice.len() - 1].to_string()
+    )
 }
 
 #[derive(Logos, Debug, Clone, PartialEq)]
@@ -133,6 +138,7 @@ pub enum LexerToken {
     #[regex("\"[^\"]*\"", string)]
     #[regex(r"-?\d+(\.\d+)?", |number| Token::Value(number.slice().parse().unwrap()))]
     #[regex("'.'", |character| Token::Char(character.slice().chars().nth(1).unwrap()))]
+    #[regex("`[^`]*`", container_literal)]
     Token(Token),
 
     #[error]
