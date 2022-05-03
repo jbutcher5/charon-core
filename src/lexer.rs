@@ -138,15 +138,6 @@ pub enum LexerToken {
     #[regex(r"\S* <-|", boolean_guard)]
     BooleanGuard(String),
 
-    #[token("  ")]
-    Indent,
-
-    #[token(" ")]
-    Seperator,
-
-    #[token("\n")]
-    Newline,
-
     #[regex(r"\S* ->", guard_option)]
     GuardOption(String),
 
@@ -158,6 +149,15 @@ pub enum LexerToken {
     #[regex("'.'", |character| Token::Char(character.slice().chars().nth(1).unwrap()))]
     #[regex("`[^`]*`", container_literal)]
     Token(Token),
+
+    #[token("\n  ")]
+    Indent,
+
+    #[token(" ")]
+    Seperator,
+
+    #[token("\n")]
+    Newline,
 
     #[error]
     Error,
