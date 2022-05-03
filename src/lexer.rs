@@ -116,7 +116,7 @@ fn container_literal(lex: &mut Lexer<LexerToken>) -> Token {
 }
 
 fn boolean_guard(lex: &mut Lexer<LexerToken>) -> String {
-    let slice = lex.slice();
+    let slice = lex.slice().trim();
 
     slice[..slice.len() - 3].to_string()
 }
@@ -128,20 +128,20 @@ fn guard_option(lex: &mut Lexer<LexerToken>) -> String {
 }
 
 fn assignment(lex: &mut Lexer<LexerToken>) -> String {
-    let slice = lex.slice();
+    let slice = lex.slice().trim();
 
     slice[..slice.len() - 2].to_string()
 }
 
 #[derive(Logos, Debug, Clone, PartialEq)]
 pub enum LexerToken {
-    #[regex(r"\S* <-\|", boolean_guard)]
+    #[regex(r"\S* <-\| *", boolean_guard)]
     BooleanGuard(String),
 
-    #[regex(r"\S* ->", guard_option)]
+    #[regex(r"\S* -> ", guard_option)]
     GuardOption(String),
 
-    #[token(r"\S* <-", assignment)]
+    #[regex(r"\S* <- *", assignment)]
     Assignment(String),
 
     #[regex("\"[^\"]*\"", string)]
