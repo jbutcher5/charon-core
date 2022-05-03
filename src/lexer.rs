@@ -135,13 +135,13 @@ fn assignment(lex: &mut Lexer<LexerToken>) -> String {
 
 #[derive(Logos, Debug, Clone, PartialEq)]
 pub enum LexerToken {
-    #[regex(r"\S* <-\| *", boolean_guard)]
+    #[regex(r"\S+ <-\| *", boolean_guard)]
     BooleanGuard(String),
 
-    #[regex(r"\S* -> ", guard_option)]
+    #[regex(r"\S+ -> ", guard_option)]
     GuardOption(String),
 
-    #[regex(r"\S* <- *", assignment)]
+    #[regex(r"\S+ <- *", assignment)]
     Assignment(String),
 
     #[regex("\"[^\"]*\"", string)]
