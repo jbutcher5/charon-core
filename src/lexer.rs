@@ -118,19 +118,19 @@ fn container_literal(lex: &mut Lexer<LexerToken>) -> Token {
 fn boolean_guard(lex: &mut Lexer<LexerToken>) -> String {
     let slice = lex.slice().trim();
 
-    slice[..slice.len() - 3].to_string()
+    slice[..slice.len() - 4].to_string()
 }
 
 fn guard_option(lex: &mut Lexer<LexerToken>) -> String {
     let slice = lex.slice();
 
-    slice[..slice.len() - 2].to_string()
+    slice[..slice.len() - 4].to_string()
 }
 
 fn assignment(lex: &mut Lexer<LexerToken>) -> String {
     let slice = lex.slice().trim();
 
-    slice[..slice.len() - 2].to_string()
+    slice[..slice.len() - 3].to_string()
 }
 
 #[derive(Logos, Debug, Clone, PartialEq)]
