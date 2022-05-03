@@ -148,6 +148,8 @@ pub enum LexerToken {
     #[regex(r"-?\d+(\.\d+)?", |number| Token::Value(number.slice().parse().unwrap()))]
     #[regex("'.'", |character| Token::Char(character.slice().chars().nth(1).unwrap()))]
     #[regex("`[^`]*`", container_literal)]
+    #[token("TRUE", |_| Token::Value(1.0))]
+    #[token("FALSE", |_| Token::Value(0.0))]
     Token(Token),
 
     #[token("\n  ")]
