@@ -1,4 +1,5 @@
-use crate::models::Token;
+use crate::models::{Range, Token};
+use itertools::Itertools;
 use lazy_static::lazy_static;
 use logos::{Lexer, Logos};
 use phf::phf_map;
@@ -110,9 +111,7 @@ fn string(lex: &mut Lexer<LexerToken>) -> Token {
 fn container_literal(lex: &mut Lexer<LexerToken>) -> Token {
     let slice = lex.slice();
 
-    Token::ContainerLiteral(
-        slice[1..slice.len() - 1].to_string()
-    )
+    Token::ContainerLiteral(slice[1..slice.len() - 1].to_string())
 }
 
 fn boolean_guard(lex: &mut Lexer<LexerToken>) -> String {
@@ -133,6 +132,20 @@ fn assignment(lex: &mut Lexer<LexerToken>) -> String {
     slice[..slice.len() - 3].to_string()
 }
 
+fn slice_full(lex: &mut Lexer<LexerToken>) -> Token {
+    let slice = &lex.slice()[1..];
+
+    if let Some((end, start)) = slice
+        .split("..")
+        .map(|x| x.parse::<usize>().unwrap())
+        .collect_tuple()
+    {
+        Token::Parameter(Range::Full(start..=end))
+    } else {
+        panic!("Invalid tuple found.")
+    }
+}
+
 #[derive(Logos, Debug, Clone, PartialEq)]
 pub enum LexerToken {
     #[regex(r"\S+ <-\| *", boolean_guard)]
@@ -150,6 +163,7 @@ pub enum LexerToken {
     #[regex("`[^`]*`", container_literal)]
     #[token("TRUE", |_| Token::Value(1.0))]
     #[token("FALSE", |_| Token::Value(0.0))]
+    #[regex(r"\$\d+..\d+", slice_full)]
     Token(Token),
 
     #[token("\n  ")]
