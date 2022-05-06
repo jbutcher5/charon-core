@@ -146,6 +146,20 @@ fn slice_full(lex: &mut Lexer<LexerToken>) -> Token {
     }
 }
 
+fn slice_to(lex: &mut Lexer<LexerToken>) -> Token {
+    let mut slice = lex.slice()[1..].to_string();
+    slice.retain(|c| c != '.');
+
+    Token::Parameter(Range::To(slice.parse::<usize>().unwrap()..))
+}
+
+fn slice_from(lex: &mut Lexer<LexerToken>) -> Token {
+    let mut slice = lex.slice()[1..].to_string();
+    slice.retain(|c| c != '.');
+
+    Token::Parameter(Range::From(..slice.parse::<usize>().unwrap()))
+}
+
 #[derive(Logos, Debug, Clone, PartialEq)]
 pub enum LexerToken {
     #[regex(r"\S+ <-\| *", boolean_guard)]
@@ -163,7 +177,9 @@ pub enum LexerToken {
     #[regex("`[^`]*`", container_literal)]
     #[token("TRUE", |_| Token::Value(1.0))]
     #[token("FALSE", |_| Token::Value(0.0))]
-    #[regex(r"\$\d+..\d+", slice_full)]
+    #[regex(r"\$\d+\.\.\d+", slice_full)]
+    #[regex(r"\$\d+\.\.", slice_to)]
+    #[regex(r"\$\.\.\d+", slice_from)]
     Token(Token),
 
     #[token("\n  ")]
