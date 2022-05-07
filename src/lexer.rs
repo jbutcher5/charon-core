@@ -108,10 +108,11 @@ fn string(lex: &mut Lexer<LexerToken>) -> Token {
     )
 }
 
-fn container_literal(lex: &mut Lexer<LexerToken>) -> Token {
-    let slice = lex.slice();
+fn container_literal(lex: &mut Lexer<LexerToken>) -> String {
+    let mut slice = lex.slice().to_string();
+    slice.retain(|c| c != '`');
 
-    Token::ContainerLiteral(slice[1..slice.len() - 1].to_string())
+    slice
 }
 
 fn boolean_guard(lex: &mut Lexer<LexerToken>) -> String {
@@ -162,25 +163,30 @@ fn slice_from(lex: &mut Lexer<LexerToken>) -> Token {
 
 #[derive(Logos, Debug, Clone, PartialEq)]
 pub enum LexerToken {
-    #[regex(r"\S+ <-\| *", boolean_guard)]
+    #[regex(r"[a-zA-Z] <-\| *", boolean_guard)]
     BooleanGuard(String),
 
-    #[regex(r"\S+ -> ", guard_option)]
+    #[regex(r"[a-zA-Z]+ -> ", guard_option)]
     GuardOption(String),
 
-    #[regex(r"\S+ <- *", assignment)]
+    #[regex(r"[a-zA-Z]+ <- *", assignment)]
     Assignment(String),
 
     #[regex("\"[^\"]*\"", string)]
     #[regex(r"-?\d+(\.\d+)?", |number| Token::Value(number.slice().parse().unwrap()))]
     #[regex("'.'", |character| Token::Char(character.slice().chars().nth(1).unwrap()))]
-    #[regex("`[^`]*`", container_literal)]
     #[token("TRUE", |_| Token::Value(1.0))]
     #[token("FALSE", |_| Token::Value(0.0))]
     #[regex(r"\$\d+\.\.\d+", slice_full)]
     #[regex(r"\$\d+\.\.", slice_to)]
     #[regex(r"\$\.\.\d+", slice_from)]
     Token(Token),
+
+    #[regex(r"[a-zA-Z]+", |func| func.slice().to_string())]
+    Function(String),
+
+    #[regex(r"`[a-zA-Z]+`", container_literal)]
+    FunctionLiteral(String),
 
     #[token("\n  ")]
     Indent,
