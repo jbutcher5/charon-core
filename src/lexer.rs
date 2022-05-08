@@ -121,10 +121,10 @@ fn boolean_guard(lex: &mut Lexer<LexerToken>) -> String {
     slice[..slice.len() - 4].to_string()
 }
 
-fn guard_option(lex: &mut Lexer<LexerToken>) -> String {
-    let slice = lex.slice();
+fn guard_option(lex: &mut Lexer<LexerToken>) -> (String, String) {
+    let slice = lex.slice().split(" -> ").collect::<Vec<_>>();
 
-    slice[..slice.len() - 4].to_string()
+    (slice[0][1..].trim().to_string(), slice[1].to_string())
 }
 
 fn assignment(lex: &mut Lexer<LexerToken>) -> String {
@@ -163,11 +163,14 @@ fn slice_from(lex: &mut Lexer<LexerToken>) -> Token {
 
 #[derive(Logos, Debug, Clone, PartialEq)]
 pub enum LexerToken {
-    #[regex(r"[a-zA-Z] <-\| *", boolean_guard)]
+    #[regex(r"[a-zA-Z] <-\|", boolean_guard)]
     BooleanGuard(String),
 
-    #[regex(r"[a-zA-Z]+ -> ", guard_option)]
-    GuardOption(String),
+    #[regex(r"\n  [a-zA-Z]+ -> [^\n]*", guard_option)]
+    GuardOption((String, String)),
+
+    #[regex(r"\n  [^\n]*", |default| default.slice()[1..].trim().to_string())]
+    GuardDefault(String),
 
     #[regex(r"[a-zA-Z]+ <- *", assignment)]
     Assignment(String),
@@ -189,9 +192,6 @@ pub enum LexerToken {
 
     #[regex(r"`[a-zA-Z]+`", container_literal)]
     FunctionLiteral(String),
-
-    #[token("\n  ")]
-    Indent,
 
     #[token(" ")]
     Seperator,
