@@ -151,14 +151,19 @@ fn slice_to(lex: &mut Lexer<LexerToken>) -> Token {
     let mut slice = lex.slice()[1..].to_string();
     slice.retain(|c| c != '.');
 
-    Token::Parameter(Range::To(slice.parse::<usize>().unwrap()..))
+    Token::Parameter(Range::From(..slice.parse::<usize>().unwrap()))
 }
 
 fn slice_from(lex: &mut Lexer<LexerToken>) -> Token {
     let mut slice = lex.slice()[1..].to_string();
     slice.retain(|c| c != '.');
 
-    Token::Parameter(Range::From(..slice.parse::<usize>().unwrap()))
+    Token::Parameter(Range::To(slice.parse::<usize>().unwrap()..))
+}
+
+fn slice_at(lex: &mut Lexer<LexerToken>) -> Token {
+    let slice = lex.slice()[1..].parse::<usize>().unwrap();
+    Token::Parameter(Range::Full(slice..=slice))
 }
 
 #[derive(Logos, Debug, Clone, PartialEq)]
@@ -183,7 +188,8 @@ pub enum LexerToken {
     #[regex(r"\$\d+\.\.\d+", slice_full)]
     #[regex(r"\$\d+\.\.", slice_to)]
     #[regex(r"\$\.\.\d+", slice_from)]
-    #[regex(r":[a-zA-Z]", |atom| Token::Atom(atom.slice()[1..].to_string()))]
+    #[regex(r"\$\d+", slice_at)]
+    #[regex(r":[a-zA-Z\+\-\*/%><\|&]+", |atom| Token::Atom(atom.slice()[1..].to_string()))]
     #[regex(r"\(|\)|\{|\}", |s| Token::Special(s.slice().to_string()))]
     Token(Token),
 
