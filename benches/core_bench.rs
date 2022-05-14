@@ -2,13 +2,16 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use wcore::{evaluator::WEval, models::*};
 
 fn factorial(n: f64) -> f64 {
-    let code = format!("
+    let code = format!(
+        "
 factorial <-|
   $0 2 < -> 1
   $0 $0 1 sub factorial mul
 
 {} factorial
-", n);
+",
+        n
+    );
     let mut state = State::new();
     match state.apply(&code)[0][0] {
         Token::Value(x) => x,

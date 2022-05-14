@@ -191,14 +191,13 @@ pub fn as_wcode(arr: Vec<f64>) -> WTokens {
 }
 
 pub trait WFunc {
-    fn apply(&self, function: &WTokens, arr: &WTokens) -> WTokens;
+    fn resolve(&self, function: &WTokens, arr: &WTokens) -> WTokens;
 }
 
 impl WFunc for State {
-    fn apply(&self, function: &WTokens, arr: &WTokens) -> WTokens {
+    fn resolve(&self, function: &WTokens, arr: &WTokens) -> WTokens {
         let mut buffer = vec![];
         let reversed: WTokens = arr.iter().cloned().rev().collect();
-
         for token in function {
             match token {
                 Token::Parameter(range) => {
@@ -220,7 +219,7 @@ impl WFunc for State {
 
                     buffer.append(&mut slice);
                 }
-                Token::Group(x) => buffer.push(Token::Group(self.apply(x, arr))),
+                Token::Group(x) => buffer.push(Token::Group(self.resolve(x, arr))),
                 _ => buffer.push(token.clone()),
             }
         }
