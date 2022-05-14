@@ -183,8 +183,6 @@ pub enum LexerToken {
     #[regex("\"[^\"]*\"", string)]
     #[regex(r"-?\d+(\.\d+)?", |number| Token::Value(number.slice().parse().unwrap()))]
     #[regex("'.'", |character| Token::Char(character.slice().chars().nth(1).unwrap()))]
-    #[token("TRUE", |_| Token::Value(1.0))]
-    #[token("FALSE", |_| Token::Value(0.0))]
     #[regex(r"\$\d+\.\.\d+", slice_full)]
     #[regex(r"\$\d+\.\.", slice_to)]
     #[regex(r"\$\.\.\d+", slice_from)]
