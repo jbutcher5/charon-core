@@ -1,7 +1,10 @@
+use crate::lexer::{macros, LexerToken};
 use crate::models::{Range, State, Token, WCode, WFuncVariant, WTokens};
 use crate::parser::WParser;
 use crate::utils::{Utils, WFunc};
 use itertools::Itertools;
+
+use logos::Logos;
 
 pub trait WEval {
     fn apply(&mut self, code: &str) -> Vec<WTokens>;
@@ -18,13 +21,18 @@ pub trait WEval {
 
 impl WEval for State {
     fn apply(&mut self, code: &str) -> Vec<WTokens> {
-        self.wsection_eval(self.parser(code))
+        let cleaned_code = macros(code.to_string());
+        let lex = LexerToken::lexer(&cleaned_code);
+
+        let parsed = self.parser(lex.spanned().collect::<Vec<_>>(), code);
+
+        self.wsection_eval(parsed)
     }
 
     fn wsection_eval(&mut self, data: Vec<WCode>) -> Vec<WTokens> {
         let mut result: Vec<WTokens> = Vec::new();
 
-        for section in data {
+        for section in data.clone() {
             match section.container {
                 Some(container) => {
                     let mut cases = vec![];
@@ -81,7 +89,7 @@ impl WEval for State {
                     joined.append(&mut container_case.1.clone());
                     container_acc.append(&mut joined);
 
-                    let case_prefix = self.eval(self.apply(&container_case.0, &arr));
+                    let case_prefix = self.eval(self.resolve(&container_case.0, &arr));
 
                     if case_prefix[0] != Token::Value(0.0) {
                         case = container_case.1.clone();
@@ -106,8 +114,9 @@ impl WEval for State {
                     .rev()
                     .collect::<Vec<usize>>();
 
-                let result = self.apply(&case, &arr);
+                let result = self.resolve(&case, &arr);
                 code.splice(argument_range.end..=argument_range.end, result);
+
                 for n in expanded_range {
                     code.remove(n);
                 }
