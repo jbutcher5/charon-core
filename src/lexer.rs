@@ -171,11 +171,11 @@ pub enum LexerToken {
     #[regex(r"[a-zA-Z] <-\|", boolean_guard)]
     BooleanGuard(String),
 
-    #[regex(r"\n  [a-zA-Z]+ -> [^\n]*", guard_option)]
-    GuardOption((String, String)),
-
     #[regex(r"\n  [^\n]*", |default| default.slice()[1..].trim().to_string())]
     GuardDefault(String),
+
+    #[regex(r"\n  [^\n]+ -> [^\n]*", guard_option)]
+    GuardOption((String, String)),
 
     #[regex(r"[a-zA-Z]+ <- *", assignment)]
     Assignment(String),
