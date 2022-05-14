@@ -191,10 +191,10 @@ pub enum LexerToken {
     #[regex(r"\(|\)|\{|\}", |s| Token::Special(s.slice().to_string()))]
     Token(Token),
 
-    #[regex(r"[a-zA-Z]+", |func| func.slice().to_string())]
+    #[regex(r"[a-zA-Z\+\-\*/%><\|&]+", |func| func.slice().to_string())]
     Function(String),
 
-    #[regex(r"`[a-zA-Z]+`", container_literal)]
+    #[regex(r"`[a-zA-Z\+\-\*/%><\|&]+`", container_literal)]
     FunctionLiteral(String),
 
     #[token(" ")]
