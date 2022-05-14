@@ -14,7 +14,7 @@ pub enum Token {
     Group(Vec<Token>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(PartialEq, Debug, Default, Clone)]
 pub struct WCode {
     pub container: Option<String>,
     pub cases: Option<Vec<(WTokens, WTokens)>>,
