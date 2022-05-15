@@ -77,8 +77,14 @@ fn modulo(mut data: WTokens) -> WTokens {
     data
 }
 
-fn len(data: WTokens) -> WTokens {
-    let length = data.len() as f64;
+fn len(mut data: WTokens) -> WTokens {
+    let x = &data.get_par(1)[0];
+
+    let length = if let Group(contents) = x {
+        contents.len() as f64
+    } else {
+        1.0
+    };
     vec![Value(length)]
 }
 
