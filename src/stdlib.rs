@@ -88,13 +88,21 @@ fn len(mut data: WTokens) -> WTokens {
     vec![Value(length)]
 }
 
-fn reverse(data: WTokens) -> WTokens {
-    data.iter().rev().cloned().collect::<Vec<_>>()
+fn reverse(mut data: WTokens) -> WTokens {
+    let x = &data.get_par(1)[0];
+
+    let y = match x {
+        Group(content) => content,
+        _ => panic!("Incorrect type found. Found {:?} but expected Group", x),
+    };
+
+    y.iter().rev().cloned().collect::<Vec<_>>()
 }
 
 fn output(mut data: WTokens) -> WTokens {
-    let x = data.get_par(1);
+    let mut x = data.get_par(1);
     println!("{}", x.literal());
+    data.append(&mut x);
     data
 }
 
