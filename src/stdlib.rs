@@ -86,8 +86,9 @@ fn reverse(data: WTokens) -> WTokens {
     data.iter().rev().cloned().collect::<Vec<_>>()
 }
 
-fn output(data: WTokens) -> WTokens {
-    println!("{}", data.literal());
+fn output(mut data: WTokens) -> WTokens {
+    let x = data.get_par(1);
+    println!("{}", x.literal());
     data
 }
 
