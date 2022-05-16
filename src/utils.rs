@@ -224,6 +224,6 @@ impl WFunc for State {
             }
         }
 
-        buffer
+        buffer.bundle_groups()
     }
 }
