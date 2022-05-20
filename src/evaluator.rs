@@ -5,6 +5,7 @@ use crate::utils::{Utils, WFunc};
 use itertools::Itertools;
 
 use logos::Logos;
+use rayon::prelude::*;
 
 pub trait WEval {
     fn apply(&mut self, code: &str) -> Vec<WTokens>;
@@ -53,7 +54,14 @@ impl WEval for State {
     }
 
     fn eval(&self, data: WTokens) -> WTokens {
-        let mut new_code = data;
+        let mut new_code: WTokens = data
+            .par_iter()
+            .map(|x| if let Token::Group(content) = x {
+                Token::Group(self.eval(content.to_vec()))
+            } else {
+                x.clone()
+            })
+            .collect();
 
         while let Some((argument_range, func)) = new_code.first_function() {
             if let Some((x, y)) = new_code.special_pairs("(", ")") {
