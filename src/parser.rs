@@ -1,13 +1,17 @@
 use crate::lexer::LexerToken as LToken;
-use crate::models::{State, Token, WCode};
+use crate::models::{State, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
+use crate::utils::Utils;
 use logos::{Logos, Span};
 
 pub trait WParser {
     fn parser(&self, code: Vec<(LToken, Span)>, reference: &str) -> Vec<WCode>;
 }
 
-impl WParser for State {
+impl WParser for State
+where
+    WTokens: Utils,
+{
     fn parser(&self, code: Vec<(LToken, Span)>, reference: &str) -> Vec<WCode> {
         let mut parsed: Vec<WCode> = vec![];
         let mut current_container = WCode::default();
@@ -16,9 +20,23 @@ impl WParser for State {
                 .default_case
                 .clone()
         };
+
         for (token, span) in code {
             if let LToken::Newline = token {
                 if current_container != WCode::default() {
+                    if let Some(cases) = current_container.cases {
+                        current_container.cases = Some(
+                            cases
+                                .iter()
+                                .map(|(x, y)| {
+                                    (x.clone().bundle_groups(), y.clone().bundle_groups())
+                                })
+                                .collect::<Vec<_>>(),
+                        );
+                    }
+
+                    current_container.default_case = current_container.default_case.bundle_groups();
+
                     parsed.push(current_container)
                 }
 
