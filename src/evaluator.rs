@@ -56,10 +56,12 @@ impl WEval for State {
     fn eval(&self, data: WTokens) -> WTokens {
         let mut new_code: WTokens = data
             .par_iter()
-            .map(|x| if let Token::Group(content) = x {
-                Token::Group(self.eval(content.to_vec()))
-            } else {
-                x.clone()
+            .map(|x| {
+                if let Token::Group(content) = x {
+                    Token::Group(self.eval(content.to_vec()))
+                } else {
+                    x.clone()
+                }
             })
             .collect();
 
@@ -93,10 +95,7 @@ impl WEval for State {
                 let mut container_acc: WTokens = vec![];
 
                 for container_case in self.get(&x).unwrap() {
-                    let mut joined = container_case.0.clone();
-                    joined.append(&mut container_case.1.clone());
-                    container_acc.append(&mut joined);
-
+                    container_acc.append(&mut container_case.1.clone());
                     let case_prefix = self.eval(self.resolve(&container_case.0, &arr));
 
                     if case_prefix[0] != Token::Value(0.0) {
@@ -106,6 +105,16 @@ impl WEval for State {
                 }
 
                 let expanded_range = container_acc
+                    .iter()
+                    .fold(vec![], |mut acc, x| {
+                        if let Token::Group(mut contents) = x.clone() {
+                            acc.append(&mut contents);
+                            acc
+                        } else {
+                            acc.push(x.clone());
+                            acc
+                        }
+                    })
                     .iter()
                     .filter(|x| matches!(x, Token::Parameter(_)))
                     .flat_map(|range| match range {
