@@ -93,7 +93,7 @@ fn slice_at(lex: &mut Lexer<LexerToken>) -> Token {
 
 #[derive(Logos, Debug, Clone, PartialEq)]
 pub enum LexerToken {
-    #[regex(r"[a-zA-Z] <-\|", boolean_guard)]
+    #[regex(r"[a-zA-Z_] <-\|", boolean_guard)]
     BooleanGuard(String),
 
     #[regex(r"\n  [^\n]*", |default| default.slice()[1..].trim().to_string())]
@@ -102,7 +102,7 @@ pub enum LexerToken {
     #[regex(r"\n  [^\n]+ -> [^\n]*", guard_option)]
     GuardOption((String, String)),
 
-    #[regex(r"[a-zA-Z]+ <- *", assignment)]
+    #[regex(r"[a-zA-Z_]+ <- *", assignment)]
     Assignment(String),
 
     #[regex("\"[^\"]*\"", string)]
@@ -112,14 +112,14 @@ pub enum LexerToken {
     #[regex(r"\$\d+\.\.", slice_to)]
     #[regex(r"\$\.\.\d+", slice_from)]
     #[regex(r"\$\d+", slice_at)]
-    #[regex(r":[a-zA-Z\+\-\*/%><\|&]+", |atom| Token::Atom(atom.slice()[1..].to_string()))]
+    #[regex(r":[a-zA-Z\+\-\*/%><\|&_]+", |atom| Token::Atom(atom.slice()[1..].to_string()))]
     #[regex(r"\(|\)|\{|\}", |s| Token::Special(s.slice().to_string()))]
     Token(Token),
 
-    #[regex(r"[a-zA-Z\+\-\*/%><\|&]+", |func| func.slice().to_string())]
+    #[regex(r"[a-zA-Z\+\-\*/%><\|&_]+", |func| func.slice().to_string())]
     Function(String),
 
-    #[regex(r"`[a-zA-Z\+\-\*/%><\|&]+`", container_literal)]
+    #[regex(r"`[a-zA-Z\+\-\*/%><\|&_]+`", container_literal)]
     FunctionLiteral(String),
 
     #[token(" ")]
