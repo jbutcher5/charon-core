@@ -1,5 +1,6 @@
-use crate::models::{Token, Token::*, WFunc, WTokens};
+use crate::models::{Range, Token, Token::*, WFunc, WTokens};
 use crate::utils::{as_wcode, Utils};
+use crate::models::State;
 use itertools::Itertools;
 use phf::phf_map;
 
@@ -97,6 +98,41 @@ fn reverse(mut data: WTokens) -> WTokens {
     };
 
     y.iter().rev().cloned().collect::<Vec<_>>()
+}
+
+fn elem(mut data: WTokens) -> WTokens {
+    let x = &data.get_par(1)[0];
+    data.reverse();
+
+    let mut extracted = match x {
+        Token::Range(Range::Full(range)) => {
+            data.splice(range.clone(), vec![]).collect::<WTokens>()
+        }
+        _ => panic!("Incorrect type found. Found {:?} but expected a Range", x),
+    };
+
+    extracted.reverse();
+    data.reverse();
+    data.append(&mut extracted);
+    data
+}
+
+fn copy_elem(mut data: WTokens) -> WTokens {
+    let x = &data.get_par(1)[0];
+    let mut data_clone: WTokens = data.clone();
+    data_clone.reverse();
+
+    let mut extracted = match x {
+        Token::Range(Range::Full(range)) => data_clone
+            .splice(range.clone(), vec![])
+            .collect::<WTokens>(),
+        _ => panic!("Incorrect type found. Found {:?} but expected Range", x),
+    };
+
+    extracted.reverse();
+    data_clone.reverse();
+    data.append(&mut extracted);
+    data
 }
 
 fn output(mut data: WTokens) -> WTokens {
@@ -273,7 +309,7 @@ fn axe(data: WTokens) -> WTokens {
     data[..data.len() - 1].to_vec()
 }
 
-fn bundle(data: WTokens) -> WTokens {
+fn bundle(state: State, data: WTokens) -> WTokens {
     vec![Group(data)]
 }
 
@@ -298,6 +334,8 @@ pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
     "not" => not,
     "len" => len,
     "reverse" => reverse,
+    "elem" => elem,
+    "copy_elem" => copy_elem,
     "OUTPUT" => output,
     "eq" => eq,
     "if" => if_else,
