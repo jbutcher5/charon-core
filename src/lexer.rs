@@ -91,6 +91,39 @@ fn slice_at(lex: &mut Lexer<LexerToken>) -> Token {
     Token::Parameter(Range::Full(slice..=slice))
 }
 
+fn range_full(lex: &mut Lexer<LexerToken>) -> Token {
+    let slice = &lex.slice()[1..];
+
+    if let Some((end, start)) = slice
+        .split("..")
+        .map(|x| x.parse::<usize>().unwrap())
+        .collect_tuple()
+    {
+        Token::Range(Range::Full(start..=end))
+    } else {
+        panic!("Invalid tuple found.")
+    }
+}
+
+fn range_to(lex: &mut Lexer<LexerToken>) -> Token {
+    let mut slice = lex.slice()[1..].to_string();
+    slice.retain(|c| c != '.');
+
+    Token::Range(Range::From(..slice.parse::<usize>().unwrap()))
+}
+
+fn range_from(lex: &mut Lexer<LexerToken>) -> Token {
+    let mut slice = lex.slice()[1..].to_string();
+    slice.retain(|c| c != '.');
+
+    Token::Range(Range::To(slice.parse::<usize>().unwrap()..))
+}
+
+fn range_at(lex: &mut Lexer<LexerToken>) -> Token {
+    let slice = lex.slice()[1..].parse::<usize>().unwrap();
+    Token::Range(Range::Full(slice..=slice))
+}
+
 #[derive(Logos, Debug, Clone, PartialEq)]
 pub enum LexerToken {
     #[regex(r"[a-zA-Z_] <-\|", boolean_guard)]
@@ -112,6 +145,10 @@ pub enum LexerToken {
     #[regex(r"\$\d+\.\.", slice_to)]
     #[regex(r"\$\.\.\d+", slice_from)]
     #[regex(r"\$\d+", slice_at)]
+    #[regex(r"@\d+\.\.\d+", range_full)]
+    #[regex(r"@\d+\.\.", range_to)]
+    #[regex(r"@\.\.\d+", range_from)]
+    #[regex(r"@\d+", range_at)]
     #[regex(r":[a-zA-Z\+\-\*/%><\|&_]+", |atom| Token::Atom(atom.slice()[1..].to_string()))]
     #[regex(r"\(|\)|\{|\}", |s| Token::Special(s.slice().to_string()))]
     Token(Token),
