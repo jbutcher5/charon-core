@@ -3,11 +3,12 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Value(f64),
-    Function(fn(WTokens) -> WTokens),
-    FunctionLiteral(fn(WTokens) -> WTokens),
+    Function(String),
+    FunctionLiteral(String),
     Container(String),
     ContainerLiteral(String),
     Parameter(Range),
+    Range(Range),
     Atom(String),
     Char(char),
     Special(String),
@@ -28,12 +29,12 @@ pub enum Range {
     From(std::ops::RangeTo<usize>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum WFuncVariant {
     Container(String),
-    Function(WFunc),
+    Function(String),
 }
 
 pub type WTokens = Vec<Token>;
-pub(crate) type WFunc = fn(WTokens) -> WTokens;
+pub(crate) type WFunc = fn(&State, WTokens) -> WTokens;
 pub type State = HashMap<String, Vec<(WTokens, WTokens)>>;

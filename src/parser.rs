@@ -54,18 +54,18 @@ where
             } else if let LToken::Assignment(name) = token {
                 current_container.container = Some(name)
             } else if let LToken::Function(func) = token {
-                if let Some(func_reference) = FUNCTIONS.get(&func) {
+                if let Some(_) = FUNCTIONS.get(&func) {
                     current_container
                         .default_case
-                        .push(Token::Function(*func_reference))
+                        .push(Token::Function(func))
                 } else {
                     current_container.default_case.push(Token::Container(func))
                 }
             } else if let LToken::FunctionLiteral(func) = token {
-                if let Some(func_reference) = FUNCTIONS.get(&func) {
+                if let Some(_) = FUNCTIONS.get(&func) {
                     current_container
                         .default_case
-                        .push(Token::FunctionLiteral(*func_reference))
+                        .push(Token::FunctionLiteral(func))
                 } else {
                     current_container
                         .default_case
