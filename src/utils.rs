@@ -61,7 +61,10 @@ impl Utils for WTokens {
 
         for (i, token) in self.iter().rev().enumerate() {
             if let Token::Function(value) = token {
-                results = Some((0..self.len() - (i + 1), WFuncVariant::Function(value.to_string())));
+                results = Some((
+                    0..self.len() - (i + 1),
+                    WFuncVariant::Function(value.to_string()),
+                ));
             } else if let Token::Container(value) = token {
                 results = Some((
                     0..self.len() - (i + 1),

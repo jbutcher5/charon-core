@@ -1,8 +1,8 @@
 use crate::lexer::{macros, LexerToken};
 use crate::models::{Range, State, Token, WCode, WFuncVariant, WTokens};
 use crate::parser::WParser;
-use crate::utils::{Utils, WFunc};
 use crate::stdlib::FUNCTIONS;
+use crate::utils::{Utils, WFunc};
 use itertools::Itertools;
 
 use logos::Logos;

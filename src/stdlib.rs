@@ -1,6 +1,6 @@
+use crate::models::State;
 use crate::models::{Range, Token, Token::*, WFunc, WTokens};
 use crate::utils::{as_wcode, Utils};
-use crate::models::State;
 use itertools::Itertools;
 use phf::phf_map;
 
@@ -105,9 +105,7 @@ fn elem(_state: &State, mut data: WTokens) -> WTokens {
     data.reverse();
 
     let mut extracted = match x {
-        Token::Range(Range::Full(range)) => {
-            data.splice(range.clone(), vec![]).collect::<WTokens>()
-        }
+        Token::Range(Range::Full(range)) => data.splice(range.clone(), vec![]).collect::<WTokens>(),
         _ => panic!("Incorrect type found. Found {:?} but expected a Range", x),
     };
 
