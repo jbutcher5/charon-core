@@ -4,12 +4,12 @@ use crate::models::State;
 use itertools::Itertools;
 use phf::phf_map;
 
-fn sum(data: WTokens) -> WTokens {
+fn sum(_state: &State, data: WTokens) -> WTokens {
     let nums = data.as_nums();
     as_wcode(vec![nums.iter().sum()])
 }
 
-fn add(mut data: WTokens) -> WTokens {
+fn add(_state: &State, mut data: WTokens) -> WTokens {
     let x = data.get_par(2);
     data.push(Value(
         x.iter()
@@ -22,7 +22,7 @@ fn add(mut data: WTokens) -> WTokens {
     data
 }
 
-fn sub(mut data: WTokens) -> WTokens {
+fn sub(_state: &State, mut data: WTokens) -> WTokens {
     let x = data.get_par(2);
     let y = x
         .iter()
@@ -36,7 +36,7 @@ fn sub(mut data: WTokens) -> WTokens {
     data
 }
 
-fn mul(mut data: WTokens) -> WTokens {
+fn mul(_state: &State, mut data: WTokens) -> WTokens {
     let x = data.get_par(2);
     let y = x
         .iter()
@@ -50,7 +50,7 @@ fn mul(mut data: WTokens) -> WTokens {
     data
 }
 
-fn div(mut data: WTokens) -> WTokens {
+fn div(_state: &State, mut data: WTokens) -> WTokens {
     let x = data.get_par(2);
     let y = x
         .iter()
@@ -64,7 +64,7 @@ fn div(mut data: WTokens) -> WTokens {
     data
 }
 
-fn modulo(mut data: WTokens) -> WTokens {
+fn modulo(_state: &State, mut data: WTokens) -> WTokens {
     let x = data.get_par(2);
     let y = x
         .iter()
@@ -78,7 +78,7 @@ fn modulo(mut data: WTokens) -> WTokens {
     data
 }
 
-fn len(mut data: WTokens) -> WTokens {
+fn len(_state: &State, mut data: WTokens) -> WTokens {
     let x = &data.get_par(1)[0];
 
     let length = if let Group(contents) = x {
@@ -89,7 +89,7 @@ fn len(mut data: WTokens) -> WTokens {
     vec![Value(length)]
 }
 
-fn reverse(mut data: WTokens) -> WTokens {
+fn reverse(_state: &State, mut data: WTokens) -> WTokens {
     let x = &data.get_par(1)[0];
 
     let y = match x {
@@ -100,7 +100,7 @@ fn reverse(mut data: WTokens) -> WTokens {
     y.iter().rev().cloned().collect::<Vec<_>>()
 }
 
-fn elem(mut data: WTokens) -> WTokens {
+fn elem(_state: &State, mut data: WTokens) -> WTokens {
     let x = &data.get_par(1)[0];
     data.reverse();
 
@@ -117,7 +117,7 @@ fn elem(mut data: WTokens) -> WTokens {
     data
 }
 
-fn copy_elem(mut data: WTokens) -> WTokens {
+fn copy_elem(_state: &State, mut data: WTokens) -> WTokens {
     let x = &data.get_par(1)[0];
     let mut data_clone: WTokens = data.clone();
     data_clone.reverse();
@@ -135,14 +135,14 @@ fn copy_elem(mut data: WTokens) -> WTokens {
     data
 }
 
-fn output(mut data: WTokens) -> WTokens {
+fn output(_state: &State, mut data: WTokens) -> WTokens {
     let mut x = data.get_par(1);
     println!("{}", x.literal());
     data.append(&mut x);
     data
 }
 
-fn eq(mut data: WTokens) -> WTokens {
+fn eq(_state: &State, mut data: WTokens) -> WTokens {
     let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -165,7 +165,7 @@ fn eq(mut data: WTokens) -> WTokens {
     data
 }
 
-fn or(mut data: WTokens) -> WTokens {
+fn or(_state: &State, mut data: WTokens) -> WTokens {
     let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -181,7 +181,7 @@ fn or(mut data: WTokens) -> WTokens {
     data
 }
 
-fn not(mut data: WTokens) -> WTokens {
+fn not(_state: &State, mut data: WTokens) -> WTokens {
     let par = &data.get_par(1)[0];
 
     let token = Value(match par {
@@ -199,7 +199,7 @@ fn not(mut data: WTokens) -> WTokens {
     data
 }
 
-fn and(mut data: WTokens) -> WTokens {
+fn and(_state: &State, mut data: WTokens) -> WTokens {
     let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -215,7 +215,7 @@ fn and(mut data: WTokens) -> WTokens {
     data
 }
 
-fn greater(mut data: WTokens) -> WTokens {
+fn greater(_state: &State, mut data: WTokens) -> WTokens {
     let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -231,7 +231,7 @@ fn greater(mut data: WTokens) -> WTokens {
     data
 }
 
-fn less(mut data: WTokens) -> WTokens {
+fn less(_state: &State, mut data: WTokens) -> WTokens {
     let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -247,7 +247,7 @@ fn less(mut data: WTokens) -> WTokens {
     data
 }
 
-fn if_else(mut data: WTokens) -> WTokens {
+fn if_else(_state: &State, mut data: WTokens) -> WTokens {
     let par_arr = data.get_par(3);
     let parameters: (Token, Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -274,7 +274,7 @@ fn if_else(mut data: WTokens) -> WTokens {
     data
 }
 
-fn expand(mut data: WTokens) -> WTokens {
+fn expand(_state: &State, mut data: WTokens) -> WTokens {
     let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -293,7 +293,7 @@ fn expand(mut data: WTokens) -> WTokens {
     data
 }
 
-fn release(mut data: WTokens) -> WTokens {
+fn release(_state: &State, mut data: WTokens) -> WTokens {
     let par_arr = data.get_par(1);
     let parameters = &par_arr[0];
 
@@ -305,11 +305,11 @@ fn release(mut data: WTokens) -> WTokens {
     data
 }
 
-fn axe(data: WTokens) -> WTokens {
+fn axe(_state: &State, data: WTokens) -> WTokens {
     data[..data.len() - 1].to_vec()
 }
 
-fn bundle(state: State, data: WTokens) -> WTokens {
+fn bundle(_state: &State, data: WTokens) -> WTokens {
     vec![Group(data)]
 }
 
