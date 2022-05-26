@@ -32,6 +32,7 @@ where
                     if let Some(cases) = current_container.cases {
                         current_container.cases = Some(
                             cases
+                                .clone()
                                 .iter()
                                 .map(|(x, y)| {
                                     (x.clone().bundle_groups(), y.clone().bundle_groups())
@@ -49,21 +50,24 @@ where
             } else if let LToken::BooleanGuard(name) | LToken::Assignment(name) = token {
                 current_container.container = Some(name)
             } else if let LToken::GuardOption((x, y)) = token {
-                let mut cases = current_container.cases.unwrap_or_default();
+                let mut cases: Vec<(WTokens, WTokens)> = match current_container.cases.clone() {
+                    Some(x) => x,
+                    _ => vec![]
+                };
 
                 match (parse(&x), parse(&y)) {
                     (Ok(token_x), Ok(token_y)) => {
                         cases.push((token_x, token_y));
                         current_container.cases = Some(cases);
                     },
-                    (Err(result_x), Err(result_y)) => {errors.append(&mut result_x); errors.append(&mut result_y)},
-                    (Err(result_x), Ok(_)) => errors.append(&mut result_x),
-                    (Ok(_), Err(result_y)) => errors.append(&mut result_y)
+                    (Err(mut result_x), Err(mut result_y)) => {errors.append(&mut result_x); errors.append(&mut result_y)},
+                    (Err(mut result_x), Ok(_)) => errors.append(&mut result_x),
+                    (Ok(_), Err(mut result_y)) => errors.append(&mut result_y)
                 };
             } else if let LToken::GuardDefault(default) = token {
                 match parse(&default) {
                     Ok(default_case) => current_container.default_case = default_case,
-                    Err(results) => errors.append(&mut results)
+                    Err(mut results) => errors.append(&mut results)
                 }
             } else if let LToken::Token(x) = token {
                 current_container.default_case.push(x)

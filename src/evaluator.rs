@@ -5,11 +5,12 @@ use crate::stdlib::FUNCTIONS;
 use crate::utils::{Utils, WFunc};
 use itertools::Itertools;
 
+use ariadne::Report;
 use logos::Logos;
 use rayon::prelude::*;
 
 pub trait WEval {
-    fn apply(&mut self, code: &str) -> Vec<WTokens>;
+    fn apply(&mut self, code: &str) -> Result<Vec<WTokens>, Vec<Report>>;
     fn wsection_eval(&mut self, data: Vec<WCode>) -> Vec<WTokens>;
     fn eval(&self, data: WTokens) -> WTokens;
     fn dissolve(
@@ -22,13 +23,17 @@ pub trait WEval {
 }
 
 impl WEval for State {
-    fn apply(&mut self, code: &str) -> Vec<WTokens> {
+    fn apply(&mut self, code: &str) -> Result<Vec<WTokens>, Vec<Report>> {
         let cleaned_code = macros(code.to_string());
         let lex = LexerToken::lexer(&cleaned_code);
 
-        let parsed = self.parser(lex.spanned().collect::<Vec<_>>(), code);
+        let parse = self.parser(lex.spanned().collect::<Vec<_>>());
 
-        self.wsection_eval(parsed)
+        if let Ok(parsed) = parse {
+            Ok(self.wsection_eval(parsed))
+        } else {
+            Err(parse.unwrap_err())
+        }
     }
 
     fn wsection_eval(&mut self, data: Vec<WCode>) -> Vec<WTokens> {
