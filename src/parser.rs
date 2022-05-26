@@ -2,24 +2,27 @@ use crate::lexer::LexerToken as LToken;
 use crate::models::{State, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
 use crate::utils::Utils;
-use ariadne::{Label, Report, ReportKind, Source};
+use ariadne::{Label, Report, ReportKind};
 use logos::{Logos, Span};
 
 pub trait WParser {
-    fn parser(&self, code: Vec<(LToken, Span)>, reference: &str) -> Vec<WCode>;
+    fn parser(&self, code: Vec<(LToken, Span)>) -> Result<Vec<WCode>, Vec<Report>>;
 }
 
 impl WParser for State
 where
     WTokens: Utils,
 {
-    fn parser(&self, code: Vec<(LToken, Span)>, reference: &str) -> Vec<WCode> {
+    fn parser(&self, code: Vec<(LToken, Span)>) -> Result<Vec<WCode>, Vec<Report>> {
         let mut parsed: Vec<WCode> = vec![];
         let mut current_container = WCode::default();
         let parse = |s: &str| {
-            self.parser(LToken::lexer(s).spanned().collect::<Vec<_>>(), s)[0]
+            match self.parser(LToken::lexer(s).spanned().collect::<Vec<_>>()) {
+                Ok(tokens) => Ok(tokens[0]
                 .default_case
-                .clone()
+                .clone()),
+                Err(errors) => Err(errors)
+            }
         };
         let mut errors: Vec<Report> = vec![];
 
@@ -47,10 +50,21 @@ where
                 current_container.container = Some(name)
             } else if let LToken::GuardOption((x, y)) = token {
                 let mut cases = current_container.cases.unwrap_or_default();
-                cases.push((parse(&x), parse(&y)));
-                current_container.cases = Some(cases);
+
+                match (parse(&x), parse(&y)) {
+                    (Ok(token_x), Ok(token_y)) => {
+                        cases.push((token_x, token_y));
+                        current_container.cases = Some(cases);
+                    },
+                    (Err(result_x), Err(result_y)) => {errors.append(&mut result_x); errors.append(&mut result_y)},
+                    (Err(result_x), Ok(_)) => errors.append(&mut result_x),
+                    (Ok(_), Err(result_y)) => errors.append(&mut result_y)
+                };
             } else if let LToken::GuardDefault(default) = token {
-                current_container.default_case = parse(&default);
+                match parse(&default) {
+                    Ok(default_case) => current_container.default_case = default_case,
+                    Err(results) => errors.append(&mut results)
+                }
             } else if let LToken::Token(x) = token {
                 current_container.default_case.push(x)
             } else if let LToken::Assignment(name) = token {
@@ -81,14 +95,14 @@ where
             }
         }
 
-        for err in errors {
-            err.print(Source::from(reference)).unwrap();
-        }
-
         if current_container != WCode::default() {
             parsed.push(current_container)
         }
 
-        parsed
+        if !errors.is_empty() {
+            Err(errors)
+        } else {
+            Ok(parsed)
+        }
     }
 }
