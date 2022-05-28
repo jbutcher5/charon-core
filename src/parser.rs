@@ -73,13 +73,13 @@ where
             } else if let LToken::Assignment(name) = token {
                 current_container.container = Some(name)
             } else if let LToken::Function(func) = token {
-                if let Some(_) = FUNCTIONS.get(&func) {
+                if FUNCTIONS.get(&func).is_some() {
                     current_container.default_case.push(Token::Function(func))
                 } else {
                     current_container.default_case.push(Token::Container(func))
                 }
             } else if let LToken::FunctionLiteral(func) = token {
-                if let Some(_) = FUNCTIONS.get(&func) {
+                if FUNCTIONS.get(&func).is_some() {
                     current_container
                         .default_case
                         .push(Token::FunctionLiteral(func))
