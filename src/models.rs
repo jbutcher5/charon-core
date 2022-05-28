@@ -1,3 +1,4 @@
+use ariadne::Report;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -36,5 +37,5 @@ pub enum WFuncVariant {
 }
 
 pub type WTokens = Vec<Token>;
-pub(crate) type WFunc = fn(&State, WTokens) -> WTokens;
+pub(crate) type WFunc = fn(&State, WTokens) -> Result<WTokens, Vec<Report>>;
 pub type State = HashMap<String, Vec<(WTokens, WTokens)>>;

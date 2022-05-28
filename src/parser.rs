@@ -16,13 +16,9 @@ where
     fn parser(&self, code: Vec<(LToken, Span)>) -> Result<Vec<WCode>, Vec<Report>> {
         let mut parsed: Vec<WCode> = vec![];
         let mut current_container = WCode::default();
-        let parse = |s: &str| {
-            match self.parser(LToken::lexer(s).spanned().collect::<Vec<_>>()) {
-                Ok(tokens) => Ok(tokens[0]
-                .default_case
-                .clone()),
-                Err(errors) => Err(errors)
-            }
+        let parse = |s: &str| match self.parser(LToken::lexer(s).spanned().collect::<Vec<_>>()) {
+            Ok(tokens) => Ok(tokens[0].default_case.clone()),
+            Err(errors) => Err(errors),
         };
         let mut errors: Vec<Report> = vec![];
 
@@ -52,22 +48,25 @@ where
             } else if let LToken::GuardOption((x, y)) = token {
                 let mut cases: Vec<(WTokens, WTokens)> = match current_container.cases.clone() {
                     Some(x) => x,
-                    _ => vec![]
+                    _ => vec![],
                 };
 
                 match (parse(&x), parse(&y)) {
                     (Ok(token_x), Ok(token_y)) => {
                         cases.push((token_x, token_y));
                         current_container.cases = Some(cases);
-                    },
-                    (Err(mut result_x), Err(mut result_y)) => {errors.append(&mut result_x); errors.append(&mut result_y)},
+                    }
+                    (Err(mut result_x), Err(mut result_y)) => {
+                        errors.append(&mut result_x);
+                        errors.append(&mut result_y)
+                    }
                     (Err(mut result_x), Ok(_)) => errors.append(&mut result_x),
-                    (Ok(_), Err(mut result_y)) => errors.append(&mut result_y)
+                    (Ok(_), Err(mut result_y)) => errors.append(&mut result_y),
                 };
             } else if let LToken::GuardDefault(default) = token {
                 match parse(&default) {
                     Ok(default_case) => current_container.default_case = default_case,
-                    Err(mut results) => errors.append(&mut results)
+                    Err(mut results) => errors.append(&mut results),
                 }
             } else if let LToken::Token(x) = token {
                 current_container.default_case.push(x)

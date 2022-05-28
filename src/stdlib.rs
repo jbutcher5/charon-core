@@ -1,15 +1,16 @@
 use crate::models::State;
 use crate::models::{Range, Token, Token::*, WFunc, WTokens};
 use crate::utils::{as_wcode, Utils};
+use ariadne::Report;
 use itertools::Itertools;
 use phf::phf_map;
 
-fn sum(_state: &State, data: WTokens) -> WTokens {
+fn sum(_state: &State, data: WTokens) -> Result<WTokens, Vec<Report>> {
     let nums = data.as_nums();
-    as_wcode(vec![nums.iter().sum()])
+    Ok(as_wcode(vec![nums.iter().sum()]))
 }
 
-fn add(_state: &State, mut data: WTokens) -> WTokens {
+fn add(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let x = data.get_par(2);
     data.push(Value(
         x.iter()
@@ -19,10 +20,10 @@ fn add(_state: &State, mut data: WTokens) -> WTokens {
             })
             .sum(),
     ));
-    data
+    Ok(data)
 }
 
-fn sub(_state: &State, mut data: WTokens) -> WTokens {
+fn sub(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let x = data.get_par(2);
     let y = x
         .iter()
@@ -33,10 +34,10 @@ fn sub(_state: &State, mut data: WTokens) -> WTokens {
         .collect::<Vec<_>>();
     let result = y[1] - y[0];
     data.push(Value(result));
-    data
+    Ok(data)
 }
 
-fn mul(_state: &State, mut data: WTokens) -> WTokens {
+fn mul(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let x = data.get_par(2);
     let y = x
         .iter()
@@ -47,10 +48,10 @@ fn mul(_state: &State, mut data: WTokens) -> WTokens {
         .collect::<Vec<_>>();
     let result = y[1] * y[0];
     data.push(Value(result));
-    data
+    Ok(data)
 }
 
-fn div(_state: &State, mut data: WTokens) -> WTokens {
+fn div(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let x = data.get_par(2);
     let y = x
         .iter()
@@ -61,10 +62,10 @@ fn div(_state: &State, mut data: WTokens) -> WTokens {
         .collect::<Vec<_>>();
     let result = y[1] / y[0];
     data.push(Value(result));
-    data
+    Ok(data)
 }
 
-fn modulo(_state: &State, mut data: WTokens) -> WTokens {
+fn modulo(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let x = data.get_par(2);
     let y = x
         .iter()
@@ -75,10 +76,10 @@ fn modulo(_state: &State, mut data: WTokens) -> WTokens {
         .collect::<Vec<_>>();
     let result = y[1] % y[0];
     data.push(Value(result));
-    data
+    Ok(data)
 }
 
-fn len(_state: &State, mut data: WTokens) -> WTokens {
+fn len(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let x = &data.get_par(1)[0];
 
     let length = if let Group(contents) = x {
@@ -86,10 +87,10 @@ fn len(_state: &State, mut data: WTokens) -> WTokens {
     } else {
         1.0
     };
-    vec![Value(length)]
+    Ok(vec![Value(length)])
 }
 
-fn reverse(_state: &State, mut data: WTokens) -> WTokens {
+fn reverse(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let x = &data.get_par(1)[0];
 
     let y = match x {
@@ -97,10 +98,10 @@ fn reverse(_state: &State, mut data: WTokens) -> WTokens {
         _ => panic!("Incorrect type found. Found {:?} but expected Group", x),
     };
 
-    y.iter().rev().cloned().collect::<Vec<_>>()
+    Ok(y.iter().rev().cloned().collect::<Vec<_>>())
 }
 
-fn elem(_state: &State, mut data: WTokens) -> WTokens {
+fn elem(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let x = &data.get_par(1)[0];
     data.reverse();
 
@@ -112,10 +113,10 @@ fn elem(_state: &State, mut data: WTokens) -> WTokens {
     extracted.reverse();
     data.reverse();
     data.append(&mut extracted);
-    data
+    Ok(data)
 }
 
-fn copy_elem(_state: &State, mut data: WTokens) -> WTokens {
+fn copy_elem(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let x = &data.get_par(1)[0];
     let mut data_clone: WTokens = data.clone();
     data_clone.reverse();
@@ -130,17 +131,17 @@ fn copy_elem(_state: &State, mut data: WTokens) -> WTokens {
     extracted.reverse();
     data_clone.reverse();
     data.append(&mut extracted);
-    data
+    Ok(data)
 }
 
-fn output(_state: &State, mut data: WTokens) -> WTokens {
+fn output(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let mut x = data.get_par(1);
     println!("{}", x.literal());
     data.append(&mut x);
-    data
+    Ok(data)
 }
 
-fn eq(_state: &State, mut data: WTokens) -> WTokens {
+fn eq(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -160,10 +161,10 @@ fn eq(_state: &State, mut data: WTokens) -> WTokens {
     });
 
     data.push(token);
-    data
+    Ok(data)
 }
 
-fn or(_state: &State, mut data: WTokens) -> WTokens {
+fn or(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -176,10 +177,10 @@ fn or(_state: &State, mut data: WTokens) -> WTokens {
     });
 
     data.push(token);
-    data
+    Ok(data)
 }
 
-fn not(_state: &State, mut data: WTokens) -> WTokens {
+fn not(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par = &data.get_par(1)[0];
 
     let token = Value(match par {
@@ -194,10 +195,10 @@ fn not(_state: &State, mut data: WTokens) -> WTokens {
     });
 
     data.push(token);
-    data
+    Ok(data)
 }
 
-fn and(_state: &State, mut data: WTokens) -> WTokens {
+fn and(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -210,10 +211,10 @@ fn and(_state: &State, mut data: WTokens) -> WTokens {
     });
 
     data.push(token);
-    data
+    Ok(data)
 }
 
-fn greater(_state: &State, mut data: WTokens) -> WTokens {
+fn greater(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -226,10 +227,10 @@ fn greater(_state: &State, mut data: WTokens) -> WTokens {
     });
 
     data.push(token);
-    data
+    Ok(data)
 }
 
-fn less(_state: &State, mut data: WTokens) -> WTokens {
+fn less(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -242,10 +243,10 @@ fn less(_state: &State, mut data: WTokens) -> WTokens {
     });
 
     data.push(token);
-    data
+    Ok(data)
 }
 
-fn if_else(_state: &State, mut data: WTokens) -> WTokens {
+fn if_else(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(3);
     let parameters: (Token, Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -269,10 +270,10 @@ fn if_else(_state: &State, mut data: WTokens) -> WTokens {
     };
 
     data.append(&mut convered);
-    data
+    Ok(data)
 }
 
-fn expand(_state: &State, mut data: WTokens) -> WTokens {
+fn expand(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
@@ -288,10 +289,10 @@ fn expand(_state: &State, mut data: WTokens) -> WTokens {
         ),
     }
 
-    data
+    Ok(data)
 }
 
-fn release(_state: &State, mut data: WTokens) -> WTokens {
+fn release(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(1);
     let parameters = &par_arr[0];
 
@@ -300,15 +301,15 @@ fn release(_state: &State, mut data: WTokens) -> WTokens {
         _ => panic!("Incorrect type found. Found {:?} but expected Group", data),
     };
 
-    data
+    Ok(data)
 }
 
-fn axe(_state: &State, data: WTokens) -> WTokens {
-    data[..data.len() - 1].to_vec()
+fn axe(_state: &State, data: WTokens) -> Result<WTokens, Vec<Report>> {
+    Ok(data[..data.len() - 1].to_vec())
 }
 
-fn bundle(_state: &State, data: WTokens) -> WTokens {
-    vec![Group(data)]
+fn bundle(_state: &State, data: WTokens) -> Result<WTokens, Vec<Report>> {
+    Ok(vec![Group(data)])
 }
 
 pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
