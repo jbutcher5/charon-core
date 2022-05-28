@@ -41,7 +41,7 @@ impl WEval for State {
     fn wsection_eval(&mut self, data: Vec<WCode>) -> Result<Vec<WTokens>, Vec<Report>> {
         let mut result: Vec<WTokens> = Vec::new();
 
-        for section in data.clone() {
+        for section in data {
             match section.container {
                 Some(container) => {
                     let mut cases = vec![];
