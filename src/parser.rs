@@ -6,17 +6,24 @@ use ariadne::{Label, Report, ReportKind, Source};
 use logos::{Logos, Span};
 
 pub trait WParser {
-    fn parser(&self, code: Vec<(LToken, Span)>, reference: &str) -> Result<Vec<WCode>, Vec<Report>>;
+    fn parser(&self, code: Vec<(LToken, Span)>, reference: &str)
+        -> Result<Vec<WCode>, Vec<Report>>;
 }
 
 impl WParser for State
 where
     WTokens: Utils,
 {
-    fn parser(&self, code: Vec<(LToken, Span)>, reference: &str) -> Result<Vec<WCode>, Vec<Report>> {
+    fn parser(
+        &self,
+        code: Vec<(LToken, Span)>,
+        reference: &str,
+    ) -> Result<Vec<WCode>, Vec<Report>> {
         let mut parsed: Vec<WCode> = vec![];
         let mut current_container = WCode::default();
-        let parse = |s: &str| match self.parser(LToken::lexer(s).spanned().collect::<Vec<_>>(), reference) {
+        let parse = |s: &str| match self
+            .parser(LToken::lexer(s).spanned().collect::<Vec<_>>(), reference)
+        {
             Ok(tokens) => Ok(tokens[0].default_case.clone()),
             Err(errors) => Err(errors),
         };

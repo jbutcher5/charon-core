@@ -26,7 +26,7 @@ impl WEval for State {
         let cleaned_code = macros(code.to_string());
         let lex = LexerToken::lexer(&cleaned_code);
 
-        let parse = self.parser(lex.spanned().collect::<Vec<_>>());
+        let parse = self.parser(lex.spanned().collect::<Vec<_>>(), code);
 
         if let Ok(parsed) = parse {
             Ok(match self.wsection_eval(parsed) {
