@@ -97,9 +97,10 @@ where
                 }
             } else if let LToken::Error = token {
                 errors.push(
-                    Report::build(ReportKind::Error, (), 0, Source::from(reference))
+                    Report::build(ReportKind::Error, (), 0)
                         .with_message("Unknown Token")
                         .with_label(Label::new(span).with_message("Unkown Token"))
+                        .with_source(Source::from(reference))
                         .finish(),
                 )
             }
