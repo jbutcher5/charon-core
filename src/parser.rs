@@ -16,7 +16,7 @@ where
 {
     fn parser(
         &self,
-        code: Vec<(LToken, Span)>,
+        mut code: Vec<(LToken, Span)>,
         reference: &str,
     ) -> Result<Vec<WCode>, Vec<Report>> {
         let mut parsed: Vec<WCode> = vec![];
@@ -28,6 +28,27 @@ where
             Err(errors) => Err(errors),
         };
         let mut errors: Vec<Report> = vec![];
+
+        code = code.iter().fold(vec![], |acc, x| {
+            let mut new = acc.clone();
+
+            if acc.is_empty() {
+                new.push(x.clone());
+            } else if let ((LToken::Error, span), (LToken::Error, span_current)) =
+                (acc[acc.len() - 1].clone(), x.clone())
+            {
+                new[acc.len() - 1] = (
+                    LToken::Error,
+                    Span {
+                        start: span.start,
+                        end: span_current.end,
+                    },
+                )
+            } else {
+                new.push(x.clone());
+            }
+            new
+        });
 
         for (token, span) in code {
             if let LToken::Newline = token {
