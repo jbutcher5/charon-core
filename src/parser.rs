@@ -2,7 +2,7 @@ use crate::lexer::LexerToken as LToken;
 use crate::models::{State, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
 use crate::utils::Utils;
-use ariadne::{Label, Report, ReportKind, Source};
+use ariadne::{Color, Label, Report, ReportKind, Source};
 use logos::{Logos, Span};
 
 pub trait WParser {
@@ -120,7 +120,11 @@ where
                 errors.push(
                     Report::build(ReportKind::Error, (), 0)
                         .with_message("Unknown Token")
-                        .with_label(Label::new(span).with_message("Unkown Token"))
+                        .with_label(
+                            Label::new(span)
+                                .with_message("Unkown Token")
+                                .with_color(Color::Red),
+                        )
                         .with_source(Source::from(reference))
                         .finish(),
                 )
