@@ -122,7 +122,7 @@ where
                         .with_message("Unknown Token")
                         .with_label(
                             Label::new(span)
-                                .with_message("Unkown Token")
+                                .with_message("The parser can not identify this token.")
                                 .with_color(Color::Red),
                         )
                         .with_source(Source::from(reference))
