@@ -68,9 +68,8 @@ impl WEval for State {
         let mut group_eval: WTokens = vec![];
         let mut errors: Vec<Report> = vec![];
 
-        let mut i = 0;
         while !data.is_empty() {
-            let token = data.remove(i);
+            let token = data.remove(0);
 
             if let Token::Group(content) = token {
                 match self.eval(content.to_vec()) {
@@ -80,8 +79,6 @@ impl WEval for State {
             } else {
                 group_eval.push(token)
             }
-
-            i += 1;
         }
 
         if !errors.is_empty() {
