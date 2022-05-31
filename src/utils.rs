@@ -1,5 +1,19 @@
 use crate::models::{Range, State, Token, WFuncVariant, WTokens};
 
+fn convert(token: &Token) -> String {
+    match token {
+        Token::Value(x) => x.to_string(),
+        Token::Atom(x) | Token::Special(x) | Token::Container(x) | Token::ContainerLiteral(x) => {
+            x.to_string()
+        }
+        Token::Group(contents) => match token.is_string() {
+            Some(x) => x,
+            _ => format!("{{{}}}", contents.literal()),
+        },
+        _ => format!("{:?}", token),
+    }
+}
+
 pub trait Utils {
     fn get_par(&mut self, n: usize) -> WTokens;
     fn as_nums(&self) -> Vec<f64>;
@@ -8,6 +22,7 @@ pub trait Utils {
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)>;
     fn skin_content(&mut self);
     fn literal(&self) -> String;
+    fn literal_enumerate(&self) -> (String, Vec<std::ops::Range<usize>>);
 }
 
 impl Token {
@@ -167,25 +182,28 @@ impl Utils for WTokens {
     }
 
     fn literal(&self) -> String {
-        fn convert(token: &Token) -> String {
-            match token {
-                Token::Value(x) => x.to_string(),
-                Token::Atom(x)
-                | Token::Special(x)
-                | Token::Container(x)
-                | Token::ContainerLiteral(x) => x.to_string(),
-                Token::Group(contents) => match token.is_string() {
-                    Some(x) => x,
-                    _ => format!("{{{}}}", contents.literal()),
-                },
-                _ => format!("{:?}", token),
-            }
-        }
-
         self.iter()
             .fold(String::new(), |acc, x| format!("{} {}", acc, convert(x)))
             .trim()
             .to_string()
+    }
+
+    fn literal_enumerate(&self) -> (String, Vec<std::ops::Range<usize>>) {
+        self.iter().fold((String::new(), vec![]), |mut acc, x| {
+            let token_string = convert(x);
+            let mut token_range = 0..token_string.len();
+
+            if acc.0.is_empty() {
+                acc = (token_string, vec![token_range]);
+            } else {
+                token_range.start = acc.0.len();
+                acc.0 = format!("{} {}", acc.0, token_string);
+                token_range.end += token_range.start;
+                acc.1.push(token_range);
+            }
+
+            acc
+        })
     }
 }
 
