@@ -3,13 +3,16 @@ use crate::models::{Range, State, Token, WFuncVariant, WTokens};
 fn convert(token: &Token) -> String {
     match token {
         Token::Value(x) => x.to_string(),
-        Token::Atom(x) | Token::Special(x) | Token::Container(x) | Token::ContainerLiteral(x) => {
-            x.to_string()
-        }
+        Token::Atom(x)
+        | Token::Special(x)
+        | Token::Container(x)
+        | Token::ContainerLiteral(x)
+        | Token::Function(x) => x.to_string(),
         Token::Group(contents) => match token.is_string() {
             Some(x) => x,
             _ => format!("{{{}}}", contents.literal()),
         },
+        Token::FunctionLiteral(x) => format!("`{}`", x),
         _ => format!("{:?}", token),
     }
 }
