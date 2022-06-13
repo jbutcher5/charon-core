@@ -199,7 +199,7 @@ impl Utils for WTokens {
             if acc.0.is_empty() {
                 acc = (token_string, vec![token_range]);
             } else {
-                token_range.start = acc.0.len();
+                token_range.start = acc.0.len()+1;
                 acc.0 = format!("{} {}", acc.0, token_string);
                 token_range.end += token_range.start;
                 acc.1.push(token_range);

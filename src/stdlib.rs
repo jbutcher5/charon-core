@@ -1,7 +1,7 @@
 use crate::models::State;
 use crate::models::{Range, Token, Token::*, WFunc, WTokens};
 use crate::utils::{as_wcode, Utils};
-use ariadne::Report;
+use ariadne::{Color, Label, Report, ReportKind, Source};
 use itertools::Itertools;
 use phf::phf_map;
 
@@ -182,6 +182,11 @@ fn or(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
 
 fn not(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par = &data.get_par(1)[0];
+    let full = [
+        data.clone(),
+        vec![par.clone(), Token::Function("not".to_string())],
+    ]
+    .concat();
 
     let token = Value(match par {
         Value(x) => {
@@ -191,7 +196,21 @@ fn not(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
                 0.0
             }
         }
-        _ => panic!("Incorrect type found. Found {:?} but expected Value", par),
+        _ => {
+            let literal = full.literal_enumerate();
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Incorrect Type")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!(
+                            "This has the type of {:?} but expected a Value",
+                            par
+                        ))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
     });
 
     data.push(token);
