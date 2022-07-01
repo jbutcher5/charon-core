@@ -219,6 +219,12 @@ fn not(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
 
 fn and(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
+    let full = [
+        data.clone(),
+        par_arr.clone(),
+        vec![Token::Function("and".to_string())],
+    ]
+    .concat();
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let token = Value(match parameters {
@@ -226,7 +232,24 @@ fn and(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
             true => 1.0,
             _ => 0.0,
         },
-        _ => 0.0,
+        _ => {
+            let literal = full.literal_enumerate();
+
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Incorrect Type")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[1])))
+                        .with_color(Color::Red),
+                )
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 3].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[0])))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
     });
 
     data.push(token);
