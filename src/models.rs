@@ -1,5 +1,6 @@
 use ariadne::Report;
 use std::collections::HashMap;
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
@@ -14,6 +15,12 @@ pub enum Token {
     Char(char),
     Special(String),
     Group(Vec<Token>),
+}
+
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 #[derive(PartialEq, Debug, Default, Clone)]

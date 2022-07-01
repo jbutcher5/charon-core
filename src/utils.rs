@@ -17,6 +17,20 @@ fn convert(token: &Token) -> String {
     }
 }
 
+pub fn type_of(token: &Token) -> String {
+    let mut buffer = String::new();
+
+    for character in token.to_string().chars() {
+        if character == '(' {
+            break;
+        } else {
+            buffer.push(character);
+        }
+    }
+
+    buffer
+}
+
 pub trait Utils {
     fn get_par(&mut self, n: usize) -> WTokens;
     fn as_nums(&self) -> Vec<f64>;
@@ -199,7 +213,7 @@ impl Utils for WTokens {
             if acc.0.is_empty() {
                 acc = (token_string, vec![token_range]);
             } else {
-                token_range.start = acc.0.len()+1;
+                token_range.start = acc.0.len() + 1;
                 acc.0 = format!("{} {}", acc.0, token_string);
                 token_range.end += token_range.start;
                 acc.1.push(token_range);

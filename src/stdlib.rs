@@ -1,9 +1,18 @@
 use crate::models::State;
 use crate::models::{Range, Token, Token::*, WFunc, WTokens};
-use crate::utils::{as_wcode, Utils};
+use crate::utils::{as_wcode, type_of, Utils};
 use ariadne::{Color, Label, Report, ReportKind, Source};
 use itertools::Itertools;
 use phf::phf_map;
+use std::any::type_name;
+
+fn type_of_container(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
+    let par = &data.get_par(1)[0];
+    let type_string = Group(type_of(par).chars().map(Char).collect::<_>());
+
+    data.push(type_string);
+    Ok(data)
+}
 
 fn sum(_state: &State, data: WTokens) -> Result<WTokens, Vec<Report>> {
     let nums = data.as_nums();
@@ -355,6 +364,7 @@ fn bundle(_state: &State, data: WTokens) -> Result<WTokens, Vec<Report>> {
 }
 
 pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
+    "type" => type_of_container,
     "sum" => sum,
     "add" => add,
     "sub" => sub,
