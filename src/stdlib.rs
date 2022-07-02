@@ -4,7 +4,6 @@ use crate::utils::{as_wcode, type_of, Utils};
 use ariadne::{Color, Label, Report, ReportKind, Source};
 use itertools::Itertools;
 use phf::phf_map;
-use std::any::type_name;
 
 fn type_of_container(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par = &data.get_par(1)[0];
@@ -20,71 +19,182 @@ fn sum(_state: &State, data: WTokens) -> Result<WTokens, Vec<Report>> {
 }
 
 fn add(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
-    let x = data.get_par(2);
-    data.push(Value(
-        x.iter()
-            .map(|value| match value {
-                Value(content) => content,
-                _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
-            })
-            .sum(),
-    ));
+    let par_arr = data.get_par(2);
+    let full = [
+        data.clone(),
+        par_arr.clone(),
+        vec![Token::Function("add".to_string())],
+    ]
+    .concat();
+    let parameters: (Token, Token) = par_arr.clone().iter().cloned().collect_tuple().unwrap();
+
+    let result = Value(match parameters {
+        (Value(x), Value(y)) => x + y,
+        _ => {
+            let literal = full.literal_enumerate();
+
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Invalid Operation")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[1])))
+                        .with_color(Color::Red),
+                )
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 3].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[0])))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
+    });
+
+    data.push(result);
     Ok(data)
 }
 
 fn sub(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
-    let x = data.get_par(2);
-    let y = x
-        .iter()
-        .map(|value| match value {
-            Value(content) => content,
-            _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
-        })
-        .collect::<Vec<_>>();
-    let result = y[1] - y[0];
-    data.push(Value(result));
+    let par_arr = data.get_par(2);
+    let full = [
+        data.clone(),
+        par_arr.clone(),
+        vec![Token::Function("sub".to_string())],
+    ]
+    .concat();
+    let parameters: (Token, Token) = par_arr.clone().iter().cloned().collect_tuple().unwrap();
+
+    let result = Value(match parameters {
+        (Value(x), Value(y)) => y - x,
+        _ => {
+            let literal = full.literal_enumerate();
+
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Invalid Operation")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[1])))
+                        .with_color(Color::Red),
+                )
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 3].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[0])))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
+    });
+
+    data.push(result);
     Ok(data)
 }
 
 fn mul(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
-    let x = data.get_par(2);
-    let y = x
-        .iter()
-        .map(|value| match value {
-            Value(content) => content,
-            _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
-        })
-        .collect::<Vec<_>>();
-    let result = y[1] * y[0];
-    data.push(Value(result));
+    let par_arr = data.get_par(2);
+    let full = [
+        data.clone(),
+        par_arr.clone(),
+        vec![Token::Function("mul".to_string())],
+    ]
+    .concat();
+    let parameters: (Token, Token) = par_arr.clone().iter().cloned().collect_tuple().unwrap();
+
+    let result = Value(match parameters {
+        (Value(x), Value(y)) => x * y,
+        _ => {
+            let literal = full.literal_enumerate();
+
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Invalid Operation")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[1])))
+                        .with_color(Color::Red),
+                )
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 3].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[0])))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
+    });
+
+    data.push(result);
     Ok(data)
 }
 
 fn div(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
-    let x = data.get_par(2);
-    let y = x
-        .iter()
-        .map(|value| match value {
-            Value(content) => content,
-            _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
-        })
-        .collect::<Vec<_>>();
-    let result = y[1] / y[0];
-    data.push(Value(result));
+    let par_arr = data.get_par(2);
+    let full = [
+        data.clone(),
+        par_arr.clone(),
+        vec![Token::Function("div".to_string())],
+    ]
+    .concat();
+    let parameters: (Token, Token) = par_arr.clone().iter().cloned().collect_tuple().unwrap();
+
+    let result = Value(match parameters {
+        (Value(x), Value(y)) => y / x,
+        _ => {
+            let literal = full.literal_enumerate();
+
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Invalid Operation")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[1])))
+                        .with_color(Color::Red),
+                )
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 3].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[0])))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
+    });
+
+    data.push(result);
     Ok(data)
 }
 
 fn modulo(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
-    let x = data.get_par(2);
-    let y = x
-        .iter()
-        .map(|value| match value {
-            Value(content) => content,
-            _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
-        })
-        .collect::<Vec<_>>();
-    let result = y[1] % y[0];
-    data.push(Value(result));
+    let par_arr = data.get_par(2);
+    let full = [
+        data.clone(),
+        par_arr.clone(),
+        vec![Token::Function("modulo".to_string())],
+    ]
+    .concat();
+    let parameters: (Token, Token) = par_arr.clone().iter().cloned().collect_tuple().unwrap();
+
+    let result = Value(match parameters {
+        (Value(x), Value(y)) => y % x,
+        _ => {
+            let literal = full.literal_enumerate();
+
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Invalid Operation")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[1])))
+                        .with_color(Color::Red),
+                )
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 3].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[0])))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
+    });
+
+    data.push(result);
     Ok(data)
 }
 
@@ -101,10 +211,28 @@ fn len(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
 
 fn reverse(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let x = &data.get_par(1)[0];
-
+    let full = [
+        data.clone(),
+        vec![x.clone(), Token::Function("elem".to_string())],
+    ]
+    .concat();
     let y = match x {
         Group(content) => content,
-        _ => panic!("Incorrect type found. Found {:?} but expected Group", x),
+        _ => {
+            let literal = full.literal_enumerate();
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Incorrect Type")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!(
+                            "This has the type of {:?} but expected a Group",
+                            type_of(&x)
+                        ))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
     };
 
     Ok(y.iter().rev().cloned().collect::<Vec<_>>())
@@ -112,11 +240,30 @@ fn reverse(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
 
 fn elem(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let x = &data.get_par(1)[0];
+    let full = [
+        data.clone(),
+        vec![x.clone(), Token::Function("elem".to_string())],
+    ]
+    .concat();
     data.reverse();
 
     let mut extracted = match x {
         Token::Range(Range::Full(range)) => data.splice(range.clone(), vec![]).collect::<WTokens>(),
-        _ => panic!("Incorrect type found. Found {:?} but expected a Range", x),
+        _ => {
+            let literal = full.literal_enumerate();
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Incorrect Type")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!(
+                            "This has the type of {:?} but expected a Range",
+                            type_of(&x)
+                        ))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
     };
 
     extracted.reverse();
@@ -127,6 +274,11 @@ fn elem(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
 
 fn copy_elem(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let x = &data.get_par(1)[0];
+    let full = [
+        data.clone(),
+        vec![x.clone(), Token::Function("copy_elem".to_string())],
+    ]
+    .concat();
     let mut data_clone: WTokens = data.clone();
     data_clone.reverse();
 
@@ -134,7 +286,21 @@ fn copy_elem(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> 
         Token::Range(Range::Full(range)) => data_clone
             .splice(range.clone(), vec![])
             .collect::<WTokens>(),
-        _ => panic!("Incorrect type found. Found {:?} but expected Range", x),
+        _ => {
+            let literal = full.literal_enumerate();
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Incorrect Type")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!(
+                            "This has the type of {:?} but expected a Range",
+                            type_of(&x)
+                        ))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
     };
 
     extracted.reverse();
@@ -152,6 +318,12 @@ fn output(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
 
 fn eq(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
+    let full = [
+        data.clone(),
+        par_arr.clone(),
+        vec![Token::Function("eq".to_string())],
+    ]
+    .concat();
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let result = match parameters {
@@ -161,7 +333,24 @@ fn eq(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
         | (Atom(x), Atom(y))
         | (ContainerLiteral(x), ContainerLiteral(y)) => x == y,
         (Parameter(x), Parameter(y)) => x == y,
-        _ => panic!("Incorrect tokens"),
+        _ => {
+            let literal = full.literal_enumerate();
+
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Invalid Operation")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[1])))
+                        .with_color(Color::Red),
+                )
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 3].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[0])))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
     };
 
     let token = Value(match result {
@@ -175,6 +364,12 @@ fn eq(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
 
 fn or(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
+    let full = [
+        data.clone(),
+        par_arr.clone(),
+        vec![Token::Function("or".to_string())],
+    ]
+    .concat();
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let token = Value(match parameters {
@@ -182,7 +377,24 @@ fn or(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
             true => 1.0,
             _ => 0.0,
         },
-        _ => 0.0,
+        _ => {
+            let literal = full.literal_enumerate();
+
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Invalid Operation")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[1])))
+                        .with_color(Color::Red),
+                )
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 3].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[0])))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
     });
 
     data.push(token);
@@ -213,7 +425,7 @@ fn not(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
                     Label::new(literal.1[literal.1.len() - 2].clone())
                         .with_message(format!(
                             "This has the type of {:?} but expected a Value",
-                            par
+                            type_of(&par)
                         ))
                         .with_color(Color::Red),
                 )
@@ -245,7 +457,7 @@ fn and(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
             let literal = full.literal_enumerate();
 
             return Err(vec![Report::build(ReportKind::Error, (), 0)
-                .with_message("Incorrect Type")
+                .with_message("Invalid Operation")
                 .with_label(
                     Label::new(literal.1[literal.1.len() - 2].clone())
                         .with_message(format!("This has the type of {:?}", type_of(&par_arr[1])))
@@ -267,6 +479,12 @@ fn and(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
 
 fn greater(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
+    let full = [
+        data.clone(),
+        par_arr.clone(),
+        vec![Token::Function("greater".to_string())],
+    ]
+    .concat();
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let token = Value(match parameters {
@@ -274,7 +492,24 @@ fn greater(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
             true => 1.0,
             _ => 0.0,
         },
-        _ => 0.0,
+        _ => {
+            let literal = full.literal_enumerate();
+
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Invalid Operation")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[1])))
+                        .with_color(Color::Red),
+                )
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 3].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[0])))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
     });
 
     data.push(token);
@@ -283,6 +518,12 @@ fn greater(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
 
 fn less(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
+    let full = [
+        data.clone(),
+        par_arr.clone(),
+        vec![Token::Function("less".to_string())],
+    ]
+    .concat();
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     let token = Value(match parameters {
@@ -290,7 +531,24 @@ fn less(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
             true => 1.0,
             _ => 0.0,
         },
-        _ => 0.0,
+        _ => {
+            let literal = full.literal_enumerate();
+
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Invalid Operation")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[1])))
+                        .with_color(Color::Red),
+                )
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 3].clone())
+                        .with_message(format!("This has the type of {:?}", type_of(&par_arr[0])))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
     });
 
     data.push(token);
@@ -326,6 +584,12 @@ fn if_else(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
 
 fn expand(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
+    let full = [
+        data.clone(),
+        par_arr.clone(),
+        vec![Token::Function("expand".to_string())],
+    ]
+    .concat();
     let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
 
     match parameters {
@@ -334,22 +598,61 @@ fn expand(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
                 data.append(&mut group.clone())
             }
         }
-        _ => panic!(
-            "Incorrect type found. Found {:?} but expected (Value, Group)",
-            data
-        ),
+        _ => {
+            let literal = full.literal_enumerate();
+
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Invalid Operation")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 2].clone())
+                        .with_message(format!(
+                            "This has the type of {:?} expected Group",
+                            type_of(&par_arr[1])
+                        ))
+                        .with_color(Color::Red),
+                )
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 3].clone())
+                        .with_message(format!(
+                            "This has the type of {:?} expected Value",
+                            type_of(&par_arr[0])
+                        ))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
     }
 
     Ok(data)
 }
 
 fn release(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
-    let par_arr = data.get_par(1);
-    let parameters = &par_arr[0];
+    let x = &data.get_par(1)[0];
+    let full = [
+        data.clone(),
+        vec![x.clone(), Token::Function("release".to_string())],
+    ]
+    .concat();
 
-    match parameters {
+    match x {
         Group(group) => data.append(&mut group.clone()),
-        _ => panic!("Incorrect type found. Found {:?} but expected Group", data),
+        _ => {
+            let literal = full.literal_enumerate();
+
+            return Err(vec![Report::build(ReportKind::Error, (), 0)
+                .with_message("Invalid Type")
+                .with_label(
+                    Label::new(literal.1[literal.1.len() - 1].clone())
+                        .with_message(format!(
+                            "This has the type of {:?} expected Group",
+                            type_of(&x)
+                        ))
+                        .with_color(Color::Red),
+                )
+                .with_source(Source::from(literal.0))
+                .finish()]);
+        }
     };
 
     Ok(data)
