@@ -22,7 +22,7 @@ fn add(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let full = [
         data.clone(),
-        par_arr.clone(),
+        par_arr.iter().cloned().rev().collect::<Vec<_>>(),
         vec![Token::Function("add".to_string())],
     ]
     .concat();
@@ -58,7 +58,7 @@ fn sub(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let full = [
         data.clone(),
-        par_arr.clone(),
+        par_arr.iter().cloned().rev().collect::<Vec<_>>(),
         vec![Token::Function("sub".to_string())],
     ]
     .concat();
@@ -94,7 +94,7 @@ fn mul(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let full = [
         data.clone(),
-        par_arr.clone(),
+        par_arr.iter().cloned().rev().collect::<Vec<_>>(),
         vec![Token::Function("mul".to_string())],
     ]
     .concat();
@@ -130,7 +130,7 @@ fn div(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let full = [
         data.clone(),
-        par_arr.clone(),
+        par_arr.iter().cloned().rev().collect::<Vec<_>>(),
         vec![Token::Function("div".to_string())],
     ]
     .concat();
@@ -166,7 +166,7 @@ fn modulo(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let full = [
         data.clone(),
-        par_arr.clone(),
+        par_arr.iter().cloned().rev().collect::<Vec<_>>(),
         vec![Token::Function("modulo".to_string())],
     ]
     .concat();
@@ -320,7 +320,7 @@ fn eq(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let full = [
         data.clone(),
-        par_arr.clone(),
+        par_arr.iter().cloned().rev().collect::<Vec<_>>(),
         vec![Token::Function("eq".to_string())],
     ]
     .concat();
@@ -366,7 +366,7 @@ fn or(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let full = [
         data.clone(),
-        par_arr.clone(),
+        par_arr.iter().cloned().rev().collect::<Vec<_>>(),
         vec![Token::Function("or".to_string())],
     ]
     .concat();
@@ -442,7 +442,7 @@ fn and(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let full = [
         data.clone(),
-        par_arr.clone(),
+        par_arr.iter().cloned().rev().collect::<Vec<_>>(),
         vec![Token::Function("and".to_string())],
     ]
     .concat();
@@ -481,7 +481,7 @@ fn greater(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let full = [
         data.clone(),
-        par_arr.clone(),
+        par_arr.iter().cloned().rev().collect::<Vec<_>>(),
         vec![Token::Function("greater".to_string())],
     ]
     .concat();
@@ -520,7 +520,7 @@ fn less(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let full = [
         data.clone(),
-        par_arr.clone(),
+        par_arr.iter().cloned().rev().collect::<Vec<_>>(),
         vec![Token::Function("less".to_string())],
     ]
     .concat();
@@ -586,7 +586,7 @@ fn expand(_state: &State, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
     let par_arr = data.get_par(2);
     let full = [
         data.clone(),
-        par_arr.clone(),
+        par_arr.iter().cloned().rev().collect::<Vec<_>>(),
         vec![Token::Function("expand".to_string())],
     ]
     .concat();
