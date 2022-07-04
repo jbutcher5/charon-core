@@ -1,4 +1,7 @@
+use ariadne::Report;
+
 use crate::models::{Range, State, Token, WFuncVariant, WTokens};
+use crate::stdlib::FUNCTIONS;
 
 fn convert(token: &Token) -> String {
     match token {
@@ -32,7 +35,7 @@ pub fn type_of(token: &Token) -> String {
 }
 
 pub trait Utils {
-    fn get_par(&mut self, n: usize) -> WTokens;
+    fn get_par(&mut self, func: &str) -> Result<WTokens, Report>;
     fn as_nums(&self) -> Vec<f64>;
     fn first_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)>;
     fn bundle_groups(&mut self) -> WTokens;
@@ -63,20 +66,26 @@ impl Token {
 }
 
 impl Utils for WTokens {
-    fn get_par(&mut self, n: usize) -> WTokens {
+    fn get_par(&mut self, func: &str) -> Result<WTokens, Report> {
         let mut result = vec![];
+        let paramerters = FUNCTIONS.get(func).unwrap().1.iter();
 
-        for _ in 0..n {
+        for token_type in paramerters {
             result.push(match self.pop() {
-                Some(content) => content,
-                None => panic!(
-                    "Too few arguments in {:?} where {} arguments were expected!",
-                    self, n
-                ),
+                Some(content) => {
+                    if *token_type == "Any" || type_of(&content) == *token_type {
+                        content
+                    } else {
+                        unimplemented!();
+                    }
+                }
+                None => {
+                    unimplemented!();
+                }
             })
         }
 
-        result
+        Ok(result)
     }
 
     fn as_nums(&self) -> Vec<f64> {
@@ -224,8 +233,8 @@ impl Utils for WTokens {
     }
 }
 
-pub fn as_wcode(arr: Vec<f64>) -> WTokens {
-    arr.iter().map(|&value| Token::Value(value)).collect()
+pub fn encode_string(string: &str) -> Token {
+    Token::Group(string.chars().map(Token::Char).collect::<Vec<_>>())
 }
 
 pub trait WFunc {
