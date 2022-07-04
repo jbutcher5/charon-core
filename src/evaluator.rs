@@ -10,15 +10,15 @@ use logos::Logos;
 
 pub trait WEval {
     fn apply(&mut self, code: &str) -> Result<Vec<WTokens>, Vec<Report>>;
-    fn wsection_eval(&mut self, data: Vec<WCode>) -> Result<Vec<WTokens>, Vec<Report>>;
-    fn eval(&self, data: WTokens) -> Result<WTokens, Vec<Report>>;
+    fn wsection_eval(&mut self, data: Vec<WCode>) -> Result<Vec<WTokens>, Report>;
+    fn eval(&self, data: WTokens) -> Result<WTokens, Report>;
     fn dissolve(
         &self,
         code: &mut WTokens,
         func: WFuncVariant,
         argument_range: &std::ops::Range<usize>,
         arr: WTokens,
-    ) -> Result<(), Vec<Report>>;
+    ) -> Result<(), Report>;
 }
 
 impl WEval for State {
@@ -31,14 +31,14 @@ impl WEval for State {
         if let Ok(parsed) = parse {
             Ok(match self.wsection_eval(parsed) {
                 Ok(x) => x,
-                Err(reports) => return Err(reports),
+                Err(reports) => return Err(vec![reports]),
             })
         } else {
             Err(parse.unwrap_err())
         }
     }
 
-    fn wsection_eval(&mut self, data: Vec<WCode>) -> Result<Vec<WTokens>, Vec<Report>> {
+    fn wsection_eval(&mut self, data: Vec<WCode>) -> Result<Vec<WTokens>, Report> {
         let mut result: Vec<WTokens> = Vec::new();
 
         for section in data {
@@ -56,7 +56,7 @@ impl WEval for State {
                 }
                 None => result.push(match self.eval(section.default_case) {
                     Ok(x) => x,
-                    Err(reports) => return Err(reports),
+                    Err(report) => return Err(report),
                 }),
             }
         }
@@ -64,9 +64,8 @@ impl WEval for State {
         Ok(result)
     }
 
-    fn eval(&self, mut data: WTokens) -> Result<WTokens, Vec<Report>> {
+    fn eval(&self, mut data: WTokens) -> Result<WTokens, Report> {
         let mut group_eval: WTokens = vec![];
-        let mut errors: Vec<Report> = vec![];
 
         while !data.is_empty() {
             let token = data.remove(0);
@@ -74,15 +73,11 @@ impl WEval for State {
             if let Token::Group(content) = token {
                 match self.eval(content.to_vec()) {
                     Ok(x) => group_eval.push(Token::Group(x)),
-                    Err(mut reports) => errors.append(&mut reports),
+                    Err(report) => return Err(report),
                 }
             } else {
                 group_eval.push(token)
             }
-        }
-
-        if !errors.is_empty() {
-            return Err(errors);
         }
 
         let mut new_code: WTokens = group_eval.clone();
@@ -94,7 +89,7 @@ impl WEval for State {
                     x..=y,
                     match self.eval(result) {
                         Ok(x) => x,
-                        Err(reports) => return Err(reports),
+                        Err(report) => return Err(report),
                     },
                 );
             } else {
@@ -102,8 +97,8 @@ impl WEval for State {
                 let dissolve =
                     self.dissolve(&mut new_code, func, &argument_range, code_to_evaluate);
 
-                if let Err(reports) = dissolve {
-                    return Err(reports);
+                if let Err(report) = dissolve {
+                    return Err(report);
                 }
             }
         }
@@ -116,15 +111,20 @@ impl WEval for State {
         code: &mut WTokens,
         func: WFuncVariant,
         argument_range: &std::ops::Range<usize>,
-        arr: WTokens,
-    ) -> Result<(), Vec<Report>> {
+        mut arr: WTokens,
+    ) -> Result<(), Report> {
         match func {
             WFuncVariant::Function(func) => {
-                let result = match FUNCTIONS.get(&func).unwrap()(self, arr) {
+                let parameters = arr.get_par(&func)?;
+
+                let result = match FUNCTIONS.get(&func).unwrap().0(self, parameters) {
                     Ok(result) => result,
-                    Err(reports) => return Err(reports),
+                    Err(report) => return Err(report),
                 };
-                code.splice(argument_range.start..argument_range.end + 1, result);
+
+                let combined = [arr.clone(), result].concat();
+
+                code.splice(argument_range.start..argument_range.end + 1, combined);
             }
             WFuncVariant::Container(x) => {
                 let mut case: WTokens = vec![];
@@ -134,7 +134,7 @@ impl WEval for State {
                     container_acc.append(&mut container_case.1.clone());
                     let case_prefix = match self.eval(self.resolve(&container_case.0, &arr)) {
                         Ok(x) => x,
-                        Err(reports) => return Err(reports),
+                        Err(report) => return Err(report),
                     };
 
                     if case_prefix[0] != Token::Value(0.0) {
