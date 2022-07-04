@@ -44,5 +44,5 @@ pub enum WFuncVariant {
 }
 
 pub type WTokens = Vec<Token>;
-pub(crate) type WFunc = fn(&State, WTokens) -> Result<WTokens, Vec<Report>>;
+pub(crate) type WFunc = fn(&State, WTokens) -> Result<WTokens, Report>;
 pub type State = HashMap<String, Vec<(WTokens, WTokens)>>;
