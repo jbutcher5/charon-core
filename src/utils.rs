@@ -1,4 +1,4 @@
-use ariadne::Report;
+use ariadne::{Color, Label, Report, ReportBuilder, ReportKind, Source};
 
 use crate::models::{Range, State, Token, WFuncVariant, WTokens};
 use crate::stdlib::FUNCTIONS;
@@ -35,7 +35,7 @@ pub fn type_of(token: &Token) -> String {
 }
 
 pub trait Utils {
-    fn get_par(&mut self, func: &str) -> Result<WTokens, Report>;
+    fn get_par(&mut self, func: &str, reference_code: WTokens) -> Result<WTokens, Report>;
     fn as_nums(&self) -> Vec<f64>;
     fn first_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)>;
     fn bundle_groups(&mut self) -> WTokens;
@@ -66,23 +66,55 @@ impl Token {
 }
 
 impl Utils for WTokens {
-    fn get_par(&mut self, func: &str) -> Result<WTokens, Report> {
+    fn get_par(&mut self, func: &str, reference_code: WTokens) -> Result<WTokens, Report> {
         let mut result = vec![];
         let paramerters = FUNCTIONS.get(func).unwrap().1.iter();
+        let literal = reference_code.literal_enumerate();
+        let mut type_report: Option<ReportBuilder<std::ops::Range<usize>, Source>> = None;
 
-        for token_type in paramerters {
-            result.push(match self.pop() {
+        for (index, token_type) in paramerters.enumerate() {
+            match self.pop() {
                 Some(content) => {
                     if *token_type == "Any" || type_of(&content) == *token_type {
-                        content
+                        result.push(content)
                     } else {
-                        unimplemented!();
+                        if let Some(report) = type_report {
+                            type_report = Some(
+                                report.with_label(
+                                    Label::new(literal.1[literal.1.len() - index - 2].clone())
+                                        .with_message(format!(
+                                            "This has the type of {} but expected {}.",
+                                            type_of(&content),
+                                            *token_type
+                                        ))
+                                        .with_color(Color::Red),
+                                ),
+                            )
+                        } else {
+                            type_report = Some(
+                                Report::build(ReportKind::Error, (), 0)
+                                    .with_message("Mismatched Types")
+                                    .with_label(
+                                        Label::new(literal.1[literal.1.len() - index - 2].clone())
+                                            .with_message(format!(
+                                                "This has the type of {} but expected {}.",
+                                                type_of(&content),
+                                                *token_type
+                                            ))
+                                            .with_color(Color::Red),
+                                    ),
+                            )
+                        }
                     }
                 }
                 None => {
-                    unimplemented!();
+                    unimplemented!()
                 }
-            })
+            }
+        }
+
+        if let Some(report) = type_report {
+            return Err(report.with_source(Source::from(literal.0)).finish());
         }
 
         Ok(result)

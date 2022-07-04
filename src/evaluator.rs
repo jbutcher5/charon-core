@@ -115,7 +115,9 @@ impl WEval for State {
     ) -> Result<(), Report> {
         match func {
             WFuncVariant::Function(func) => {
-                let parameters = arr.get_par(&func)?;
+                let function_range = argument_range.start..argument_range.end + 1;
+                let reference_code: WTokens = code.clone()[function_range.clone()].to_vec();
+                let parameters = arr.get_par(&func, reference_code)?;
 
                 let result = match FUNCTIONS.get(&func).unwrap().0(self, parameters) {
                     Ok(result) => result,
@@ -124,7 +126,7 @@ impl WEval for State {
 
                 let combined = [arr.clone(), result].concat();
 
-                code.splice(argument_range.start..argument_range.end + 1, combined);
+                code.splice(function_range, combined);
             }
             WFuncVariant::Container(x) => {
                 let mut case: WTokens = vec![];
