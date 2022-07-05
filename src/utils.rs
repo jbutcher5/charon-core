@@ -70,16 +70,16 @@ impl Utils for WTokens {
         let mut result = vec![];
         let paramerters = FUNCTIONS.get(func).unwrap().1.iter();
         let literal = reference_code.literal_enumerate();
-        let mut type_report: Option<ReportBuilder<std::ops::Range<usize>, Source>> = None;
+        let mut final_report: Option<ReportBuilder<std::ops::Range<usize>, Source>> = None;
 
-        for (index, token_type) in paramerters.enumerate() {
+        for (index, token_type) in paramerters.clone().enumerate() {
             match self.pop() {
                 Some(content) => {
                     if *token_type == "Any" || type_of(&content) == *token_type {
                         result.push(content)
                     } else {
-                        if let Some(report) = type_report {
-                            type_report = Some(
+                        if let Some(report) = final_report {
+                            final_report = Some(
                                 report.with_label(
                                     Label::new(literal.1[literal.1.len() - index - 2].clone())
                                         .with_message(format!(
@@ -91,7 +91,7 @@ impl Utils for WTokens {
                                 ),
                             )
                         } else {
-                            type_report = Some(
+                            final_report = Some(
                                 Report::build(ReportKind::Error, (), 0)
                                     .with_message("Mismatched Types")
                                     .with_label(
@@ -108,12 +108,37 @@ impl Utils for WTokens {
                     }
                 }
                 None => {
-                    unimplemented!()
+                    let mut report = Report::build(ReportKind::Error, (), 0)
+                        .with_message("Missing Parameters")
+                        .with_label(
+                            Label::new(literal.1[literal.1.len() - 1].clone())
+                                .with_message(format!(
+                                    "This function expects the parameters ({}).",
+                                    paramerters
+                                        .clone()
+                                        .fold("".to_string(), |x, acc| format!("{} {}", acc, x))
+                                        .trim()
+                                ))
+                                .with_color(Color::Red),
+                        );
+
+                    if !result.is_empty() {
+                        report = report.with_label(
+                            Label::new(
+                                literal.1[0].clone().start
+                                    ..literal.1[literal.1.len() - 2].clone().end,
+                            )
+                            .with_message(format!("Only {} parameter(s) provided.", result.len()))
+                            .with_color(Color::Yellow),
+                        )
+                    }
+
+                    final_report = Some(report)
                 }
             }
         }
 
-        if let Some(report) = type_report {
+        if let Some(report) = final_report {
             return Err(report.with_source(Source::from(literal.0)).finish());
         }
 
