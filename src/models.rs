@@ -1,20 +1,29 @@
+use ariadne::Report;
 use std::collections::HashMap;
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Value(f64),
-    Function(fn(WTokens) -> WTokens),
-    FunctionLiteral(fn(WTokens) -> WTokens),
+    Function(String),
+    FunctionLiteral(String),
     Container(String),
     ContainerLiteral(String),
     Parameter(Range),
+    Range(Range),
     Atom(String),
     Char(char),
     Special(String),
     Group(Vec<Token>),
 }
 
-#[derive(Debug, Clone)]
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(PartialEq, Debug, Default, Clone)]
 pub struct WCode {
     pub container: Option<String>,
     pub cases: Option<Vec<(WTokens, WTokens)>>,
@@ -28,12 +37,12 @@ pub enum Range {
     From(std::ops::RangeTo<usize>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum WFuncVariant {
     Container(String),
-    Function(WFunc),
+    Function(String),
 }
 
 pub type WTokens = Vec<Token>;
-pub(crate) type WFunc = fn(WTokens) -> WTokens;
+pub(crate) type WFunc = fn(&State, WTokens) -> Result<WTokens, Report>;
 pub type State = HashMap<String, Vec<(WTokens, WTokens)>>;

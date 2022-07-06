@@ -1,13 +1,45 @@
+use ariadne::{Color, Label, Report, ReportBuilder, ReportKind, Source};
+
 use crate::models::{Range, State, Token, WFuncVariant, WTokens};
+use crate::stdlib::FUNCTIONS;
+
+pub fn convert(token: &Token) -> String {
+    match token {
+        Token::Value(x) => x.to_string(),
+        Token::Atom(x) => format!(":{}", x),
+        Token::Special(x) | Token::Container(x) | Token::Function(x) => x.to_string(),
+        Token::Group(contents) => match token.is_string() {
+            Some(x) => x.to_string(),
+            _ => format!("{{{}}}", contents.literal()),
+        },
+        Token::FunctionLiteral(x) | Token::ContainerLiteral(x) => format!("`{}`", x),
+        _ => format!("{:?}", token),
+    }
+}
+
+pub fn type_of(token: &Token) -> String {
+    let mut buffer = String::new();
+
+    for character in token.to_string().chars() {
+        if character == '(' {
+            break;
+        } else {
+            buffer.push(character);
+        }
+    }
+
+    buffer
+}
 
 pub trait Utils {
-    fn get_par(&mut self, n: usize) -> WTokens;
+    fn get_par(&mut self, func: &str, reference_code: WTokens) -> Result<WTokens, Report>;
     fn as_nums(&self) -> Vec<f64>;
     fn first_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)>;
     fn bundle_groups(&mut self) -> WTokens;
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)>;
     fn skin_content(&mut self);
     fn literal(&self) -> String;
+    fn literal_enumerate(&self) -> (String, Vec<std::ops::Range<usize>>);
 }
 
 impl Token {
@@ -31,20 +63,83 @@ impl Token {
 }
 
 impl Utils for WTokens {
-    fn get_par(&mut self, n: usize) -> WTokens {
+    fn get_par(&mut self, func: &str, reference_code: WTokens) -> Result<WTokens, Report> {
         let mut result = vec![];
+        let paramerters = FUNCTIONS.get(func).unwrap().1.iter();
+        let literal = reference_code.literal_enumerate();
+        let mut final_report: Option<ReportBuilder<std::ops::Range<usize>, Source>> = None;
 
-        for _ in 0..n {
-            result.push(match self.pop() {
-                Some(content) => content,
-                None => panic!(
-                    "Too few arguments in {:?} where {} arguments were expected!",
-                    self, n
-                ),
-            })
+        for (index, token_type) in paramerters.clone().enumerate() {
+            match self.pop() {
+                Some(content) => {
+                    if *token_type == "Any" || type_of(&content) == *token_type {
+                        result.push(content)
+                    } else {
+                        if let Some(report) = final_report {
+                            final_report = Some(
+                                report.with_label(
+                                    Label::new(literal.1[literal.1.len() - index - 2].clone())
+                                        .with_message(format!(
+                                            "This has the type of {} but expected {}.",
+                                            type_of(&content),
+                                            *token_type
+                                        ))
+                                        .with_color(Color::Red),
+                                ),
+                            )
+                        } else {
+                            final_report = Some(
+                                Report::build(ReportKind::Error)
+                                    .with_message("Mismatched Types")
+                                    .with_label(
+                                        Label::new(literal.1[literal.1.len() - index - 2].clone())
+                                            .with_message(format!(
+                                                "This has the type of {} but expected {}.",
+                                                type_of(&content),
+                                                *token_type
+                                            ))
+                                            .with_color(Color::Red),
+                                    ),
+                            )
+                        }
+                    }
+                }
+                None => {
+                    let mut report = Report::build(ReportKind::Error)
+                        .with_message("Missing Parameters")
+                        .with_label(
+                            Label::new(literal.1[literal.1.len() - 1].clone())
+                                .with_message(format!(
+                                    "This function expects the parameters ({}).",
+                                    paramerters
+                                        .clone()
+                                        .fold("".to_string(), |x, acc| format!("{} {}", acc, x))
+                                        .trim()
+                                ))
+                                .with_color(Color::Red),
+                        );
+
+                    if !result.is_empty() {
+                        report = report.with_label(
+                            Label::new(
+                                literal.1[0].clone().start
+                                    ..literal.1[literal.1.len() - 2].clone().end,
+                            )
+                            .with_message(format!("Only {} parameter(s) provided.", result.len()))
+                            .with_color(Color::Yellow),
+                        )
+                    }
+
+                    final_report = Some(report)
+                }
+            }
         }
 
-        result
+        if let Some(report) = final_report {
+            return Err(report.with_source(Source::from(literal.0)).finish());
+        }
+
+        Ok(result)
     }
 
     fn as_nums(&self) -> Vec<f64> {
@@ -61,7 +156,10 @@ impl Utils for WTokens {
 
         for (i, token) in self.iter().rev().enumerate() {
             if let Token::Function(value) = token {
-                results = Some((0..self.len() - (i + 1), WFuncVariant::Function(*value)));
+                results = Some((
+                    0..self.len() - (i + 1),
+                    WFuncVariant::Function(value.to_string()),
+                ));
             } else if let Token::Container(value) = token {
                 results = Some((
                     0..self.len() - (i + 1),
@@ -164,41 +262,44 @@ impl Utils for WTokens {
     }
 
     fn literal(&self) -> String {
-        fn convert(token: &Token) -> String {
-            match token {
-                Token::Value(x) => x.to_string(),
-                Token::Atom(x)
-                | Token::Special(x)
-                | Token::Container(x)
-                | Token::ContainerLiteral(x) => x.to_string(),
-                Token::Group(contents) => match token.is_string() {
-                    Some(x) => x,
-                    _ => format!("{{{}}}", contents.literal()),
-                },
-                _ => format!("{:?}", token),
-            }
-        }
-
         self.iter()
             .fold(String::new(), |acc, x| format!("{} {}", acc, convert(x)))
             .trim()
             .to_string()
     }
+
+    fn literal_enumerate(&self) -> (String, Vec<std::ops::Range<usize>>) {
+        self.iter().fold((String::new(), vec![]), |mut acc, x| {
+            let token_string = convert(x);
+
+            let mut token_range = 0..token_string.len();
+
+            if acc.0.is_empty() {
+                acc = (token_string, vec![token_range]);
+            } else {
+                token_range.start = acc.0.len() + 1;
+                acc.0 = format!("{} {}", acc.0, token_string);
+                token_range.end += token_range.start;
+                acc.1.push(token_range);
+            }
+
+            acc
+        })
+    }
 }
 
-pub fn as_wcode(arr: Vec<f64>) -> WTokens {
-    arr.iter().map(|&value| Token::Value(value)).collect()
+pub fn encode_string(string: &str) -> Token {
+    Token::Group(string.chars().map(Token::Char).collect::<Vec<_>>())
 }
 
 pub trait WFunc {
-    fn apply(&self, function: &WTokens, arr: &WTokens) -> WTokens;
+    fn resolve(&self, function: &WTokens, arr: &WTokens) -> WTokens;
 }
 
 impl WFunc for State {
-    fn apply(&self, function: &WTokens, arr: &WTokens) -> WTokens {
+    fn resolve(&self, function: &WTokens, arr: &WTokens) -> WTokens {
         let mut buffer = vec![];
         let reversed: WTokens = arr.iter().cloned().rev().collect();
-
         for token in function {
             match token {
                 Token::Parameter(range) => {
@@ -220,7 +321,7 @@ impl WFunc for State {
 
                     buffer.append(&mut slice);
                 }
-                Token::Group(x) => buffer.push(Token::Group(self.apply(x, arr))),
+                Token::Group(x) => buffer.push(Token::Group(self.resolve(x, arr))),
                 _ => buffer.push(token.clone()),
             }
         }

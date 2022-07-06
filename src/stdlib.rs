@@ -1,293 +1,233 @@
-use crate::models::{Token, Token::*, WFunc, WTokens};
-use crate::utils::{as_wcode, Utils};
+use crate::models::{State, Token, Token::*, WFunc, WTokens};
+use crate::utils::{convert, encode_string, type_of, Utils};
+use ariadne::Report;
 use itertools::Itertools;
 use phf::phf_map;
 
-fn sum(data: WTokens) -> WTokens {
-    let nums = data.as_nums();
-    as_wcode(vec![nums.iter().sum()])
+fn type_of_container(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    Ok(vec![encode_string(&type_of(&par[0]))])
 }
 
-fn add(mut data: WTokens) -> WTokens {
-    let x = data.get_par(2);
-    data.push(Value(
-        x.iter()
-            .map(|value| match value {
-                Value(content) => content,
-                _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
-            })
-            .sum(),
-    ));
-    data
+fn sum(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let x = if let Group(x) = &par[0] {
+        x
+    } else {
+        unimplemented!()
+    };
+
+    Ok(vec![Value(x.as_nums().iter().sum())])
 }
 
-fn sub(mut data: WTokens) -> WTokens {
-    let x = data.get_par(2);
-    let y = x
-        .iter()
-        .map(|value| match value {
-            Value(content) => content,
-            _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
-        })
-        .collect::<Vec<_>>();
-    let result = y[1] - y[0];
-    data.push(Value(result));
-    data
+fn add(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
+        (x, y)
+    } else {
+        unimplemented!()
+    };
+
+    Ok(vec![Token::Value(x + y)])
 }
 
-fn mul(mut data: WTokens) -> WTokens {
-    let x = data.get_par(2);
-    let y = x
-        .iter()
-        .map(|value| match value {
-            Value(content) => content,
-            _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
-        })
-        .collect::<Vec<_>>();
-    let result = y[1] * y[0];
-    data.push(Value(result));
-    data
+fn sub(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
+        (x, y)
+    } else {
+        unimplemented!()
+    };
+
+    Ok(vec![Value(y - x)])
 }
 
-fn div(mut data: WTokens) -> WTokens {
-    let x = data.get_par(2);
-    let y = x
-        .iter()
-        .map(|value| match value {
-            Value(content) => content,
-            _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
-        })
-        .collect::<Vec<_>>();
-    let result = y[1] / y[0];
-    data.push(Value(result));
-    data
+fn mul(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
+        (x, y)
+    } else {
+        unimplemented!()
+    };
+
+    Ok(vec![Value(x * y)])
 }
 
-fn modulo(mut data: WTokens) -> WTokens {
-    let x = data.get_par(2);
-    let y = x
-        .iter()
-        .map(|value| match value {
-            Value(content) => content,
-            _ => panic!("Incorrect type found. Found {:?} but expected Value", data),
-        })
-        .collect::<Vec<_>>();
-    let result = y[1] % y[0];
-    data.push(Value(result));
-    data
+fn div(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
+        (x, y)
+    } else {
+        unimplemented!()
+    };
+
+    Ok(vec![Value(y / x)])
 }
 
-fn len(data: WTokens) -> WTokens {
-    let length = data.len() as f64;
-    vec![Value(length)]
+fn modulo(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
+        (x, y)
+    } else {
+        unimplemented!()
+    };
+
+    Ok(vec![Value(y % x)])
 }
 
-fn reverse(data: WTokens) -> WTokens {
-    data.iter().rev().cloned().collect::<Vec<_>>()
+fn len(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let x = if let Group(x) = &par[0] {
+        x
+    } else {
+        unimplemented!()
+    };
+
+    Ok(vec![Value(x.len() as f64)])
 }
 
-fn output(data: WTokens) -> WTokens {
-    println!("{}", data.literal());
-    data
+fn reverse(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let x = if let Group(x) = &par[0] {
+        x
+    } else {
+        unimplemented!()
+    };
+
+    Ok(vec![Group(x.iter().rev().cloned().collect::<Vec<_>>())])
 }
 
-fn eq(mut data: WTokens) -> WTokens {
-    let par_arr = data.get_par(2);
-    let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
+fn output(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    println!("{}", convert(&par[0]));
+    Ok(vec![])
+}
 
-    let result = match parameters {
+fn eq(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let parameters: (Token, Token) = par.iter().cloned().collect_tuple().unwrap();
+
+    let equal = match parameters {
         (Value(x), Value(y)) => x == y,
         (Function(x), Function(y)) | (FunctionLiteral(x), FunctionLiteral(y)) => x == y,
         (Container(x), Container(y))
         | (Atom(x), Atom(y))
         | (ContainerLiteral(x), ContainerLiteral(y)) => x == y,
         (Parameter(x), Parameter(y)) => x == y,
-        _ => panic!("Incorrect tokens"),
+        _ => unimplemented!(),
     };
 
-    let token = Value(match result {
+    let result = Value(match equal {
         true => 1.0,
         false => 0.0,
     });
 
-    data.push(token);
-    data
+    Ok(vec![result])
 }
 
-fn or(mut data: WTokens) -> WTokens {
-    let par_arr = data.get_par(2);
-    let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
-
-    let token = Value(match parameters {
-        (Value(x), Value(y)) => match (x != 0.0) || (y != 0.0) {
-            true => 1.0,
-            _ => 0.0,
-        },
-        _ => 0.0,
-    });
-
-    data.push(token);
-    data
-}
-
-fn not(mut data: WTokens) -> WTokens {
-    let par = &data.get_par(1)[0];
-
-    let token = Value(match par {
-        Value(x) => {
-            if *x == 0.0 {
-                1.0
-            } else {
-                0.0
-            }
-        }
-        _ => panic!("Incorrect type found. Found {:?} but expected Value", par),
-    });
-
-    data.push(token);
-    data
-}
-
-fn and(mut data: WTokens) -> WTokens {
-    let par_arr = data.get_par(2);
-    let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
-
-    let token = Value(match parameters {
-        (Value(x), Value(y)) => match (x != 0.0) && (y != 0.0) {
-            true => 1.0,
-            _ => 0.0,
-        },
-        _ => 0.0,
-    });
-
-    data.push(token);
-    data
-}
-
-fn greater(mut data: WTokens) -> WTokens {
-    let par_arr = data.get_par(2);
-    let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
-
-    let token = Value(match parameters {
-        (Value(x), Value(y)) => match y > x {
-            true => 1.0,
-            _ => 0.0,
-        },
-        _ => 0.0,
-    });
-
-    data.push(token);
-    data
-}
-
-fn less(mut data: WTokens) -> WTokens {
-    let par_arr = data.get_par(2);
-    let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
-
-    let token = Value(match parameters {
-        (Value(x), Value(y)) => match y < x {
-            true => 1.0,
-            _ => 0.0,
-        },
-        _ => 0.0,
-    });
-
-    data.push(token);
-    data
-}
-
-fn if_else(mut data: WTokens) -> WTokens {
-    let par_arr = data.get_par(3);
-    let parameters: (Token, Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
-
-    let selected = match parameters.0 {
-        Value(x) => {
-            if x != 0.0 {
-                parameters.1
-            } else {
-                parameters.2
-            }
-        }
-
-        _ => parameters.2,
+fn or(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
+        (x, y)
+    } else {
+        unimplemented!()
     };
 
-    let mut convered = match selected {
-        Group(x) => x,
-        ContainerLiteral(x) => vec![Container(x)],
-        FunctionLiteral(x) => vec![Function(x)],
-        _ => vec![selected],
+    let result = if x.clone() == 1.0 || y.clone() == 1.0 {
+        Value(1.0)
+    } else {
+        Value(0.0)
     };
 
-    data.append(&mut convered);
-    data
+    Ok(vec![result])
 }
 
-fn expand(mut data: WTokens) -> WTokens {
-    let par_arr = data.get_par(2);
-    let parameters: (Token, Token) = par_arr.iter().cloned().collect_tuple().unwrap();
-
-    match parameters {
-        (Value(n), Group(group)) => {
-            for _ in 0..n as usize {
-                data.append(&mut group.clone())
-            }
-        }
-        _ => panic!(
-            "Incorrect type found. Found {:?} but expected (Value, Group)",
-            data
-        ),
-    }
-
-    data
-}
-
-fn release(mut data: WTokens) -> WTokens {
-    let par_arr = data.get_par(1);
-    let parameters = &par_arr[0];
-
-    match parameters {
-        Group(group) => data.append(&mut group.clone()),
-        _ => panic!("Incorrect type found. Found {:?} but expected Group", data),
+fn not(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let x = if let [Value(x)] = par.as_slice() {
+        x
+    } else {
+        unimplemented!()
     };
 
-    data
+    let result = if x.clone() != 0.0 {
+        Value(0.0)
+    } else {
+        Value(1.0)
+    };
+
+    Ok(vec![result])
 }
 
-fn axe(data: WTokens) -> WTokens {
-    data[..data.len() - 1].to_vec()
+fn and(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
+        (x, y)
+    } else {
+        unimplemented!()
+    };
+
+    let result = if x.clone() == 1.0 && y.clone() == 1.0 {
+        Value(1.0)
+    } else {
+        Value(0.0)
+    };
+
+    Ok(vec![result])
 }
 
-fn bundle(data: WTokens) -> WTokens {
-    vec![Group(data)]
+fn greater(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
+        (x, y)
+    } else {
+        unimplemented!()
+    };
+
+    let result = if x.clone() > y.clone() {
+        Value(1.0)
+    } else {
+        Value(0.0)
+    };
+
+    Ok(vec![result])
 }
 
-pub static FUNCTIONS: phf::Map<&'static str, WFunc> = phf_map! {
-    "sum" => sum,
-    "add" => add,
-    "sub" => sub,
-    "mul" => mul,
-    "div" => div,
-    "mod" => modulo,
-    "+" => add,
-    "-" => sub,
-    "*" => mul,
-    "/" => div,
-    "%" => modulo,
-    ">" => greater,
-    "<" => less,
-    "||" => or,
-    "or" => or,
-    "&&" => and,
-    "and" => and,
-    "not" => not,
-    "len" => len,
-    "reverse" => reverse,
-    "OUTPUT" => output,
-    "eq" => eq,
-    "if" => if_else,
-    "expand" => expand,
-    "release" => release,
-    "axe" => axe,
-    "bundle" => bundle
+fn less(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
+        (x, y)
+    } else {
+        unimplemented!()
+    };
+
+    let result = if x < y { Value(1.0) } else { Value(0.0) };
+
+    Ok(vec![result])
+}
+
+fn release(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let x = if let Group(x) = &par[0] {
+        x
+    } else {
+        unimplemented!()
+    };
+    Ok(x.clone())
+}
+
+fn axe(_state: &State, _: WTokens) -> Result<WTokens, Report> {
+    Ok(vec![])
+}
+
+pub static FUNCTIONS: phf::Map<&'static str, (WFunc, &[&'static str])> = phf_map! {
+    "type" => (type_of_container, &["Any"]),
+    "sum" => (sum, &["Group"]),
+    "add" => (add, &["Value", "Value"]),
+    "sub" => (sub, &["Value", "Value"]),
+    "mul" => (mul, &["Value", "Value"]),
+    "div" => (div, &["Value", "Value"]),
+    "mod" => (modulo, &["Value", "Value"]),
+    "+" => (add, &["Value", "Value"]),
+    "-" => (sub, &["Value", "Value"]),
+    "*" => (mul, &["Value", "Value"]),
+    "/" => (div, &["Value", "Value"]),
+    "%" => (modulo, &["Value", "Value"]),
+    ">" => (greater, &["Value", "Value"]),
+    "<" => (less, &["Value", "Value"]),
+    "||" => (or, &["Value", "Value"]),
+    "or" => (or, &["Value", "Value"]),
+    "&&" => (and, &["Value", "Value"]),
+    "and" => (and, &["Value", "Value"]),
+    "not" => (not, &["Value"]),
+    "len" => (len, &["Group"]),
+    "reverse" => (reverse, &["Group"]),
+    "OUTPUT" => (output, &["Any"]),
+    "=" => (eq, &["Any", "Any"]),
+    "eq" => (eq, &["Any", "Any"]),
+    "release" => (release, &[]),
+    "axe" => (axe, &["Any"]),
 };

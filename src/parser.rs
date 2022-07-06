@@ -1,195 +1,144 @@
-use crate::lexer::{expand_bracket, expand_string, macros};
-use crate::models::{Range, State, Token, WCode, WTokens};
+use crate::lexer::LexerToken as LToken;
+use crate::models::{State, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
 use crate::utils::Utils;
-use lazy_static::lazy_static;
-use phf::phf_set;
-use rayon::prelude::*;
-use regex::Regex;
-use substring::Substring;
+use ariadne::{Color, Label, Report, ReportKind, Source};
+use logos::{Logos, Span};
 
 pub trait WParser {
-    fn parser(&self, code: &str) -> Vec<WCode>;
+    fn parser(&self, code: Vec<(LToken, Span)>, reference: &str)
+        -> Result<Vec<WCode>, Vec<Report>>;
 }
 
-fn annotate(code: &str, containers: &[String]) -> WTokens {
-    lazy_static! {
-        static ref SPECIALS: phf::Set<&'static str> = phf_set! {
-            ")",
-            "(",
-            "}",
-            "{"
+impl WParser for State
+where
+    WTokens: Utils,
+{
+    fn parser(
+        &self,
+        mut code: Vec<(LToken, Span)>,
+        reference: &str,
+    ) -> Result<Vec<WCode>, Vec<Report>> {
+        let mut parsed: Vec<WCode> = vec![];
+        let mut current_container = WCode::default();
+        let parse = |s: &str| match self
+            .parser(LToken::lexer(s).spanned().collect::<Vec<_>>(), reference)
+        {
+            Ok(tokens) => Ok(tokens[0].default_case.clone()),
+            Err(errors) => Err(errors),
         };
-        static ref FULL: Regex = Regex::new(r"(\d+)..(\d+)").unwrap();
-        static ref FROM: Regex = Regex::new(r"..(\d+)").unwrap();
-        static ref TO: Regex = Regex::new(r"(\d+)..").unwrap();
-        static ref EXACT: Regex = Regex::new(r"(\d+)").unwrap();
-    }
+        let mut errors: Vec<Report> = vec![];
 
-    let mut annotated: WTokens = code
-        .split(' ')
-        .collect::<Vec<_>>()
-        .par_iter()
-        .map(|x| match x.parse::<f64>() {
-            Ok(n) => Token::Value(n),
-            Err(_) => {
-                let cleared = x.chars().filter(|&x| x != '\n').collect::<String>();
-                let chars = cleared.chars();
+        code = code.iter().fold(vec![], |acc, x| {
+            let mut new = acc.clone();
 
-                if containers.iter().any(|name| *name == cleared) {
-                    Token::Container(cleared)
-                } else if cleared.len() > 1 && chars.clone().next().unwrap() == '$' {
-                    if let Some(captures) = FULL.captures(&cleared) {
-                        let caps: Vec<usize> = [1, 2]
-                            .iter()
-                            .map(|&x| captures.get(x).unwrap().as_str().parse::<usize>().unwrap())
-                            .collect();
-
-                        Token::Parameter(Range::Full(caps[1]..=caps[0]))
-                    } else if let Some(captures) = TO.captures(&cleared) {
-                        let cap = captures.get(1).unwrap().as_str().parse::<usize>().unwrap();
-
-                        Token::Parameter(Range::From(..cap))
-                    } else if let Some(captures) = FROM.captures(&cleared) {
-                        let cap = captures.get(1).unwrap().as_str().parse::<usize>().unwrap();
-
-                        Token::Parameter(Range::To(cap..))
-                    } else if let Some(captures) = EXACT.captures(&cleared) {
-                        let value = captures.get(1).unwrap().as_str().parse::<usize>().unwrap();
-
-                        Token::Parameter(Range::Full(value..=value))
-                    } else {
-                        Token::Atom(cleared)
-                    }
-                } else if cleared.len() > 2
-                    && chars.clone().next().unwrap() == '`'
-                    && chars.clone().last().unwrap() == '`'
-                {
-                    let slice = cleared.substring(1, cleared.len() - 1);
-
-                    if containers.iter().any(|name| *name == slice) {
-                        Token::ContainerLiteral(slice.to_string())
-                    } else {
-                        Token::FunctionLiteral(
-                            *FUNCTIONS
-                                .get(slice)
-                                .unwrap_or_else(|| panic!("Unknown function: {:?}", slice)),
-                        )
-                    }
-                } else if cleared.len() == 3
-                    && chars.clone().next().unwrap() == '\''
-                    && chars.clone().last().unwrap() == '\''
-                {
-                    Token::Char(chars.clone().nth(1).unwrap())
-                } else if SPECIALS.contains(&cleared) {
-                    Token::Special(cleared)
-                } else {
-                    match FUNCTIONS.get(&cleared) {
-                        Some(x) => Token::Function(*x),
-                        None => Token::Atom(x.to_string()),
-                    }
-                }
-            }
-        })
-        .collect();
-
-    annotated.bundle_groups()
-}
-
-impl WParser for State {
-    fn parser(&self, code: &str) -> Vec<WCode> {
-        let cleaned = macros(expand_string(expand_bracket(code.to_string())));
-
-        let container_symbols = [" <- ", " <-|", " -> "];
-
-        let mut containers: Vec<String> = self.keys().cloned().collect();
-
-        let mut section_buffer: String = "".to_string();
-        let mut sectioned_code: Vec<String> = vec![];
-
-        for line in cleaned.split('\n').filter(|&x| x.trim() != "") {
-            let re_result: Vec<bool> = container_symbols.iter().map(|x| line.contains(x)).collect();
-
-            if re_result[1] && section_buffer.is_empty() {
-                section_buffer.push_str(line);
-            } else if re_result[2] && !section_buffer.is_empty() {
-                section_buffer.push_str(format!("\n{}", line).as_str());
-            } else if !section_buffer.is_empty() {
-                section_buffer.push_str(format!("\n{}", line).as_str());
-                sectioned_code.push(section_buffer);
-                section_buffer = String::new();
-            } else {
-                sectioned_code.push(line.to_string());
-            }
-        }
-
-        if !section_buffer.is_empty() {
-            sectioned_code.push(section_buffer);
-        }
-
-        sectioned_code
-            .iter()
-            .filter(|&x| x.trim() != "" && x != "\n")
-            .map(|block| {
-                let find_results = container_symbols
-                    .iter()
-                    .map(|x| block.find(x).map(|start| start..(start + x.len())))
-                    .collect::<Vec<Option<std::ops::Range<usize>>>>();
-
-                let find_slice = find_results.as_slice();
-
-                match find_slice {
-                    [Some(pos), None, None] => {
-                        let container = block[..pos.start].to_string();
-                        let code = block[pos.end..].to_string();
-                        containers.push(container.clone());
-
-                        let default_case = annotate(&code, &containers);
-
-                        WCode {
-                            container: Some(container),
-                            cases: None,
-                            default_case,
-                        }
-                    }
-                    [None, Some(match_begin), _] => {
-                        let container = block[..match_begin.start].to_string();
-                        containers.push(container.clone());
-
-                        let mut cases: Vec<String> = block[match_begin.end..]
-                            .split('\n')
-                            .filter(|&x| x.trim() != "" && x != "\n")
-                            .map(|x| String::from(x.trim()))
-                            .filter(|x| !x.contains(container_symbols[1]))
-                            .collect();
-
-                        let default: String = cases.pop().unwrap();
-
-                        let other_cases: Vec<(WTokens, WTokens)> = cases
-                            .iter()
-                            .map(|x| {
-                                let sep: Vec<WTokens> = x
-                                    .split(container_symbols[2])
-                                    .map(|y| annotate(y, &containers))
-                                    .collect();
-
-                                (sep[0].clone(), sep[1].clone())
-                            })
-                            .collect();
-
-                        WCode {
-                            container: Some(container),
-                            cases: Some(other_cases),
-                            default_case: annotate(&default, &containers),
-                        }
-                    }
-                    _ => WCode {
-                        container: None,
-                        cases: None,
-                        default_case: annotate(block, &containers),
+            if acc.is_empty() {
+                new.push(x.clone());
+            } else if let ((LToken::Error, span), (LToken::Error, span_current)) =
+                (acc[acc.len() - 1].clone(), x.clone())
+            {
+                new[acc.len() - 1] = (
+                    LToken::Error,
+                    Span {
+                        start: span.start,
+                        end: span_current.end,
                     },
+                )
+            } else {
+                new.push(x.clone());
+            }
+            new
+        });
+
+        for (token, span) in code {
+            if let LToken::Newline = token {
+                if current_container != WCode::default() {
+                    if let Some(cases) = current_container.cases {
+                        current_container.cases = Some(
+                            cases
+                                .clone()
+                                .iter()
+                                .map(|(x, y)| {
+                                    (x.clone().bundle_groups(), y.clone().bundle_groups())
+                                })
+                                .collect::<Vec<_>>(),
+                        );
+                    }
+
+                    current_container.default_case = current_container.default_case.bundle_groups();
+
+                    parsed.push(current_container)
                 }
-            })
-            .collect()
+
+                current_container = WCode::default();
+            } else if let LToken::BooleanGuard(name) | LToken::Assignment(name) = token {
+                current_container.container = Some(name)
+            } else if let LToken::GuardOption((x, y)) = token {
+                let mut cases: Vec<(WTokens, WTokens)> = match current_container.cases.clone() {
+                    Some(x) => x,
+                    _ => vec![],
+                };
+
+                match (parse(&x), parse(&y)) {
+                    (Ok(token_x), Ok(token_y)) => {
+                        cases.push((token_x, token_y));
+                        current_container.cases = Some(cases);
+                    }
+                    (Err(mut result_x), Err(mut result_y)) => {
+                        errors.append(&mut result_x);
+                        errors.append(&mut result_y)
+                    }
+                    (Err(mut result_x), Ok(_)) => errors.append(&mut result_x),
+                    (Ok(_), Err(mut result_y)) => errors.append(&mut result_y),
+                };
+            } else if let LToken::GuardDefault(default) = token {
+                match parse(&default) {
+                    Ok(default_case) => current_container.default_case = default_case,
+                    Err(mut results) => errors.append(&mut results),
+                }
+            } else if let LToken::Token(x) = token {
+                current_container.default_case.push(x)
+            } else if let LToken::Assignment(name) = token {
+                current_container.container = Some(name)
+            } else if let LToken::Function(func) = token {
+                if FUNCTIONS.get(&func).is_some() {
+                    current_container.default_case.push(Token::Function(func))
+                } else {
+                    current_container.default_case.push(Token::Container(func))
+                }
+            } else if let LToken::FunctionLiteral(func) = token {
+                if FUNCTIONS.get(&func).is_some() {
+                    current_container
+                        .default_case
+                        .push(Token::FunctionLiteral(func))
+                } else {
+                    current_container
+                        .default_case
+                        .push(Token::ContainerLiteral(func))
+                }
+            } else if let LToken::Error = token {
+                errors.push(
+                    Report::build(ReportKind::Error)
+                        .with_message("Unknown Token")
+                        .with_label(
+                            Label::new(span)
+                                .with_message("The parser can not identify this token.")
+                                .with_color(Color::Red),
+                        )
+                        .with_source(Source::from(reference))
+                        .finish(),
+                )
+            }
+        }
+
+        if current_container != WCode::default() {
+            parsed.push(current_container)
+        }
+
+        if !errors.is_empty() {
+            Err(errors)
+        } else {
+            Ok(parsed)
+        }
     }
 }
