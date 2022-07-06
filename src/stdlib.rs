@@ -226,6 +226,7 @@ pub static FUNCTIONS: phf::Map<&'static str, (WFunc, &[&'static str])> = phf_map
     "len" => (len, &["Group"]),
     "reverse" => (reverse, &["Group"]),
     "OUTPUT" => (output, &["Any"]),
+    "=" => (eq, &["Any", "Any"]),
     "eq" => (eq, &["Any", "Any"]),
     "release" => (release, &[]),
     "axe" => (axe, &["Any"]),
