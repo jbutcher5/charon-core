@@ -3,19 +3,16 @@ use ariadne::{Color, Label, Report, ReportBuilder, ReportKind, Source};
 use crate::models::{Range, State, Token, WFuncVariant, WTokens};
 use crate::stdlib::FUNCTIONS;
 
-fn convert(token: &Token) -> String {
+pub fn convert(token: &Token) -> String {
     match token {
         Token::Value(x) => x.to_string(),
-        Token::Atom(x)
-        | Token::Special(x)
-        | Token::Container(x)
-        | Token::ContainerLiteral(x)
-        | Token::Function(x) => x.to_string(),
+        Token::Atom(x) => format!(":{}", x),
+        Token::Special(x) | Token::Container(x) | Token::Function(x) => x.to_string(),
         Token::Group(contents) => match token.is_string() {
-            Some(x) => x,
+            Some(x) => x.to_string(),
             _ => format!("{{{}}}", contents.literal()),
         },
-        Token::FunctionLiteral(x) => format!("`{}`", x),
+        Token::FunctionLiteral(x) | Token::ContainerLiteral(x) => format!("`{}`", x),
         _ => format!("{:?}", token),
     }
 }
@@ -92,7 +89,7 @@ impl Utils for WTokens {
                             )
                         } else {
                             final_report = Some(
-                                Report::build(ReportKind::Error, (), 0)
+                                Report::build(ReportKind::Error)
                                     .with_message("Mismatched Types")
                                     .with_label(
                                         Label::new(literal.1[literal.1.len() - index - 2].clone())
@@ -108,7 +105,7 @@ impl Utils for WTokens {
                     }
                 }
                 None => {
-                    let mut report = Report::build(ReportKind::Error, (), 0)
+                    let mut report = Report::build(ReportKind::Error)
                         .with_message("Missing Parameters")
                         .with_label(
                             Label::new(literal.1[literal.1.len() - 1].clone())
@@ -274,6 +271,7 @@ impl Utils for WTokens {
     fn literal_enumerate(&self) -> (String, Vec<std::ops::Range<usize>>) {
         self.iter().fold((String::new(), vec![]), |mut acc, x| {
             let token_string = convert(x);
+
             let mut token_range = 0..token_string.len();
 
             if acc.0.is_empty() {
