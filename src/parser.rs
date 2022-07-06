@@ -118,7 +118,7 @@ where
                 }
             } else if let LToken::Error = token {
                 errors.push(
-                    Report::build(ReportKind::Error, (), 0)
+                    Report::build(ReportKind::Error)
                         .with_message("Unknown Token")
                         .with_label(
                             Label::new(span)
