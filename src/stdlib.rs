@@ -1,6 +1,5 @@
-use crate::models::State;
-use crate::models::{Token, Token::*, WFunc, WTokens};
-use crate::utils::{encode_string, type_of, Utils};
+use crate::models::{State, Token, Token::*, WFunc, WTokens};
+use crate::utils::{convert, encode_string, type_of, Utils};
 use ariadne::Report;
 use itertools::Itertools;
 use phf::phf_map;
@@ -90,7 +89,7 @@ fn reverse(_state: &State, par: WTokens) -> Result<WTokens, Report> {
 }
 
 fn output(_state: &State, par: WTokens) -> Result<WTokens, Report> {
-    println!("{:?}", &par[0]);
+    println!("{}", convert(&par[0]));
     Ok(vec![])
 }
 
