@@ -13,8 +13,8 @@ dependencies = [
 
 [[package]]
 name = "ariadne"
-version = "0.1.5"
-source = "git+https://github.com/Wlanguage/ariadne?rev=e0b5961#e0b5961489c927ddca57473195a514d07ddab3e9"
+version = "0.1.6"
+source = "git+https://github.com/Wlanguage/ariadne?rev=c27cf59#c27cf59b0af07da5703a1a203798daba557b8712"
 dependencies = [
  "yansi",
 ]
