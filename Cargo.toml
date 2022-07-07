@@ -1,5 +1,5 @@
 [package]
-name = "wcore"
+name = "charon"
 version = "0.6.0-rc.1"
 edition = "2021"
 authors = ["James Butcher <jamesbutcher167@gmail.com>"]

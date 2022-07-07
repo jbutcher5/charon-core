@@ -82,6 +82,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "charon"
+version = "0.6.0-rc.1"
+dependencies = [
+ "ariadne",
+ "criterion",
+ "itertools",
+ "lazy_static",
+ "logos",
+ "phf",
+ "rayon",
+ "regex",
+ "substring",
+]
+
+[[package]]
 name = "clap"
 version = "2.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -735,21 +750,6 @@ name = "wasm-bindgen-shared"
 version = "0.2.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d554b7f530dee5964d9a9468d95c1f8b8acae4f282807e7d27d4b03099a46744"
-
-[[package]]
-name = "wcore"
-version = "0.6.0-rc.1"
-dependencies = [
- "ariadne",
- "criterion",
- "itertools",
- "lazy_static",
- "logos",
- "phf",
- "rayon",
- "regex",
- "substring",
-]
 
 [[package]]
 name = "web-sys"
