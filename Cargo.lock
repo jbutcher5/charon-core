@@ -12,14 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ariadne"
-version = "0.1.6"
-source = "git+https://github.com/Wlanguage/ariadne?rev=c27cf59#c27cf59b0af07da5703a1a203798daba557b8712"
-dependencies = [
- "yansi",
-]
-
-[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -85,7 +77,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 name = "charon"
 version = "0.6.0-rc.1"
 dependencies = [
- "ariadne",
+ "charon_ariadne",
  "criterion",
  "itertools",
  "lazy_static",
@@ -94,6 +86,15 @@ dependencies = [
  "rayon",
  "regex",
  "substring",
+]
+
+[[package]]
+name = "charon_ariadne"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ea7086d27f05038de0ffbdfe4d0e9ac4e1127a0e1ecfcc9b491bd787735c1d9b"
+dependencies = [
+ "yansi",
 ]
 
 [[package]]

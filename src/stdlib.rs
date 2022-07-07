@@ -1,6 +1,6 @@
 use crate::models::{State, Token, Token::*, WFunc, WTokens};
 use crate::utils::{convert, encode_string, type_of, Utils};
-use ariadne::Report;
+use charon_ariadne::Report;
 use itertools::Itertools;
 use phf::phf_map;
 

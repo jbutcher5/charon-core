@@ -1,4 +1,4 @@
-use ariadne::{Color, Label, Report, ReportBuilder, ReportKind, Source};
+use charon_ariadne::{Color, Label, Report, ReportBuilder, ReportKind, Source};
 
 use crate::models::{Range, State, Token, WFuncVariant, WTokens};
 use crate::stdlib::FUNCTIONS;

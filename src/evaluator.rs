@@ -5,7 +5,7 @@ use crate::stdlib::FUNCTIONS;
 use crate::utils::{Utils, WFunc};
 use itertools::Itertools;
 
-use ariadne::Report;
+use charon_ariadne::Report;
 use logos::Logos;
 
 pub trait WEval {

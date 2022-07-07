@@ -18,7 +18,7 @@ itertools = "0.10.3"
 rayon = "1.5.1"
 criterion = "0.3.5"
 logos = "0.12.0"
-ariadne = { git = "https://github.com/Wlanguage/ariadne", rev = "c27cf59" }
+charon_ariadne = "0.1.0"
 
 [[bench]]
 name = "core_bench"

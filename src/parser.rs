@@ -2,7 +2,7 @@ use crate::lexer::LexerToken as LToken;
 use crate::models::{State, Token, WCode, WTokens};
 use crate::stdlib::FUNCTIONS;
 use crate::utils::Utils;
-use ariadne::{Color, Label, Report, ReportKind, Source};
+use charon_ariadne::{Color, Label, Report, ReportKind, Source};
 use logos::{Logos, Span};
 
 pub trait WParser {

@@ -1,4 +1,4 @@
-use ariadne::Report;
+use charon_ariadne::Report;
 use std::collections::HashMap;
 use std::fmt;
 
