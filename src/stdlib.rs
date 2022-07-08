@@ -121,7 +121,7 @@ fn or(_state: &State, par: WTokens) -> Result<WTokens, Report> {
         unimplemented!()
     };
 
-    let result = if x.clone() == 1.0 || y.clone() == 1.0 {
+    let result = if *x == 1.0 || *y == 1.0 {
         Value(1.0)
     } else {
         Value(0.0)
@@ -137,7 +137,7 @@ fn not(_state: &State, par: WTokens) -> Result<WTokens, Report> {
         unimplemented!()
     };
 
-    let result = if x.clone() != 0.0 {
+    let result = if *x != 0.0 {
         Value(0.0)
     } else {
         Value(1.0)
@@ -153,7 +153,7 @@ fn and(_state: &State, par: WTokens) -> Result<WTokens, Report> {
         unimplemented!()
     };
 
-    let result = if x.clone() == 1.0 && y.clone() == 1.0 {
+    let result = if *x == 1.0 && *y == 1.0 {
         Value(1.0)
     } else {
         Value(0.0)
@@ -169,7 +169,7 @@ fn greater(_state: &State, par: WTokens) -> Result<WTokens, Report> {
         unimplemented!()
     };
 
-    let result = if x.clone() > y.clone() {
+    let result = if *x > *y {
         Value(1.0)
     } else {
         Value(0.0)
