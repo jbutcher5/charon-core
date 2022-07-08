@@ -72,7 +72,11 @@ impl Utils for WTokens {
         for (index, token_type) in paramerters.clone().enumerate() {
             match self.pop() {
                 Some(content) => {
-                    if *token_type == "Any" || type_of(&content) == *token_type {
+                    if *token_type == "Any"
+                        || type_of(&content) == *token_type
+                        || (*token_type == "Literal" && (
+                            type_of(&content) == "FunctionLiteral" || type_of(&content) == "ContainerLiteral"))
+                    {
                         result.push(content)
                     } else {
                         if let Some(report) = final_report {
