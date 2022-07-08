@@ -203,6 +203,14 @@ fn axe(_state: &State, _: WTokens) -> Result<WTokens, Report> {
     Ok(vec![])
 }
 
+fn call(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    Ok(vec![match &par[0] {
+        ContainerLiteral(x) => Container(x.to_string()),
+        FunctionLiteral(x) => Function(x.to_string()),
+        _ => unimplemented!(),
+    }])
+}
+
 pub static FUNCTIONS: phf::Map<&'static str, (WFunc, &[&'static str])> = phf_map! {
     "type" => (type_of_container, &["Any"]),
     "sum" => (sum, &["Group"]),
@@ -230,5 +238,6 @@ pub static FUNCTIONS: phf::Map<&'static str, (WFunc, &[&'static str])> = phf_map
     "eq" => (eq, &["Any", "Any"]),
     "release" => (release, &[]),
     "axe" => (axe, &["Any"]),
-    "swap" => (|_, par| Ok(par), &["Any", "Any"])
+    "swap" => (|_, par| Ok(par), &["Any", "Any"]),
+    "call" => (call, &["Literal"]),
 };
