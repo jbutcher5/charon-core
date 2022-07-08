@@ -1,5 +1,6 @@
 use crate::models::{State, Token, Token::*, WFunc, WTokens};
 use crate::utils::{convert, encode_string, type_of, Utils};
+use crate::evaluator::WEval;
 use charon_ariadne::Report;
 use itertools::Itertools;
 use phf::phf_map;
@@ -211,6 +212,23 @@ fn call(_state: &State, par: WTokens) -> Result<WTokens, Report> {
     }])
 }
 
+fn map(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    let deref = &call(_state, vec![par[0].clone()])?[0];
+
+    let elements: Vec<Token> = if let Group(x) = &par[1] {
+        x.to_vec()
+    } else {
+        unimplemented!()
+    };
+
+    let mut result = vec![];
+    for element in elements {
+        result = [result, _state.eval(vec![element, deref.clone()])?].concat();
+    }
+
+    Ok(vec![Group(result)])
+}
+
 pub static FUNCTIONS: phf::Map<&'static str, (WFunc, &[&'static str])> = phf_map! {
     "type" => (type_of_container, &["Any"]),
     "sum" => (sum, &["Group"]),
@@ -240,4 +258,5 @@ pub static FUNCTIONS: phf::Map<&'static str, (WFunc, &[&'static str])> = phf_map
     "axe" => (axe, &["Any"]),
     "swap" => (|_, par| Ok(par), &["Any", "Any"]),
     "call" => (call, &["Literal"]),
+    "map" => (map, &["Literal", "Group"])
 };
