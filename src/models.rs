@@ -30,7 +30,7 @@ pub struct WCode {
     pub default_case: WTokens,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Range {
     Full(std::ops::RangeInclusive<usize>),
     To(std::ops::RangeFrom<usize>),
