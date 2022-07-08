@@ -9,7 +9,7 @@ pub fn convert(token: &Token) -> String {
         Token::Atom(x) => format!(":{}", x),
         Token::Special(x) | Token::Container(x) | Token::Function(x) => x.to_string(),
         Token::Group(contents) => match token.is_string() {
-            Some(x) => x.to_string(),
+            Some(x) => x,
             _ => format!("{{{}}}", contents.literal()),
         },
         Token::FunctionLiteral(x) | Token::ContainerLiteral(x) => format!("`{}`", x),
@@ -74,14 +74,28 @@ impl Utils for WTokens {
                 Some(content) => {
                     if *token_type == "Any"
                         || type_of(&content) == *token_type
-                        || (*token_type == "Literal" && (
-                            type_of(&content) == "FunctionLiteral" || type_of(&content) == "ContainerLiteral"))
+                        || (*token_type == "Literal"
+                            && (type_of(&content) == "FunctionLiteral"
+                                || type_of(&content) == "ContainerLiteral"))
                     {
                         result.push(content)
+                    } else if let Some(report) = final_report {
+                        final_report = Some(
+                            report.with_label(
+                                Label::new(literal.1[literal.1.len() - index - 2].clone())
+                                    .with_message(format!(
+                                        "This has the type of {} but expected {}.",
+                                        type_of(&content),
+                                        *token_type
+                                    ))
+                                    .with_color(Color::Red),
+                            ),
+                        )
                     } else {
-                        if let Some(report) = final_report {
-                            final_report = Some(
-                                report.with_label(
+                        final_report = Some(
+                            Report::build(ReportKind::Error)
+                                .with_message("Mismatched Types")
+                                .with_label(
                                     Label::new(literal.1[literal.1.len() - index - 2].clone())
                                         .with_message(format!(
                                             "This has the type of {} but expected {}.",
@@ -90,22 +104,7 @@ impl Utils for WTokens {
                                         ))
                                         .with_color(Color::Red),
                                 ),
-                            )
-                        } else {
-                            final_report = Some(
-                                Report::build(ReportKind::Error)
-                                    .with_message("Mismatched Types")
-                                    .with_label(
-                                        Label::new(literal.1[literal.1.len() - index - 2].clone())
-                                            .with_message(format!(
-                                                "This has the type of {} but expected {}.",
-                                                type_of(&content),
-                                                *token_type
-                                            ))
-                                            .with_color(Color::Red),
-                                    ),
-                            )
-                        }
+                        )
                     }
                 }
                 None => {
