@@ -36,6 +36,7 @@ pub trait Utils {
     fn as_nums(&self) -> Vec<f64>;
     fn first_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)>;
     fn bundle_groups(&mut self) -> WTokens;
+    fn bundle_lists(&mut self) -> WTokens;
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)>;
     fn skin_content(&mut self);
     fn literal(&self) -> String;
@@ -202,6 +203,20 @@ impl Utils for WTokens {
                 self.splice(x..y + 1, vec![token_group]);
                 match self.special_pairs("{", "}") {
                     Some(_) => self.bundle_groups(),
+                    None => self.to_owned(),
+                }
+            }
+            None => self.to_owned(),
+        }
+    }
+
+    fn bundle_lists(&mut self) -> WTokens {
+        match self.special_pairs("[", "]") {
+            Some((x, y)) => {
+                let token_list= Token::List(self[x + 1..y].to_vec().bundle_lists());
+                self.splice(x..y + 1, vec![token_list]);
+                match self.special_pairs("[", "]") {
+                    Some(_) => self.bundle_lists(),
                     None => self.to_owned(),
                 }
             }

@@ -59,13 +59,13 @@ where
                                 .clone()
                                 .iter()
                                 .map(|(x, y)| {
-                                    (x.clone().bundle_groups(), y.clone().bundle_groups())
+                                    (x.clone().bundle_groups().bundle_lists(), y.clone().bundle_groups().bundle_lists())
                                 })
                                 .collect::<Vec<_>>(),
                         );
                     }
 
-                    current_container.default_case = current_container.default_case.bundle_groups();
+                    current_container.default_case = current_container.default_case.bundle_groups().bundle_lists();
 
                     parsed.push(current_container)
                 }

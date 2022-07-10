@@ -15,6 +15,7 @@ pub enum Token {
     Char(char),
     Special(String),
     Group(Vec<Token>),
+    List(Vec<Token>)
 }
 
 impl fmt::Display for Token {
