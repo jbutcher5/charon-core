@@ -221,6 +221,15 @@ fn map(_state: &State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![List(result)])
 }
 
+
+fn lambda(_state: &State, par: WTokens) -> Result<WTokens, Report> {
+    if let List(x) = &par[0] {
+        Ok(vec![Lambda(x.to_vec())])
+    } else {
+        unimplemented!()
+    }
+}
+
 pub static COMPLEX_TYPES: phf::Map<&'static str, &[&'static str]> = phf_map! {
     "Literal" => &["FunctionLiteral", "ContainerLiteral"],
     "Iterable" => &["Group", "List"],
@@ -253,5 +262,6 @@ pub static FUNCTIONS: phf::Map<&'static str, (WFunc, &[&'static str])> = phf_map
     "axe" => (axe, &["Any"]),
     "swap" => (|_, par| Ok(par), &["Any", "Any"]),
     "call" => (call, &["Literal"]),
-    "map" => (map, &["Literal", "Iterable"])
+    "map" => (map, &["Literal", "Iterable"]),
+    "lambda" => (lambda, &["List"])
 };
