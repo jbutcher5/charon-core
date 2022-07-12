@@ -80,13 +80,13 @@ fn len(_state: &State, par: WTokens) -> Result<WTokens, Report> {
 }
 
 fn reverse(_state: &State, par: WTokens) -> Result<WTokens, Report> {
-    let x = if let Group(x) | List(x) = &par[0] {
-        x
+    if let Group(x) = &par[0] {
+        Ok(vec![Group(x.iter().rev().cloned().collect::<Vec<_>>())])
+    } else if let List(x) = &par[0] {
+        Ok(vec![List(x.iter().rev().cloned().collect::<Vec<_>>())])
     } else {
         unimplemented!()
-    };
-
-    Ok(vec![Group(x.iter().rev().cloned().collect::<Vec<_>>())])
+    }
 }
 
 fn output(_state: &State, par: WTokens) -> Result<WTokens, Report> {
