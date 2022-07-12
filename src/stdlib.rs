@@ -1,6 +1,6 @@
+use crate::evaluator::WEval;
 use crate::models::{State, Token, Token::*, WFunc, WTokens};
 use crate::utils::{convert, encode_string, type_of, Utils};
-use crate::evaluator::WEval;
 use charon_ariadne::Report;
 use itertools::Itertools;
 use phf::phf_map;
@@ -138,11 +138,7 @@ fn not(_state: &State, par: WTokens) -> Result<WTokens, Report> {
         unimplemented!()
     };
 
-    let result = if *x != 0.0 {
-        Value(0.0)
-    } else {
-        Value(1.0)
-    };
+    let result = if *x != 0.0 { Value(0.0) } else { Value(1.0) };
 
     Ok(vec![result])
 }
@@ -170,11 +166,7 @@ fn greater(_state: &State, par: WTokens) -> Result<WTokens, Report> {
         unimplemented!()
     };
 
-    let result = if *x > *y {
-        Value(1.0)
-    } else {
-        Value(0.0)
-    };
+    let result = if *x > *y { Value(1.0) } else { Value(0.0) };
 
     Ok(vec![result])
 }
