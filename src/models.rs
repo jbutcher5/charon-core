@@ -9,6 +9,8 @@ pub enum Token {
     FunctionLiteral(String),
     Container(String),
     ContainerLiteral(String),
+    Lambda(Vec<Token>),
+    ActiveLambda(Vec<Token>),
     Parameter(Range),
     Range(Range),
     Atom(String),
