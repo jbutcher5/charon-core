@@ -1,7 +1,7 @@
 use charon_ariadne::{Color, Label, Report, ReportBuilder, ReportKind, Source};
 
 use crate::models::{Range, State, Token, WFuncVariant, WTokens};
-use crate::stdlib::FUNCTIONS;
+use crate::stdlib::{COMPLEX_TYPES, FUNCTIONS};
 
 pub fn convert(token: &Token) -> String {
     match token {
@@ -12,6 +12,7 @@ pub fn convert(token: &Token) -> String {
             Some(x) => x,
             _ => format!("{{{}}}", contents.literal()),
         },
+        Token::List(contents) => format!("[{}]", contents.literal()),
         Token::FunctionLiteral(x) | Token::ContainerLiteral(x) => format!("`{}`", x),
         _ => format!("{:?}", token),
     }
@@ -73,14 +74,17 @@ impl Utils for WTokens {
         for (index, token_type) in paramerters.clone().enumerate() {
             match self.pop() {
                 Some(content) => {
-                    if *token_type == "Any"
-                        || type_of(&content) == *token_type
-                        || (*token_type == "Literal"
-                            && (type_of(&content) == "FunctionLiteral"
-                                || type_of(&content) == "ContainerLiteral"))
-                    {
-                        result.push(content)
-                    } else if let Some(report) = final_report {
+                    if *token_type == "Any" || type_of(&content) == *token_type {
+                        result.push(content);
+                        continue;
+                    } else if let Some(complex_type) = COMPLEX_TYPES.get(token_type) {
+                        if complex_type.contains(&type_of(&content).as_str()) {
+                            result.push(content);
+                            continue;
+                        }
+                    }
+
+                    if let Some(report) = final_report {
                         final_report = Some(
                             report.with_label(
                                 Label::new(literal.1[literal.1.len() - index - 2].clone())
@@ -213,7 +217,7 @@ impl Utils for WTokens {
     fn bundle_lists(&mut self) -> WTokens {
         match self.special_pairs("[", "]") {
             Some((x, y)) => {
-                let token_list= Token::List(self[x + 1..y].to_vec().bundle_lists());
+                let token_list = Token::List(self[x + 1..y].to_vec().bundle_lists());
                 self.splice(x..y + 1, vec![token_list]);
                 match self.special_pairs("[", "]") {
                     Some(_) => self.bundle_lists(),

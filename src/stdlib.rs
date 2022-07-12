@@ -10,7 +10,7 @@ fn type_of_container(_state: &State, par: WTokens) -> Result<WTokens, Report> {
 }
 
 fn sum(_state: &State, par: WTokens) -> Result<WTokens, Report> {
-    let x = if let Group(x) = &par[0] {
+    let x = if let Group(x) | List(x) = &par[0] {
         x
     } else {
         unimplemented!()
@@ -70,7 +70,7 @@ fn modulo(_state: &State, par: WTokens) -> Result<WTokens, Report> {
 }
 
 fn len(_state: &State, par: WTokens) -> Result<WTokens, Report> {
-    let x = if let Group(x) = &par[0] {
+    let x = if let Group(x) | List(x) = &par[0] {
         x
     } else {
         unimplemented!()
@@ -80,7 +80,7 @@ fn len(_state: &State, par: WTokens) -> Result<WTokens, Report> {
 }
 
 fn reverse(_state: &State, par: WTokens) -> Result<WTokens, Report> {
-    let x = if let Group(x) = &par[0] {
+    let x = if let Group(x) | List(x) = &par[0] {
         x
     } else {
         unimplemented!()
@@ -215,7 +215,7 @@ fn call(_state: &State, par: WTokens) -> Result<WTokens, Report> {
 fn map(_state: &State, par: WTokens) -> Result<WTokens, Report> {
     let deref = &call(_state, vec![par[0].clone()])?[0];
 
-    let elements: Vec<Token> = if let Group(x) = &par[1] {
+    let elements: Vec<Token> = if let Group(x) | List(x) = &par[1] {
         x.to_vec()
     } else {
         unimplemented!()
@@ -226,12 +226,17 @@ fn map(_state: &State, par: WTokens) -> Result<WTokens, Report> {
         result = [result, _state.eval(vec![element, deref.clone()])?].concat();
     }
 
-    Ok(vec![Group(result)])
+    Ok(vec![List(result)])
 }
+
+pub static COMPLEX_TYPES: phf::Map<&'static str, &[&'static str]> = phf_map! {
+    "Literal" => &["FunctionLiteral", "ContainerLiteral"],
+    "Iterable" => &["Group", "List"],
+};
 
 pub static FUNCTIONS: phf::Map<&'static str, (WFunc, &[&'static str])> = phf_map! {
     "type" => (type_of_container, &["Any"]),
-    "sum" => (sum, &["Group"]),
+    "sum" => (sum, &["Iterable"]),
     "add" => (add, &["Value", "Value"]),
     "sub" => (sub, &["Value", "Value"]),
     "mul" => (mul, &["Value", "Value"]),
@@ -249,8 +254,8 @@ pub static FUNCTIONS: phf::Map<&'static str, (WFunc, &[&'static str])> = phf_map
     "&&" => (and, &["Value", "Value"]),
     "and" => (and, &["Value", "Value"]),
     "not" => (not, &["Value"]),
-    "len" => (len, &["Group"]),
-    "reverse" => (reverse, &["Group"]),
+    "len" => (len, &["Iterable"]),
+    "reverse" => (reverse, &["Iterable"]),
     "OUTPUT" => (output, &["Any"]),
     "=" => (eq, &["Any", "Any"]),
     "eq" => (eq, &["Any", "Any"]),
@@ -258,5 +263,5 @@ pub static FUNCTIONS: phf::Map<&'static str, (WFunc, &[&'static str])> = phf_map
     "axe" => (axe, &["Any"]),
     "swap" => (|_, par| Ok(par), &["Any", "Any"]),
     "call" => (call, &["Literal"]),
-    "map" => (map, &["Literal", "Group"])
+    "map" => (map, &["Literal", "Iterable"])
 };
