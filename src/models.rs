@@ -40,12 +40,13 @@ pub enum Range {
     From(std::ops::RangeTo<usize>),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum WFuncVariant {
     Container(String),
     Function(String),
+    ActiveLambda(Vec<Token>),
 }
 
 pub type WTokens = Vec<Token>;
-pub(crate) type WFunc = fn(&State, WTokens) -> Result<WTokens, Report>;
+pub(crate) type WFunc = fn(&mut State, WTokens) -> Result<WTokens, Report>;
 pub type State = HashMap<String, Vec<(WTokens, WTokens)>>;

@@ -173,6 +173,11 @@ impl Utils for WTokens {
                     0..self.len() - (i + 1),
                     WFuncVariant::Container(value.to_string()),
                 ));
+            } else if let Token::ActiveLambda(lambda) = token {
+                results = Some((
+                    0..self.len() - (i + 1),
+                    WFuncVariant::ActiveLambda(lambda.to_vec()),
+                ));
             }
         }
 
