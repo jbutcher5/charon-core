@@ -230,6 +230,32 @@ fn lambda(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     }
 }
 
+fn head(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+    if let Group(x) | List(x) = &par[0] {
+        if let Some(first) = x.get(0) {
+            Ok(vec![first.clone()])
+        } else {
+            Ok(vec![])
+        }
+    } else {
+        unimplemented!()
+    }
+}
+
+fn tail(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+    match par[0].clone() {
+        Group(mut x) => {
+            x.remove(0);
+            Ok(vec![Group(x.clone())])
+        }
+        List(mut x) => {
+            x.remove(0);
+            Ok(vec![List(x.clone())])
+        }
+        _ => unimplemented!(),
+    }
+}
+
 pub static COMPLEX_TYPES: phf::Map<&'static str, &[&'static str]> = phf_map! {
     "Literal" => &["Lambda", "FunctionLiteral", "ContainerLiteral"],
     "Iterable" => &["Group", "List"],
@@ -263,5 +289,7 @@ pub static FUNCTIONS: phf::Map<&'static str, (WFunc, &[&'static str])> = phf_map
     "swap" => (|_, par| Ok(par), &["Any", "Any"]),
     "call" => (call, &["Literal"]),
     "map" => (map, &["Literal", "Iterable"]),
-    "lambda" => (lambda, &["List"])
+    "lambda" => (lambda, &["List"]),
+    "head" => (head, &["Iterable"]),
+    "tail" => (tail, &["Iterable"])
 };
