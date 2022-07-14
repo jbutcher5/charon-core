@@ -1,27 +1,27 @@
 use crate::lexer::{macros, LexerToken};
-use crate::models::{Range, State, Token, Tokens, WCode, WFuncVariant};
-use crate::parser::WParser;
+use crate::{CodeBlock, State, Token, Tokens, Range};
+use crate::parser::Parser;
 use crate::stdlib::FUNCTIONS;
-use crate::utils::{Utils, WFunc};
+use crate::utils::{Function, Utils};
 use itertools::Itertools;
 
 use charon_ariadne::Report;
 use logos::Logos;
 
-pub trait WEval {
+pub trait Evaluate {
     fn apply(&mut self, code: &str) -> Result<Vec<Tokens>, Vec<Report>>;
-    fn wsection_eval(&mut self, data: Vec<WCode>) -> Result<Vec<Tokens>, Report>;
+    fn codeblock_eval(&mut self, data: Vec<CodeBlock>) -> Result<Vec<Tokens>, Report>;
     fn eval(&mut self, data: Tokens) -> Result<Tokens, Report>;
     fn dissolve(
         &mut self,
         code: &mut Tokens,
-        func: WFuncVariant,
+        func: Token,
         argument_range: &std::ops::Range<usize>,
         arr: Tokens,
     ) -> Result<(), Report>;
 }
 
-impl WEval for State {
+impl Evaluate for State {
     fn apply(&mut self, code: &str) -> Result<Vec<Tokens>, Vec<Report>> {
         let cleaned_code = macros(code.to_string());
         let lex = LexerToken::lexer(&cleaned_code);
@@ -29,7 +29,7 @@ impl WEval for State {
         let parse = self.parser(lex.spanned().collect::<Vec<_>>(), code);
 
         if let Ok(parsed) = parse {
-            Ok(match self.wsection_eval(parsed) {
+            Ok(match self.codeblock_eval(parsed) {
                 Ok(x) => x,
                 Err(reports) => return Err(vec![reports]),
             })
@@ -38,23 +38,23 @@ impl WEval for State {
         }
     }
 
-    fn wsection_eval(&mut self, data: Vec<WCode>) -> Result<Vec<Tokens>, Report> {
+    fn codeblock_eval(&mut self, data: Vec<CodeBlock>) -> Result<Vec<Tokens>, Report> {
         let mut result: Vec<Tokens> = Vec::new();
 
-        for section in data {
-            match section.container {
+        for codeblock in data {
+            match codeblock.container {
                 Some(container) => {
                     let mut cases = vec![];
 
-                    if let Some(container_cases) = section.cases {
+                    if let Some(container_cases) = codeblock.cases {
                         cases.append(&mut container_cases.clone())
                     }
 
-                    cases.push((vec![Token::Value(1.0)], section.default_case));
+                    cases.push((vec![Token::Value(1.0)], codeblock.default_case));
 
                     self.insert(container, cases);
                 }
-                None => result.push(match self.eval(section.default_case) {
+                None => result.push(match self.eval(codeblock.default_case) {
                     Ok(x) => x,
                     Err(report) => return Err(report),
                 }),
@@ -109,24 +109,24 @@ impl WEval for State {
     fn dissolve(
         &mut self,
         code: &mut Tokens,
-        func: WFuncVariant,
+        func: Token,
         argument_range: &std::ops::Range<usize>,
         mut arr: Tokens,
     ) -> Result<(), Report> {
         match func {
-            WFuncVariant::ActiveLambda(x) => {
+            Token::ActiveLambda(x) => {
                 self.insert(
                     "%lambda".to_string(),
                     vec![(vec![Token::Value(1.0)], x.to_vec())],
                 );
                 self.dissolve(
                     code,
-                    WFuncVariant::Container("%lambda".to_string()),
+                    Token::Container("%lambda".to_string()),
                     argument_range,
                     arr,
                 )
             }
-            WFuncVariant::Function(func) => {
+            Token::Function(func) => {
                 let function_range = argument_range.start..argument_range.end + 1;
                 let reference_code: Tokens = code.clone()[function_range.clone()].to_vec();
                 let parameters = arr.get_par(&func, reference_code)?;
@@ -141,7 +141,7 @@ impl WEval for State {
                 code.splice(function_range, combined);
                 Ok(())
             }
-            WFuncVariant::Container(x) => {
+            Token::Container(x) => {
                 let mut case: Tokens = vec![];
                 let mut container_acc: Tokens = vec![];
 
@@ -194,6 +194,7 @@ impl WEval for State {
 
                 Ok(())
             }
+            _ => unimplemented!(),
         }
     }
 }

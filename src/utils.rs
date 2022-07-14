@@ -1,6 +1,6 @@
 use charon_ariadne::{Color, Label, Report, ReportBuilder, ReportKind, Source};
 
-use crate::models::{Range, State, Token, Tokens, WFuncVariant};
+use crate::{Range, State, Token, Tokens};
 use crate::stdlib::{COMPLEX_TYPES, FUNCTIONS};
 
 pub fn convert(token: &Token) -> String {
@@ -35,7 +35,7 @@ pub fn type_of(token: &Token) -> String {
 pub trait Utils {
     fn get_par(&mut self, func: &str, reference_code: Tokens) -> Result<Tokens, Report>;
     fn as_nums(&self) -> Vec<f64>;
-    fn first_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)>;
+    fn first_function(&self) -> Option<(std::ops::Range<usize>, Token)>;
     fn bundle_groups(&mut self) -> Tokens;
     fn bundle_lists(&mut self) -> Tokens;
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)>;
@@ -159,24 +159,18 @@ impl Utils for Tokens {
             .collect()
     }
 
-    fn first_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)> {
-        let mut results: Option<(std::ops::Range<usize>, WFuncVariant)> = None;
+    fn first_function(&self) -> Option<(std::ops::Range<usize>, Token)> {
+        let mut results: Option<(std::ops::Range<usize>, Token)> = None;
 
         for (i, token) in self.iter().rev().enumerate() {
             if let Token::Function(value) = token {
-                results = Some((
-                    0..self.len() - (i + 1),
-                    WFuncVariant::Function(value.to_string()),
-                ));
+                results = Some((0..self.len() - (i + 1), Token::Function(value.to_string())));
             } else if let Token::Container(value) = token {
-                results = Some((
-                    0..self.len() - (i + 1),
-                    WFuncVariant::Container(value.to_string()),
-                ));
+                results = Some((0..self.len() - (i + 1), Token::Container(value.to_string())));
             } else if let Token::ActiveLambda(lambda) = token {
                 results = Some((
                     0..self.len() - (i + 1),
-                    WFuncVariant::ActiveLambda(lambda.to_vec()),
+                    Token::ActiveLambda(lambda.to_vec()),
                 ));
             }
         }
@@ -315,11 +309,11 @@ pub fn encode_string(string: &str) -> Token {
     Token::Group(string.chars().map(Token::Char).collect::<Vec<_>>())
 }
 
-pub trait WFunc {
+pub trait Function {
     fn resolve(&self, function: &Tokens, arr: &Tokens) -> Tokens;
 }
 
-impl WFunc for State {
+impl Function for State {
     fn resolve(&self, function: &Tokens, arr: &Tokens) -> Tokens {
         let mut buffer = vec![];
         let reversed: Tokens = arr.iter().cloned().rev().collect();

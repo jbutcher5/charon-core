@@ -1,16 +1,19 @@
 use crate::lexer::LexerToken as LToken;
-use crate::models::{State, Token, Tokens, WCode};
+use crate::{CodeBlock, State, Token, Tokens};
 use crate::stdlib::FUNCTIONS;
 use crate::utils::Utils;
 use charon_ariadne::{Color, Label, Report, ReportKind, Source};
 use logos::{Logos, Span};
 
-pub trait WParser {
-    fn parser(&self, code: Vec<(LToken, Span)>, reference: &str)
-        -> Result<Vec<WCode>, Vec<Report>>;
+pub trait Parser {
+    fn parser(
+        &self,
+        code: Vec<(LToken, Span)>,
+        reference: &str,
+    ) -> Result<Vec<CodeBlock>, Vec<Report>>;
 }
 
-impl WParser for State
+impl Parser for State
 where
     Tokens: Utils,
 {
@@ -18,9 +21,9 @@ where
         &self,
         mut code: Vec<(LToken, Span)>,
         reference: &str,
-    ) -> Result<Vec<WCode>, Vec<Report>> {
-        let mut parsed: Vec<WCode> = vec![];
-        let mut current_container = WCode::default();
+    ) -> Result<Vec<CodeBlock>, Vec<Report>> {
+        let mut parsed: Vec<CodeBlock> = vec![];
+        let mut current_container = CodeBlock::default();
         let parse = |s: &str| match self
             .parser(LToken::lexer(s).spanned().collect::<Vec<_>>(), reference)
         {
@@ -52,7 +55,7 @@ where
 
         for (token, span) in code {
             if let LToken::Newline = token {
-                if current_container != WCode::default() {
+                if current_container != CodeBlock::default() {
                     if let Some(cases) = current_container.cases {
                         current_container.cases = Some(
                             cases
@@ -76,7 +79,7 @@ where
                     parsed.push(current_container)
                 }
 
-                current_container = WCode::default();
+                current_container = CodeBlock::default();
             } else if let LToken::BooleanGuard(name) | LToken::Assignment(name) = token {
                 current_container.container = Some(name)
             } else if let LToken::GuardOption((x, y)) = token {
@@ -137,7 +140,7 @@ where
             }
         }
 
-        if current_container != WCode::default() {
+        if current_container != CodeBlock::default() {
             parsed.push(current_container)
         }
 

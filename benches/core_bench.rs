@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use wcore::{evaluator::WEval, models::*};
+use wcore::{evaluator::Evaluate, models::*};
 
 fn factorial(n: f64) -> f64 {
     let code = format!(

@@ -1,5 +1,5 @@
-use crate::evaluator::WEval;
-use crate::models::{State, Token, Token::*, Tokens, WFunc};
+use crate::evaluator::Evaluate;
+use crate::{FunctionRef, State, Token, Token::*, Tokens};
 use crate::utils::{convert, encode_string, type_of, Utils};
 use charon_ariadne::Report;
 use itertools::Itertools;
@@ -283,7 +283,7 @@ pub static COMPLEX_TYPES: phf::Map<&'static str, &[&'static str]> = phf_map! {
     "Iterable" => &["Group", "List"],
 };
 
-pub static FUNCTIONS: phf::Map<&'static str, (WFunc, &[&'static str])> = phf_map! {
+pub static FUNCTIONS: phf::Map<&'static str, (FunctionRef, &[&'static str])> = phf_map! {
     "type" => (type_of_container, &["Any"]),
     "sum" => (sum, &["Iterable"]),
     "add" => (add, &["Value", "Value"]),
