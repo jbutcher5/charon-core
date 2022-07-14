@@ -208,7 +208,8 @@ impl Utils for WTokens {
     fn bundle_groups(&mut self) -> WTokens {
         match self.special_pairs("{", "}") {
             Some((x, y)) => {
-                let token_group = Token::Group(self[x + 1..y].to_vec().bundle_groups());
+                let token_group =
+                    Token::Group(self[x + 1..y].to_vec().bundle_groups().bundle_lists());
                 self.splice(x..y + 1, vec![token_group]);
                 match self.special_pairs("{", "}") {
                     Some(_) => self.bundle_groups(),
@@ -222,7 +223,8 @@ impl Utils for WTokens {
     fn bundle_lists(&mut self) -> WTokens {
         match self.special_pairs("[", "]") {
             Some((x, y)) => {
-                let token_list = Token::List(self[x + 1..y].to_vec().bundle_lists());
+                let token_list =
+                    Token::List(self[x + 1..y].to_vec().bundle_lists().bundle_groups());
                 self.splice(x..y + 1, vec![token_list]);
                 match self.special_pairs("[", "]") {
                     Some(_) => self.bundle_lists(),
