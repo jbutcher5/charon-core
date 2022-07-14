@@ -153,7 +153,7 @@ impl Evaluate for State {
                     };
 
                     if case_prefix[0] != Token::Value(0.0) {
-                        case = container_case.1.clone();
+                        case = container_case.1;
                         break;
                     }
                 }

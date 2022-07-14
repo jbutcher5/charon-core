@@ -235,7 +235,7 @@ fn foldr(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
         acc = _state.eval(vec![acc.clone(), element, func.clone()])?[0].clone();
     }
 
-    Ok(vec![acc.clone()])
+    Ok(vec![acc])
 }
 
 fn foldl(_state: &mut State, mut par: Tokens) -> Result<Tokens, Report> {
