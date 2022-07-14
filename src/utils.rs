@@ -1,7 +1,7 @@
 use charon_ariadne::{Color, Label, Report, ReportBuilder, ReportKind, Source};
 
 use crate::models::{Range, State, Token, WFuncVariant, WTokens};
-use crate::stdlib::FUNCTIONS;
+use crate::stdlib::{COMPLEX_TYPES, FUNCTIONS};
 
 pub fn convert(token: &Token) -> String {
     match token {
@@ -9,9 +9,10 @@ pub fn convert(token: &Token) -> String {
         Token::Atom(x) => format!(":{}", x),
         Token::Special(x) | Token::Container(x) | Token::Function(x) => x.to_string(),
         Token::Group(contents) => match token.is_string() {
-            Some(x) => x.to_string(),
+            Some(x) => x,
             _ => format!("{{{}}}", contents.literal()),
         },
+        Token::List(contents) => format!("[{}]", contents.literal()),
         Token::FunctionLiteral(x) | Token::ContainerLiteral(x) => format!("`{}`", x),
         _ => format!("{:?}", token),
     }
@@ -36,6 +37,7 @@ pub trait Utils {
     fn as_nums(&self) -> Vec<f64>;
     fn first_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)>;
     fn bundle_groups(&mut self) -> WTokens;
+    fn bundle_lists(&mut self) -> WTokens;
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)>;
     fn skin_content(&mut self);
     fn literal(&self) -> String;
@@ -73,11 +75,32 @@ impl Utils for WTokens {
             match self.pop() {
                 Some(content) => {
                     if *token_type == "Any" || type_of(&content) == *token_type {
-                        result.push(content)
+                        result.push(content);
+                        continue;
+                    } else if let Some(complex_type) = COMPLEX_TYPES.get(token_type) {
+                        if complex_type.contains(&type_of(&content).as_str()) {
+                            result.push(content);
+                            continue;
+                        }
+                    }
+
+                    if let Some(report) = final_report {
+                        final_report = Some(
+                            report.with_label(
+                                Label::new(literal.1[literal.1.len() - index - 2].clone())
+                                    .with_message(format!(
+                                        "This has the type of {} but expected {}.",
+                                        type_of(&content),
+                                        *token_type
+                                    ))
+                                    .with_color(Color::Red),
+                            ),
+                        )
                     } else {
-                        if let Some(report) = final_report {
-                            final_report = Some(
-                                report.with_label(
+                        final_report = Some(
+                            Report::build(ReportKind::Error)
+                                .with_message("Mismatched Types")
+                                .with_label(
                                     Label::new(literal.1[literal.1.len() - index - 2].clone())
                                         .with_message(format!(
                                             "This has the type of {} but expected {}.",
@@ -86,22 +109,7 @@ impl Utils for WTokens {
                                         ))
                                         .with_color(Color::Red),
                                 ),
-                            )
-                        } else {
-                            final_report = Some(
-                                Report::build(ReportKind::Error)
-                                    .with_message("Mismatched Types")
-                                    .with_label(
-                                        Label::new(literal.1[literal.1.len() - index - 2].clone())
-                                            .with_message(format!(
-                                                "This has the type of {} but expected {}.",
-                                                type_of(&content),
-                                                *token_type
-                                            ))
-                                            .with_color(Color::Red),
-                                    ),
-                            )
-                        }
+                        )
                     }
                 }
                 None => {
@@ -165,6 +173,11 @@ impl Utils for WTokens {
                     0..self.len() - (i + 1),
                     WFuncVariant::Container(value.to_string()),
                 ));
+            } else if let Token::ActiveLambda(lambda) = token {
+                results = Some((
+                    0..self.len() - (i + 1),
+                    WFuncVariant::ActiveLambda(lambda.to_vec()),
+                ));
             }
         }
 
@@ -195,12 +208,22 @@ impl Utils for WTokens {
     fn bundle_groups(&mut self) -> WTokens {
         match self.special_pairs("{", "}") {
             Some((x, y)) => {
-                let token_group = Token::Group(self[x + 1..y].to_vec().bundle_groups());
+                let token_group =
+                    Token::Group(self[x + 1..y].to_vec().bundle_groups().bundle_lists());
                 self.splice(x..y + 1, vec![token_group]);
-                match self.special_pairs("{", "}") {
-                    Some(_) => self.bundle_groups(),
-                    None => self.to_owned(),
-                }
+                self.bundle_groups()
+            }
+            None => self.to_owned(),
+        }
+    }
+
+    fn bundle_lists(&mut self) -> WTokens {
+        match self.special_pairs("[", "]") {
+            Some((x, y)) => {
+                let token_list =
+                    Token::List(self[x + 1..y].to_vec().bundle_lists().bundle_groups());
+                self.splice(x..y + 1, vec![token_list]);
+                self.bundle_lists()
             }
             None => self.to_owned(),
         }

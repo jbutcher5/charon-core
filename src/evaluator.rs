@@ -11,9 +11,9 @@ use logos::Logos;
 pub trait WEval {
     fn apply(&mut self, code: &str) -> Result<Vec<WTokens>, Vec<Report>>;
     fn wsection_eval(&mut self, data: Vec<WCode>) -> Result<Vec<WTokens>, Report>;
-    fn eval(&self, data: WTokens) -> Result<WTokens, Report>;
+    fn eval(&mut self, data: WTokens) -> Result<WTokens, Report>;
     fn dissolve(
-        &self,
+        &mut self,
         code: &mut WTokens,
         func: WFuncVariant,
         argument_range: &std::ops::Range<usize>,
@@ -64,7 +64,7 @@ impl WEval for State {
         Ok(result)
     }
 
-    fn eval(&self, mut data: WTokens) -> Result<WTokens, Report> {
+    fn eval(&mut self, mut data: WTokens) -> Result<WTokens, Report> {
         let mut group_eval: WTokens = vec![];
 
         while !data.is_empty() {
@@ -107,13 +107,25 @@ impl WEval for State {
     }
 
     fn dissolve(
-        &self,
+        &mut self,
         code: &mut WTokens,
         func: WFuncVariant,
         argument_range: &std::ops::Range<usize>,
         mut arr: WTokens,
     ) -> Result<(), Report> {
         match func {
+            WFuncVariant::ActiveLambda(x) => {
+                self.insert(
+                    "%lambda".to_string(),
+                    vec![(vec![Token::Value(1.0)], x.to_vec())],
+                );
+                self.dissolve(
+                    code,
+                    WFuncVariant::Container("%lambda".to_string()),
+                    argument_range,
+                    arr,
+                )
+            }
             WFuncVariant::Function(func) => {
                 let function_range = argument_range.start..argument_range.end + 1;
                 let reference_code: WTokens = code.clone()[function_range.clone()].to_vec();
@@ -127,12 +139,13 @@ impl WEval for State {
                 let combined = [arr.clone(), result].concat();
 
                 code.splice(function_range, combined);
+                Ok(())
             }
             WFuncVariant::Container(x) => {
                 let mut case: WTokens = vec![];
                 let mut container_acc: WTokens = vec![];
 
-                for container_case in self.get(&x).unwrap() {
+                for container_case in self.get(&x).unwrap().clone() {
                     container_acc.append(&mut container_case.1.clone());
                     let case_prefix = match self.eval(self.resolve(&container_case.0, &arr)) {
                         Ok(x) => x,
@@ -178,8 +191,9 @@ impl WEval for State {
                 for n in expanded_range {
                     code.remove(n);
                 }
+
+                Ok(())
             }
-        };
-        Ok(())
+        }
     }
 }

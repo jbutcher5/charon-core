@@ -9,12 +9,15 @@ pub enum Token {
     FunctionLiteral(String),
     Container(String),
     ContainerLiteral(String),
+    Lambda(Vec<Token>),
+    ActiveLambda(Vec<Token>),
     Parameter(Range),
     Range(Range),
     Atom(String),
     Char(char),
     Special(String),
     Group(Vec<Token>),
+    List(Vec<Token>),
 }
 
 impl fmt::Display for Token {
@@ -30,19 +33,20 @@ pub struct WCode {
     pub default_case: WTokens,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Range {
     Full(std::ops::RangeInclusive<usize>),
     To(std::ops::RangeFrom<usize>),
     From(std::ops::RangeTo<usize>),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum WFuncVariant {
     Container(String),
     Function(String),
+    ActiveLambda(Vec<Token>),
 }
 
 pub type WTokens = Vec<Token>;
-pub(crate) type WFunc = fn(&State, WTokens) -> Result<WTokens, Report>;
+pub(crate) type WFunc = fn(&mut State, WTokens) -> Result<WTokens, Report>;
 pub type State = HashMap<String, Vec<(WTokens, WTokens)>>;
