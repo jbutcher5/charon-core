@@ -1,5 +1,5 @@
 use crate::lexer::LexerToken as LToken;
-use crate::models::{State, Token, WCode, WTokens};
+use crate::models::{State, Token, Tokens, WCode};
 use crate::stdlib::FUNCTIONS;
 use crate::utils::Utils;
 use charon_ariadne::{Color, Label, Report, ReportKind, Source};
@@ -12,7 +12,7 @@ pub trait WParser {
 
 impl WParser for State
 where
-    WTokens: Utils,
+    Tokens: Utils,
 {
     fn parser(
         &self,
@@ -80,7 +80,7 @@ where
             } else if let LToken::BooleanGuard(name) | LToken::Assignment(name) = token {
                 current_container.container = Some(name)
             } else if let LToken::GuardOption((x, y)) = token {
-                let mut cases: Vec<(WTokens, WTokens)> = match current_container.cases.clone() {
+                let mut cases: Vec<(Tokens, Tokens)> = match current_container.cases.clone() {
                     Some(x) => x,
                     _ => vec![],
                 };

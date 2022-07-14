@@ -1,15 +1,15 @@
 use crate::evaluator::WEval;
-use crate::models::{State, Token, Token::*, WFunc, WTokens};
+use crate::models::{State, Token, Token::*, Tokens, WFunc};
 use crate::utils::{convert, encode_string, type_of, Utils};
 use charon_ariadne::Report;
 use itertools::Itertools;
 use phf::phf_map;
 
-fn type_of_container(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn type_of_container(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     Ok(vec![encode_string(&type_of(&par[0]))])
 }
 
-fn sum(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn sum(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let x = if let Group(x) | List(x) = &par[0] {
         x
     } else {
@@ -19,7 +19,7 @@ fn sum(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![Value(x.as_nums().iter().sum())])
 }
 
-fn add(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn add(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
@@ -29,7 +29,7 @@ fn add(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![Token::Value(x + y)])
 }
 
-fn sub(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn sub(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
@@ -39,7 +39,7 @@ fn sub(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![Value(y - x)])
 }
 
-fn mul(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn mul(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
@@ -49,7 +49,7 @@ fn mul(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![Value(x * y)])
 }
 
-fn div(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn div(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
@@ -59,7 +59,7 @@ fn div(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![Value(y / x)])
 }
 
-fn modulo(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn modulo(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
@@ -69,7 +69,7 @@ fn modulo(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![Value(y % x)])
 }
 
-fn len(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn len(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let x = if let Group(x) | List(x) = &par[0] {
         x
     } else {
@@ -79,7 +79,7 @@ fn len(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![Value(x.len() as f64)])
 }
 
-fn reverse(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn reverse(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     if let Group(x) = &par[0] {
         Ok(vec![Group(x.iter().rev().cloned().collect::<Vec<_>>())])
     } else if let List(x) = &par[0] {
@@ -89,12 +89,12 @@ fn reverse(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     }
 }
 
-fn output(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn output(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     println!("{}", convert(&par[0]));
     Ok(vec![])
 }
 
-fn eq(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn eq(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let parameters: (Token, Token) = par.iter().cloned().collect_tuple().unwrap();
 
     let equal = match parameters {
@@ -115,7 +115,7 @@ fn eq(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![result])
 }
 
-fn or(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn or(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
@@ -131,7 +131,7 @@ fn or(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![result])
 }
 
-fn not(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn not(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let x = if let [Value(x)] = par.as_slice() {
         x
     } else {
@@ -143,7 +143,7 @@ fn not(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![result])
 }
 
-fn and(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn and(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
@@ -159,7 +159,7 @@ fn and(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![result])
 }
 
-fn greater(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn greater(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
@@ -171,7 +171,7 @@ fn greater(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![result])
 }
 
-fn less(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn less(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
@@ -183,7 +183,7 @@ fn less(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![result])
 }
 
-fn release(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn release(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let x = if let Group(x) = &par[0] {
         x
     } else {
@@ -192,11 +192,11 @@ fn release(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(x.clone())
 }
 
-fn axe(_state: &mut State, _: WTokens) -> Result<WTokens, Report> {
+fn axe(_state: &mut State, _: Tokens) -> Result<Tokens, Report> {
     Ok(vec![])
 }
 
-fn call(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn call(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     Ok(vec![match &par[0] {
         ContainerLiteral(x) => Container(x.to_string()),
         FunctionLiteral(x) => Function(x.to_string()),
@@ -205,7 +205,7 @@ fn call(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     }])
 }
 
-fn map(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn map(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let deref = &call(_state, vec![par[0].clone()])?[0];
 
     let elements: Vec<Token> = if let Group(x) | List(x) = &par[1] {
@@ -222,7 +222,7 @@ fn map(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![List(result)])
 }
 
-fn foldr(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn foldr(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let mut acc: Token = par[0].clone();
     let arr = if let Group(x) | List(x) = &par[2] {
         x.to_vec()
@@ -238,13 +238,13 @@ fn foldr(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     Ok(vec![acc.clone()])
 }
 
-fn foldl(_state: &mut State, mut par: WTokens) -> Result<WTokens, Report> {
+fn foldl(_state: &mut State, mut par: Tokens) -> Result<Tokens, Report> {
     let mut reversed = reverse(_state, vec![par.pop().unwrap()])?;
     par.append(&mut reversed);
     foldr(_state, par)
 }
 
-fn lambda(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn lambda(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     if let List(x) = &par[0] {
         Ok(vec![Lambda(x.to_vec())])
     } else {
@@ -252,7 +252,7 @@ fn lambda(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     }
 }
 
-fn head(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn head(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     if let Group(x) | List(x) = &par[0] {
         if let Some(first) = x.get(0) {
             Ok(vec![first.clone()])
@@ -264,7 +264,7 @@ fn head(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     }
 }
 
-fn tail(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
+fn tail(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     match par[0].clone() {
         Group(mut x) => {
             x.remove(0);

@@ -29,8 +29,8 @@ impl fmt::Display for Token {
 #[derive(PartialEq, Debug, Default, Clone)]
 pub struct WCode {
     pub container: Option<String>,
-    pub cases: Option<Vec<(WTokens, WTokens)>>,
-    pub default_case: WTokens,
+    pub cases: Option<Vec<(Tokens, Tokens)>>,
+    pub default_case: Tokens,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -47,6 +47,6 @@ pub enum WFuncVariant {
     ActiveLambda(Vec<Token>),
 }
 
-pub type WTokens = Vec<Token>;
-pub(crate) type WFunc = fn(&mut State, WTokens) -> Result<WTokens, Report>;
-pub type State = HashMap<String, Vec<(WTokens, WTokens)>>;
+pub type Tokens = Vec<Token>;
+pub(crate) type WFunc = fn(&mut State, Tokens) -> Result<Tokens, Report>;
+pub type State = HashMap<String, Vec<(Tokens, Tokens)>>;
