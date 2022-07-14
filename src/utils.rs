@@ -1,6 +1,6 @@
 use charon_ariadne::{Color, Label, Report, ReportBuilder, ReportKind, Source};
 
-use crate::models::{Range, State, Token, WFuncVariant, WTokens};
+use crate::{Range, State, Token, Tokens};
 use crate::stdlib::{COMPLEX_TYPES, FUNCTIONS};
 
 pub fn convert(token: &Token) -> String {
@@ -33,11 +33,11 @@ pub fn type_of(token: &Token) -> String {
 }
 
 pub trait Utils {
-    fn get_par(&mut self, func: &str, reference_code: WTokens) -> Result<WTokens, Report>;
+    fn get_par(&mut self, func: &str, reference_code: Tokens) -> Result<Tokens, Report>;
     fn as_nums(&self) -> Vec<f64>;
-    fn first_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)>;
-    fn bundle_groups(&mut self) -> WTokens;
-    fn bundle_lists(&mut self) -> WTokens;
+    fn first_function(&self) -> Option<(std::ops::Range<usize>, Token)>;
+    fn bundle_groups(&mut self) -> Tokens;
+    fn bundle_lists(&mut self) -> Tokens;
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)>;
     fn skin_content(&mut self);
     fn literal(&self) -> String;
@@ -64,8 +64,8 @@ impl Token {
     }
 }
 
-impl Utils for WTokens {
-    fn get_par(&mut self, func: &str, reference_code: WTokens) -> Result<WTokens, Report> {
+impl Utils for Tokens {
+    fn get_par(&mut self, func: &str, reference_code: Tokens) -> Result<Tokens, Report> {
         let mut result = vec![];
         let paramerters = FUNCTIONS.get(func).unwrap().1.iter();
         let literal = reference_code.literal_enumerate();
@@ -159,24 +159,18 @@ impl Utils for WTokens {
             .collect()
     }
 
-    fn first_function(&self) -> Option<(std::ops::Range<usize>, WFuncVariant)> {
-        let mut results: Option<(std::ops::Range<usize>, WFuncVariant)> = None;
+    fn first_function(&self) -> Option<(std::ops::Range<usize>, Token)> {
+        let mut results: Option<(std::ops::Range<usize>, Token)> = None;
 
         for (i, token) in self.iter().rev().enumerate() {
             if let Token::Function(value) = token {
-                results = Some((
-                    0..self.len() - (i + 1),
-                    WFuncVariant::Function(value.to_string()),
-                ));
+                results = Some((0..self.len() - (i + 1), Token::Function(value.to_string())));
             } else if let Token::Container(value) = token {
-                results = Some((
-                    0..self.len() - (i + 1),
-                    WFuncVariant::Container(value.to_string()),
-                ));
+                results = Some((0..self.len() - (i + 1), Token::Container(value.to_string())));
             } else if let Token::ActiveLambda(lambda) = token {
                 results = Some((
                     0..self.len() - (i + 1),
-                    WFuncVariant::ActiveLambda(lambda.to_vec()),
+                    Token::ActiveLambda(lambda.to_vec()),
                 ));
             }
         }
@@ -205,7 +199,7 @@ impl Utils for WTokens {
         results
     }
 
-    fn bundle_groups(&mut self) -> WTokens {
+    fn bundle_groups(&mut self) -> Tokens {
         match self.special_pairs("{", "}") {
             Some((x, y)) => {
                 let token_group =
@@ -217,7 +211,7 @@ impl Utils for WTokens {
         }
     }
 
-    fn bundle_lists(&mut self) -> WTokens {
+    fn bundle_lists(&mut self) -> Tokens {
         match self.special_pairs("[", "]") {
             Some((x, y)) => {
                 let token_list =
@@ -315,31 +309,31 @@ pub fn encode_string(string: &str) -> Token {
     Token::Group(string.chars().map(Token::Char).collect::<Vec<_>>())
 }
 
-pub trait WFunc {
-    fn resolve(&self, function: &WTokens, arr: &WTokens) -> WTokens;
+pub trait Function {
+    fn resolve(&self, function: &Tokens, arr: &Tokens) -> Tokens;
 }
 
-impl WFunc for State {
-    fn resolve(&self, function: &WTokens, arr: &WTokens) -> WTokens {
+impl Function for State {
+    fn resolve(&self, function: &Tokens, arr: &Tokens) -> Tokens {
         let mut buffer = vec![];
-        let reversed: WTokens = arr.iter().cloned().rev().collect();
+        let reversed: Tokens = arr.iter().cloned().rev().collect();
         for token in function {
             match token {
                 Token::Parameter(range) => {
                     let mut slice = match range {
                         Range::From(from) => {
-                            reversed[*from].iter().cloned().rev().collect::<WTokens>()
+                            reversed[*from].iter().cloned().rev().collect::<Tokens>()
                         }
                         Range::To(to) => reversed[to.clone()]
                             .iter()
                             .cloned()
                             .rev()
-                            .collect::<WTokens>(),
+                            .collect::<Tokens>(),
                         Range::Full(full) => reversed[full.clone()]
                             .iter()
                             .cloned()
                             .rev()
-                            .collect::<WTokens>(),
+                            .collect::<Tokens>(),
                     };
 
                     buffer.append(&mut slice);

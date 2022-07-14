@@ -1,4 +1,4 @@
-use crate::models::{Range, Token};
+use crate::{Range, Token};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use logos::{Lexer, Logos};
