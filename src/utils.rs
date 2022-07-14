@@ -211,10 +211,7 @@ impl Utils for WTokens {
                 let token_group =
                     Token::Group(self[x + 1..y].to_vec().bundle_groups().bundle_lists());
                 self.splice(x..y + 1, vec![token_group]);
-                match self.special_pairs("{", "}") {
-                    Some(_) => self.bundle_groups(),
-                    None => self.to_owned(),
-                }
+                self.bundle_groups()
             }
             None => self.to_owned(),
         }
@@ -226,10 +223,7 @@ impl Utils for WTokens {
                 let token_list =
                     Token::List(self[x + 1..y].to_vec().bundle_lists().bundle_groups());
                 self.splice(x..y + 1, vec![token_list]);
-                match self.special_pairs("[", "]") {
-                    Some(_) => self.bundle_lists(),
-                    None => self.to_owned(),
-                }
+                self.bundle_lists()
             }
             None => self.to_owned(),
         }
