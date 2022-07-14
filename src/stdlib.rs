@@ -224,7 +224,11 @@ fn map(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
 
 fn foldr(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     let mut acc: Token = par[0].clone();
-    let arr = if let Group(x) | List(x) = &par[2] { x.to_vec() } else {unimplemented!()};
+    let arr = if let Group(x) | List(x) = &par[2] {
+        x.to_vec()
+    } else {
+        unimplemented!()
+    };
     let func = &call(_state, vec![par[1].clone()])?[0];
 
     for element in arr {
@@ -232,6 +236,12 @@ fn foldr(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
     }
 
     Ok(vec![acc.clone()])
+}
+
+fn foldl(_state: &mut State, mut par: WTokens) -> Result<WTokens, Report> {
+    let mut reversed = reverse(_state, vec![par.pop().unwrap()])?;
+    par.append(&mut reversed);
+    foldr(_state, par)
 }
 
 fn lambda(_state: &mut State, par: WTokens) -> Result<WTokens, Report> {
@@ -302,6 +312,7 @@ pub static FUNCTIONS: phf::Map<&'static str, (WFunc, &[&'static str])> = phf_map
     "call" => (call, &["Literal"]),
     "map" => (map, &["Literal", "Iterable"]),
     "foldr" => (foldr, &["Any", "Literal", "Iterable"]),
+    "foldl" => (foldl, &["Any", "Literal", "Iterable"]),
     "lambda" => (lambda, &["List"]),
     "head" => (head, &["Iterable"]),
     "tail" => (tail, &["Iterable"])
