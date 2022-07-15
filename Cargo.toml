@@ -2,7 +2,7 @@
 name = "charon"
 version = "0.6.0-rc.4"
 edition = "2021"
-authors = ["James Butcher <jamesbutcher167@gmail.com>"]
+authors = ["James Butcher <jamesbutcher@duck.com>"]
 repository = "https://github.com/Wlanguage/core"
 description = "A simple concatenative programming language"
 license = "MIT"
