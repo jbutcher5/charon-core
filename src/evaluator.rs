@@ -1,8 +1,8 @@
 use crate::lexer::{macros, LexerToken};
-use crate::{CodeBlock, State, Token, Tokens, Range};
 use crate::parser::Parser;
 use crate::stdlib::FUNCTIONS;
 use crate::utils::{Function, Utils};
+use crate::{CodeBlock, Range, State, Token, Tokens};
 use itertools::Itertools;
 
 use charon_ariadne::Report;

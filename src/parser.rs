@@ -1,7 +1,7 @@
 use crate::lexer::LexerToken as LToken;
-use crate::{CodeBlock, State, Token, Tokens};
 use crate::stdlib::FUNCTIONS;
 use crate::utils::Utils;
+use crate::{CodeBlock, State, Token, Tokens};
 use charon_ariadne::{Color, Label, Report, ReportKind, Source};
 use logos::{Logos, Span};
 

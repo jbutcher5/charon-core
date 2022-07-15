@@ -1,7 +1,7 @@
 use charon_ariadne::{Color, Label, Report, ReportBuilder, ReportKind, Source};
 
-use crate::{Range, State, Token, Tokens};
 use crate::stdlib::{COMPLEX_TYPES, FUNCTIONS};
+use crate::{Range, State, Token, Tokens};
 
 pub fn convert(token: &Token) -> String {
     match token {
