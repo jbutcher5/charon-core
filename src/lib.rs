@@ -24,6 +24,7 @@ pub enum Token {
     Special(String),
     Group(Vec<Token>),
     List(Vec<Token>),
+    Iterator(Vec<Token>),
 }
 
 impl fmt::Display for Token {

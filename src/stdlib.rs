@@ -1,6 +1,6 @@
 use crate::evaluator::Evaluate;
-use crate::{FunctionRef, State, Token, Token::*, Tokens};
 use crate::utils::{convert, encode_string, type_of, Utils};
+use crate::{FunctionRef, State, Token, Token::*, Tokens};
 use charon_ariadne::Report;
 use itertools::Itertools;
 use phf::phf_map;
@@ -208,7 +208,7 @@ fn call(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
 fn map(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let deref = &call(_state, vec![par[0].clone()])?[0];
 
-    let elements: Vec<Token> = if let Group(x) | List(x) = &par[1] {
+    let elements: Vec<Token> = if let Iterator(x) = &par[1] {
         x.to_vec()
     } else {
         unimplemented!()
@@ -219,12 +219,12 @@ fn map(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
         result = [result, _state.eval(vec![element, deref.clone()])?].concat();
     }
 
-    Ok(vec![List(result)])
+    Ok(vec![Iterator(result)])
 }
 
 fn foldr(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
     let mut acc: Token = par[0].clone();
-    let arr = if let Group(x) | List(x) = &par[2] {
+    let arr = if let Iterator(x) = &par[2] {
         x.to_vec()
     } else {
         unimplemented!()
@@ -239,9 +239,41 @@ fn foldr(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
 }
 
 fn foldl(_state: &mut State, mut par: Tokens) -> Result<Tokens, Report> {
-    let mut reversed = reverse(_state, vec![par.pop().unwrap()])?;
-    par.append(&mut reversed);
+    let reversed: Token = if let Iterator(x) = &par[0] {
+        Iterator(x.iter().cloned().rev().collect())
+    } else {
+        unimplemented!()
+    };
+    par.push(reversed);
     foldr(_state, par)
+}
+
+fn iter(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+    Ok(vec![if let Group(x) | List(x) = &par[0] {
+        Iterator(x.to_vec())
+    } else {
+        unimplemented!()
+    }])
+}
+
+fn collect_group(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+    let arr = if let Iterator(x) = &par[0] {
+        x.to_vec()
+    } else {
+        unimplemented!()
+    };
+
+    Ok(vec![Group(arr)])
+}
+
+fn collect_list(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+    let arr = if let Iterator(x) = &par[0] {
+        x.to_vec()
+    } else {
+        unimplemented!()
+    };
+
+    Ok(vec![List(arr)])
 }
 
 fn lambda(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
@@ -310,9 +342,12 @@ pub static FUNCTIONS: phf::Map<&'static str, (FunctionRef, &[&'static str])> = p
     "axe" => (axe, &["Any"]),
     "swap" => (|_, par| Ok(par), &["Any", "Any"]),
     "call" => (call, &["Literal"]),
-    "map" => (map, &["Literal", "Iterable"]),
-    "foldr" => (foldr, &["Any", "Literal", "Iterable"]),
-    "foldl" => (foldl, &["Any", "Literal", "Iterable"]),
+    "map" => (map, &["Literal", "Iterator"]),
+    "foldr" => (foldr, &["Any", "Literal", "Iterator"]),
+    "foldl" => (foldl, &["Any", "Literal", "Iterator"]),
+    "iter" => (iter, &["Iterable"]),
+    "collect_group" => (collect_group, &["Iterable"]),
+    "collect_list" => (collect_list, &["Iterable"]),
     "lambda" => (lambda, &["List"]),
     "head" => (head, &["Iterable"]),
     "tail" => (tail, &["Iterable"])
