@@ -18,7 +18,6 @@ pub enum Token {
     Lambda(Vec<Token>),
     ActiveLambda(Vec<Token>),
     Parameter(Range),
-    Range(Range),
     Atom(String),
     Char(char),
     Special(String),
