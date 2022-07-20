@@ -36,8 +36,8 @@ pub trait Utils {
     fn get_par(&mut self, func: &str, reference_code: Tokens) -> Result<Tokens, Report>;
     fn as_nums(&self) -> Vec<f64>;
     fn first_function(&self) -> Option<(std::ops::Range<usize>, Token)>;
-    fn bundle_groups(&mut self) -> Tokens;
-    fn bundle_lists(&mut self) -> Tokens;
+    fn bundle_groups(&self) -> Tokens;
+    fn bundle_lists(&self) -> Tokens;
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)>;
     fn skin_content(&mut self);
     fn literal(&self) -> String;
@@ -199,25 +199,31 @@ impl Utils for Tokens {
         results
     }
 
-    fn bundle_groups(&mut self) -> Tokens {
+    fn bundle_groups(&self) -> Tokens {
         match self.special_pairs("{", "}") {
             Some((x, y)) => {
+                let mut bundled = self.clone();
+
                 let token_group =
-                    Token::Group(self[x + 1..y].to_vec().bundle_groups().bundle_lists());
-                self.splice(x..y + 1, vec![token_group]);
-                self.bundle_groups()
+                    Token::Group(bundled[x + 1..y].to_vec().bundle_groups().bundle_lists());
+                bundled.splice(x..y + 1, vec![token_group]);
+                bundled.bundle_groups()
             }
             None => self.to_owned(),
         }
     }
 
-    fn bundle_lists(&mut self) -> Tokens {
-        match self.special_pairs("[", "]") {
+    fn bundle_lists(&self) -> Tokens {
+        let pairs = self.special_pairs("[", "]");
+
+        match pairs {
             Some((x, y)) => {
+                let mut bundled = self.clone();
+
                 let token_list =
-                    Token::List(self[x + 1..y].to_vec().bundle_lists().bundle_groups());
-                self.splice(x..y + 1, vec![token_list]);
-                self.bundle_lists()
+                    Token::List(bundled[x + 1..y].to_vec().bundle_lists().bundle_groups());
+                bundled.splice(x..y + 1, vec![token_list]);
+                bundled.bundle_lists()
             }
             None => self.to_owned(),
         }
@@ -234,8 +240,6 @@ impl Utils for Tokens {
             }
         }
 
-        first_index?;
-
         let mut count: i32 = 1;
 
         for (index, value) in self[first_index? + 1..].iter().enumerate() {
@@ -249,11 +253,11 @@ impl Utils for Tokens {
             }
         }
 
-        if let Some(second_index) = second_index {
-            Some((first_index?, second_index))
-        } else {
-            None
+        if count == 0 && second_index.is_none() {
+            second_index = Some(self[first_index? + 1..].len() + first_index?);
         }
+
+        Some((first_index?, second_index?))
     }
 
     fn skin_content(&mut self) {

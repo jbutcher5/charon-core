@@ -4,6 +4,7 @@ use crate::utils::Utils;
 use crate::{CodeBlock, State, Token, Tokens};
 use charon_ariadne::{Color, Label, Report, ReportKind, Source};
 use logos::{Logos, Span};
+use rayon::prelude::*;
 
 pub trait Parser {
     fn parser(
@@ -56,26 +57,6 @@ where
         for (token, span) in code {
             if let LToken::Newline = token {
                 if current_container != CodeBlock::default() {
-                    if let Some(cases) = current_container.cases {
-                        current_container.cases = Some(
-                            cases
-                                .clone()
-                                .iter()
-                                .map(|(x, y)| {
-                                    (
-                                        x.clone().bundle_groups().bundle_lists(),
-                                        y.clone().bundle_groups().bundle_lists(),
-                                    )
-                                })
-                                .collect::<Vec<_>>(),
-                        );
-                    }
-
-                    current_container.default_case = current_container
-                        .default_case
-                        .bundle_groups()
-                        .bundle_lists();
-
                     parsed.push(current_container)
                 }
 
@@ -147,7 +128,25 @@ where
         if !errors.is_empty() {
             Err(errors)
         } else {
-            Ok(parsed)
+            Ok(parsed
+                .par_iter()
+                .cloned()
+                .map(|code_block| CodeBlock {
+                    container: code_block.container,
+                    cases: code_block.cases.map(|inner| {
+                        inner
+                            .iter()
+                            .map(|(predictate, consequent)| {
+                                (
+                                    predictate.bundle_groups().bundle_lists(),
+                                    consequent.bundle_groups().bundle_lists(),
+                                )
+                            })
+                            .collect::<Vec<_>>()
+                    }),
+                    default_case: code_block.default_case.bundle_groups().bundle_lists(),
+                })
+                .collect::<Vec<_>>())
         }
     }
 }

@@ -85,13 +85,7 @@ impl Evaluate for State {
         while let Some((argument_range, func)) = new_code.first_function() {
             if let Some((x, y)) = new_code.special_pairs("(", ")") {
                 let result = new_code[x + 1..y].to_vec();
-                new_code.splice(
-                    x..=y,
-                    match self.eval(result) {
-                        Ok(x) => x,
-                        Err(report) => return Err(report),
-                    },
-                );
+                new_code.splice(x..=y, self.eval(result)?);
             } else {
                 let code_to_evaluate: Tokens = new_code[argument_range.clone()].to_vec();
                 let dissolve =
