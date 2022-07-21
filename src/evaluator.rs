@@ -54,10 +54,7 @@ impl Evaluate for State {
 
                     self.insert(container, cases);
                 }
-                None => result.push(match self.eval(codeblock.default_case) {
-                    Ok(x) => x,
-                    Err(report) => return Err(report),
-                }),
+                None => result.push(self.eval(codeblock.default_case)?)
             }
         }
 
@@ -88,12 +85,7 @@ impl Evaluate for State {
                 new_code.splice(x..=y, self.eval(result)?);
             } else {
                 let code_to_evaluate: Tokens = new_code[argument_range.clone()].to_vec();
-                let dissolve =
-                    self.dissolve(&mut new_code, func, &argument_range, code_to_evaluate);
-
-                if let Err(report) = dissolve {
-                    return Err(report);
-                }
+                self.dissolve(&mut new_code, func, &argument_range, code_to_evaluate)?;
             }
         }
 

@@ -175,8 +175,6 @@ impl Utils for Tokens {
             }
         }
 
-        results.as_ref()?;
-
         let mut count: i32 = 0;
 
         for (i, token) in self[..results.clone()?.0.end].iter().rev().enumerate() {
