@@ -2,11 +2,10 @@ use crate::lexer::{macros, LexerToken};
 use crate::parser::Parser;
 use crate::stdlib::FUNCTIONS;
 use crate::utils::{Function, Utils};
-use crate::{CodeBlock, Range, State, Token, Tokens};
+use crate::{CodeBlock, State, Token, Tokens};
 use std::collections::VecDeque;
 
 use charon_ariadne::Report;
-use itertools::Itertools;
 use logos::Logos;
 
 pub trait Evaluate {
@@ -56,7 +55,7 @@ impl Evaluate for State {
     }
 
     fn eval(&mut self, data: Tokens) -> Result<Tokens, Report> {
-        let mut execution_stack: VecDeque<Token> = VecDeque::from(data.clone());
+        let mut execution_stack: VecDeque<Token> = VecDeque::from(data);
         let mut parameter_stack: VecDeque<Token> = VecDeque::new();
 
         while let Some(token) = execution_stack.pop_front() {
@@ -69,12 +68,12 @@ impl Evaluate for State {
                             Vec::from(execution_stack.clone()),
                         ]
                         .concat(),
-                        self
+                        self,
                     )?;
 
                     parameter_stack = VecDeque::from(parameters.clone());
 
-                    let result = FUNCTIONS.get(&ident).unwrap().0(self, parameters)?;
+                    let result = FUNCTIONS.get(ident).unwrap().0(self, parameters)?;
 
                     execution_stack.push_front(result);
                 }
@@ -86,7 +85,7 @@ impl Evaluate for State {
                             Vec::from(execution_stack.clone()),
                         ]
                         .concat(),
-                        self
+                        self,
                     )?;
 
                     let cases = self.get(ident.as_str()).unwrap();
@@ -94,13 +93,21 @@ impl Evaluate for State {
                     let mut selected_consequent: Option<&Vec<Token>> = None;
 
                     for (predictate, consequent) in cases {
-                        if self.clone().eval(self.resolve(&predictate, &parameters))? == vec![Token::Value(1.0)] {
+                        if self.clone().eval(self.resolve(predictate, &parameters))?
+                            == vec![Token::Value(1.0)]
+                        {
                             selected_consequent = Some(consequent);
                             break;
                         }
                     }
 
-                    execution_stack = VecDeque::from([self.resolve(selected_consequent.unwrap(), &parameters), Vec::from(execution_stack.clone())].concat());
+                    execution_stack = VecDeque::from(
+                        [
+                            self.resolve(selected_consequent.unwrap(), &parameters),
+                            Vec::from(execution_stack.clone()),
+                        ]
+                        .concat(),
+                    );
                 }
                 Token::Void => continue,
                 _ => parameter_stack.push_back(token),
