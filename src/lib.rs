@@ -24,6 +24,7 @@ pub enum Token {
     Group(Vec<Token>),
     List(Vec<Token>),
     Iterator(Vec<Token>),
+    Expr(Vec<Token>),
     Null,
     Void,
 }
