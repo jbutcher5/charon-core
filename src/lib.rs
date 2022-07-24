@@ -24,6 +24,8 @@ pub enum Token {
     Group(Vec<Token>),
     List(Vec<Token>),
     Iterator(Vec<Token>),
+    Null,
+    Void,
 }
 
 impl fmt::Display for Token {
@@ -47,5 +49,5 @@ pub enum Range {
 }
 
 pub type Tokens = Vec<Token>;
-pub(crate) type FunctionRef = fn(&mut State, Tokens) -> Result<Tokens, Report>;
+pub(crate) type FunctionRef = fn(&mut State, Tokens) -> Result<Token, Report>;
 pub type State = HashMap<String, Vec<(Tokens, Tokens)>>;

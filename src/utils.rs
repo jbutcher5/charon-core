@@ -33,7 +33,7 @@ pub fn type_of(token: &Token) -> String {
 }
 
 pub trait Utils {
-    fn get_par(&mut self, func: &str, reference_code: Tokens) -> Result<Tokens, Report>;
+    fn get_par(&mut self, func: Token, reference_code: Tokens, state: &State) -> Result<Tokens, Report>;
     fn as_nums(&self) -> Vec<f64>;
     fn first_function(&self) -> Option<(std::ops::Range<usize>, Token)>;
     fn bundle_groups(&self) -> Tokens;
@@ -65,13 +65,64 @@ impl Token {
 }
 
 impl Utils for Tokens {
-    fn get_par(&mut self, func: &str, reference_code: Tokens) -> Result<Tokens, Report> {
+    fn get_par(
+        &mut self,
+        func: Token,
+        reference_code: Tokens,
+        state: &State,
+    ) -> Result<Tokens, Report> {
         let mut result = vec![];
-        let paramerters = FUNCTIONS.get(func).unwrap().1.iter();
+        let parameters = match func {
+            Token::Function(ident) => FUNCTIONS.get(&ident).unwrap().1.to_vec(),
+            Token::Container(ident) => {
+                let container = state.get(&ident).unwrap();
+
+                fn highest_rec(tokens: Tokens, max: usize) -> usize {
+                    let mut highest = 0;
+
+                    for token in tokens {
+                        if let Token::Group(inner) | Token::List(inner) = token {
+                            let inner_highest = highest_rec(inner, max);
+
+                            if inner_highest > highest {
+                                highest = inner_highest;
+                            }
+                        } else if let Token::Parameter(range) = token {
+                            let range_max = match range {
+                                Range::Full(full) => *full.end()+1,
+                                Range::From(from) => from.end+1,
+                                Range::To(to) => {
+                                    if to.start > max {
+                                        to.start+1
+                                    } else {
+                                        max
+                                    }
+                                }
+                            };
+
+                            if range_max > highest {
+                                highest = range_max
+                            }
+                        }
+                    }
+
+                    highest
+                }
+
+                let all_tokens: Vec<Token> = container
+                    .iter()
+                    .fold(vec![], |acc, x| [acc, x.0.clone(), x.1.clone()].concat());
+
+                let max: usize = highest_rec(all_tokens, self.len());
+
+                vec!["Any"; max]
+            }
+            _ => unimplemented!(),
+        };
         let literal = reference_code.literal_enumerate();
         let mut final_report: Option<ReportBuilder<std::ops::Range<usize>, Source>> = None;
 
-        for (index, token_type) in paramerters.clone().enumerate() {
+        for (index, token_type) in parameters.clone().iter().enumerate() {
             match self.pop() {
                 Some(content) => {
                     if *token_type == "Any" || type_of(&content) == *token_type {
@@ -119,8 +170,9 @@ impl Utils for Tokens {
                             Label::new(literal.1[literal.1.len() - 1].clone())
                                 .with_message(format!(
                                     "This function expects the parameters ({}).",
-                                    paramerters
+                                    parameters
                                         .clone()
+                                        .iter()
                                         .fold("".to_string(), |x, acc| format!("{} {}", acc, x))
                                         .trim()
                                 ))

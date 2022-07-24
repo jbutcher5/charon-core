@@ -3,22 +3,16 @@ use crate::parser::Parser;
 use crate::stdlib::FUNCTIONS;
 use crate::utils::{Function, Utils};
 use crate::{CodeBlock, Range, State, Token, Tokens};
-use itertools::Itertools;
+use std::collections::VecDeque;
 
 use charon_ariadne::Report;
+use itertools::Itertools;
 use logos::Logos;
 
 pub trait Evaluate {
     fn apply(&mut self, code: &str) -> Result<Vec<Tokens>, Vec<Report>>;
     fn codeblock_eval(&mut self, data: Vec<CodeBlock>) -> Result<Vec<Tokens>, Report>;
     fn eval(&mut self, data: Tokens) -> Result<Tokens, Report>;
-    fn dissolve(
-        &mut self,
-        code: &mut Tokens,
-        func: Token,
-        argument_range: &std::ops::Range<usize>,
-        arr: Tokens,
-    ) -> Result<(), Report>;
 }
 
 impl Evaluate for State {
@@ -54,133 +48,65 @@ impl Evaluate for State {
 
                     self.insert(container, cases);
                 }
-                None => result.push(self.eval(codeblock.default_case)?)
+                None => result.push(self.eval(codeblock.default_case)?),
             }
         }
 
         Ok(result)
     }
 
-    fn eval(&mut self, mut data: Tokens) -> Result<Tokens, Report> {
-        let mut group_eval: Tokens = vec![];
+    fn eval(&mut self, data: Tokens) -> Result<Tokens, Report> {
+        let mut execution_stack: VecDeque<Token> = VecDeque::from(data.clone());
+        let mut parameter_stack: VecDeque<Token> = VecDeque::new();
 
-        while !data.is_empty() {
-            let token = data.remove(0);
+        while let Some(token) = execution_stack.pop_front() {
+            match token {
+                Token::Function(ref ident) => {
+                    let parameters = Vec::from(parameter_stack.clone()).get_par(
+                        token.clone(),
+                        [
+                            Vec::from(parameter_stack.clone()),
+                            Vec::from(execution_stack.clone()),
+                        ]
+                        .concat(),
+                        self
+                    )?;
 
-            if let Token::Group(content) = token {
-                match self.eval(content.to_vec()) {
-                    Ok(x) => group_eval.push(Token::Group(x)),
-                    Err(report) => return Err(report),
+                    parameter_stack = VecDeque::from(parameters.clone());
+
+                    let result = FUNCTIONS.get(&ident).unwrap().0(self, parameters)?;
+
+                    execution_stack.push_front(result);
                 }
-            } else {
-                group_eval.push(token)
-            }
-        }
+                Token::Container(ref ident) => {
+                    let parameters = Vec::from(parameter_stack.clone()).get_par(
+                        token.clone(),
+                        [
+                            Vec::from(parameter_stack.clone()),
+                            Vec::from(execution_stack.clone()),
+                        ]
+                        .concat(),
+                        self
+                    )?;
 
-        let mut new_code: Tokens = group_eval.clone();
+                    let cases = self.get(ident.as_str()).unwrap();
 
-        while let Some((argument_range, func)) = new_code.first_function() {
-            if let Some((x, y)) = new_code.special_pairs("(", ")") {
-                let result = new_code[x + 1..y].to_vec();
-                new_code.splice(x..=y, self.eval(result)?);
-            } else {
-                let code_to_evaluate: Tokens = new_code[argument_range.clone()].to_vec();
-                self.dissolve(&mut new_code, func, &argument_range, code_to_evaluate)?;
-            }
-        }
+                    let mut selected_consequent: Option<&Vec<Token>> = None;
 
-        Ok(new_code)
-    }
-
-    fn dissolve(
-        &mut self,
-        code: &mut Tokens,
-        func: Token,
-        argument_range: &std::ops::Range<usize>,
-        mut arr: Tokens,
-    ) -> Result<(), Report> {
-        match func {
-            Token::ActiveLambda(x) => {
-                self.insert(
-                    "%lambda".to_string(),
-                    vec![(vec![Token::Value(1.0)], x.to_vec())],
-                );
-                self.dissolve(
-                    code,
-                    Token::Container("%lambda".to_string()),
-                    argument_range,
-                    arr,
-                )
-            }
-            Token::Function(func) => {
-                let function_range = argument_range.start..argument_range.end + 1;
-                let reference_code: Tokens = code.clone()[function_range.clone()].to_vec();
-                let parameters = arr.get_par(&func, reference_code)?;
-
-                let result = match FUNCTIONS.get(&func).unwrap().0(self, parameters) {
-                    Ok(result) => result,
-                    Err(report) => return Err(report),
-                };
-
-                let combined = [arr.clone(), result].concat();
-
-                code.splice(function_range, combined);
-                Ok(())
-            }
-            Token::Container(x) => {
-                let mut case: Tokens = vec![];
-                let mut container_acc: Tokens = vec![];
-
-                for container_case in self.get(&x).unwrap().clone() {
-                    container_acc.append(&mut container_case.1.clone());
-                    let case_prefix = match self.eval(self.resolve(&container_case.0, &arr)) {
-                        Ok(x) => x,
-                        Err(report) => return Err(report),
-                    };
-
-                    if case_prefix[0] != Token::Value(0.0) {
-                        case = container_case.1;
-                        break;
+                    for (predictate, consequent) in cases {
+                        if self.clone().eval(self.resolve(&predictate, &parameters))? == vec![Token::Value(1.0)] {
+                            selected_consequent = Some(consequent);
+                            break;
+                        }
                     }
+
+                    execution_stack = VecDeque::from([self.resolve(selected_consequent.unwrap(), &parameters), Vec::from(execution_stack.clone())].concat());
                 }
-
-                let expanded_range = container_acc
-                    .iter()
-                    .fold(vec![], |mut acc, x| {
-                        if let Token::Group(mut contents) = x.clone() {
-                            acc.append(&mut contents);
-                            acc
-                        } else {
-                            acc.push(x.clone());
-                            acc
-                        }
-                    })
-                    .iter()
-                    .filter(|x| matches!(x, Token::Parameter(_)))
-                    .flat_map(|range| match range {
-                        Token::Parameter(Range::Full(full)) => full.clone().collect::<Vec<_>>(),
-                        Token::Parameter(Range::From(from)) => (0..=from.end).collect::<Vec<_>>(),
-                        Token::Parameter(Range::To(to)) => {
-                            (to.start..=arr.len() - 1).collect::<Vec<_>>()
-                        }
-                        _ => panic!(),
-                    })
-                    .unique()
-                    .map(|wlang_index| arr.len() - (wlang_index + 1))
-                    .sorted()
-                    .rev()
-                    .collect::<Vec<usize>>();
-
-                let result = self.resolve(&case, &arr);
-                code.splice(argument_range.end..=argument_range.end, result);
-
-                for n in expanded_range {
-                    code.remove(n);
-                }
-
-                Ok(())
+                Token::Void => continue,
+                _ => parameter_stack.push_back(token),
             }
-            _ => unimplemented!(),
         }
+
+        Ok(Vec::from(parameter_stack))
     }
 }
