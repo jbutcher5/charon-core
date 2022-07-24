@@ -33,9 +33,13 @@ pub fn type_of(token: &Token) -> String {
 }
 
 pub trait Utils {
-    fn get_par(&mut self, func: Token, reference_code: Tokens, state: &State) -> Result<Tokens, Report>;
+    fn get_par(
+        &mut self,
+        func: Token,
+        reference_code: Tokens,
+        state: &State,
+    ) -> Result<Tokens, Report>;
     fn as_nums(&self) -> Vec<f64>;
-    fn first_function(&self) -> Option<(std::ops::Range<usize>, Token)>;
     fn bundle_groups(&self) -> Tokens;
     fn bundle_lists(&self) -> Tokens;
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)>;
@@ -89,11 +93,11 @@ impl Utils for Tokens {
                             }
                         } else if let Token::Parameter(range) = token {
                             let range_max = match range {
-                                Range::Full(full) => *full.end()+1,
-                                Range::From(from) => from.end+1,
+                                Range::Full(full) => *full.end() + 1,
+                                Range::From(from) => from.end + 1,
                                 Range::To(to) => {
                                     if to.start > max {
-                                        to.start+1
+                                        to.start + 1
                                     } else {
                                         max
                                     }
@@ -209,44 +213,6 @@ impl Utils for Tokens {
                 _ => 1.0,
             })
             .collect()
-    }
-
-    fn first_function(&self) -> Option<(std::ops::Range<usize>, Token)> {
-        let mut results: Option<(std::ops::Range<usize>, Token)> = None;
-
-        for (i, token) in self.iter().rev().enumerate() {
-            if let Token::Function(value) = token {
-                results = Some((0..self.len() - (i + 1), Token::Function(value.to_string())));
-            } else if let Token::Container(value) = token {
-                results = Some((0..self.len() - (i + 1), Token::Container(value.to_string())));
-            } else if let Token::ActiveLambda(lambda) = token {
-                results = Some((
-                    0..self.len() - (i + 1),
-                    Token::ActiveLambda(lambda.to_vec()),
-                ));
-            }
-        }
-
-        let mut count: i32 = 0;
-
-        for (i, token) in self[..results.clone()?.0.end].iter().rev().enumerate() {
-            if count != 0 {
-                if Token::Special("(".to_string()) == *token {
-                    count += 1;
-                } else if Token::Special(")".to_string()) == *token {
-                    count -= 1;
-                }
-            } else if Token::Special("(".to_string()) == *token {
-                results = Some((
-                    self.len() - i - 2..results.clone()?.0.end,
-                    results.clone()?.1,
-                ))
-            } else if Token::Special(")".to_string()) == *token {
-                count -= 1;
-            }
-        }
-
-        results
     }
 
     fn bundle_groups(&self) -> Tokens {
