@@ -40,8 +40,7 @@ pub trait Utils {
         state: &State,
     ) -> Result<Tokens, Report>;
     fn as_nums(&self) -> Vec<f64>;
-    fn bundle_groups(&self) -> Tokens;
-    fn bundle_lists(&self) -> Tokens;
+    fn bundle(&self) -> Tokens;
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)>;
     fn skin_content(&mut self);
     fn literal(&self) -> String;
@@ -215,34 +214,27 @@ impl Utils for Tokens {
             .collect()
     }
 
-    fn bundle_groups(&self) -> Tokens {
-        match self.special_pairs("{", "}") {
-            Some((x, y)) => {
-                let mut bundled = self.clone();
+    fn bundle(&self) -> Tokens {
+        static BUNDLES: &[(&str, &str, &str); 3] =
+            &[("(", ")", "Expr"), ("{", "}", "Group"), ("[", "]", "List")];
 
-                let token_group =
-                    Token::Group(bundled[x + 1..y].to_vec().bundle_groups().bundle_lists());
-                bundled.splice(x..y + 1, vec![token_group]);
-                bundled.bundle_groups()
+        let mut bundled = self.clone();
+
+        for (first, second, collection) in BUNDLES {
+            if let Some((x, y)) = self.special_pairs(first, second) {
+                let bundled_token = match collection {
+                    &"Expr" => Token::Expr,
+                    &"Group" => Token::Group,
+                    &"List" => Token::List,
+                    _ => unimplemented!()
+                }(bundled[x + 1..y].to_vec().bundle());
+
+                bundled.splice(x..y + 1, vec![bundled_token]);
+                bundled = bundled.bundle();
             }
-            None => self.to_owned(),
         }
-    }
 
-    fn bundle_lists(&self) -> Tokens {
-        let pairs = self.special_pairs("[", "]");
-
-        match pairs {
-            Some((x, y)) => {
-                let mut bundled = self.clone();
-
-                let token_list =
-                    Token::List(bundled[x + 1..y].to_vec().bundle_lists().bundle_groups());
-                bundled.splice(x..y + 1, vec![token_list]);
-                bundled.bundle_lists()
-            }
-            None => self.to_owned(),
-        }
+        bundled
     }
 
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)> {

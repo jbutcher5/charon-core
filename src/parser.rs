@@ -137,14 +137,11 @@ where
                         inner
                             .iter()
                             .map(|(predictate, consequent)| {
-                                (
-                                    predictate.bundle_groups().bundle_lists(),
-                                    consequent.bundle_groups().bundle_lists(),
-                                )
+                                (predictate.bundle(), consequent.bundle())
                             })
                             .collect::<Vec<_>>()
                     }),
-                    default_case: code_block.default_case.bundle_groups().bundle_lists(),
+                    default_case: code_block.default_case.bundle(),
                 })
                 .collect::<Vec<_>>())
         }
