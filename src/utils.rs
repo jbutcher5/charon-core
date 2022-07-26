@@ -211,10 +211,10 @@ impl Utils for Tokens {
 
         for (first, second, collection) in BUNDLES {
             if let Some((x, y)) = self.special_pairs(first, second) {
-                let bundled_token = match collection {
-                    &"Expr" => Token::Expr,
-                    &"Group" => Token::Group,
-                    &"List" => Token::List,
+                let bundled_token = match *collection {
+                    "Expr" => Token::Expr,
+                    "Group" => Token::Group,
+                    "List" => Token::List,
                     _ => unimplemented!(),
                 }(bundled[x + 1..y].to_vec().bundle());
 
