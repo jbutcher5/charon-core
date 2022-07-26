@@ -17,13 +17,16 @@ pub enum Token {
     ContainerLiteral(String),
     Lambda(Vec<Token>),
     ActiveLambda(Vec<Token>),
-    Parameter(Range),
+    Parameter(usize),
     Atom(String),
     Char(char),
     Special(String),
     Group(Vec<Token>),
     List(Vec<Token>),
     Iterator(Vec<Token>),
+    Expr(Vec<Token>),
+    Null,
+    Void,
 }
 
 impl fmt::Display for Token {
@@ -47,5 +50,5 @@ pub enum Range {
 }
 
 pub type Tokens = Vec<Token>;
-pub(crate) type FunctionRef = fn(&mut State, Tokens) -> Result<Tokens, Report>;
+pub(crate) type FunctionRef = fn(&mut State, Tokens) -> Result<Token, Report>;
 pub type State = HashMap<String, Vec<(Tokens, Tokens)>>;

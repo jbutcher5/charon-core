@@ -1,4 +1,4 @@
-use crate::{Range, Token};
+use crate::Token;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use logos::{Lexer, Logos};
@@ -58,37 +58,9 @@ fn assignment(lex: &mut Lexer<LexerToken>) -> String {
     slice[..slice.len() - 3].to_string()
 }
 
-fn slice_full(lex: &mut Lexer<LexerToken>) -> Token {
-    let slice = &lex.slice()[1..];
-
-    if let Some((end, start)) = slice
-        .split("..")
-        .map(|x| x.parse::<usize>().unwrap())
-        .collect_tuple()
-    {
-        Token::Parameter(Range::Full(start..=end))
-    } else {
-        panic!("Invalid tuple found.")
-    }
-}
-
-fn slice_to(lex: &mut Lexer<LexerToken>) -> Token {
-    let mut slice = lex.slice()[1..].to_string();
-    slice.retain(|c| c != '.');
-
-    Token::Parameter(Range::From(..slice.parse::<usize>().unwrap()))
-}
-
-fn slice_from(lex: &mut Lexer<LexerToken>) -> Token {
-    let mut slice = lex.slice()[1..].to_string();
-    slice.retain(|c| c != '.');
-
-    Token::Parameter(Range::To(slice.parse::<usize>().unwrap()..))
-}
-
-fn slice_at(lex: &mut Lexer<LexerToken>) -> Token {
+fn parameter(lex: &mut Lexer<LexerToken>) -> Token {
     let slice = lex.slice()[1..].parse::<usize>().unwrap();
-    Token::Parameter(Range::Full(slice..=slice))
+    Token::Parameter(slice)
 }
 
 fn range(lex: &mut Lexer<LexerToken>) -> Token {
@@ -122,10 +94,7 @@ pub enum LexerToken {
     #[regex("\"[^\"]*\"", string)]
     #[regex(r"-?\d+(\.\d+)?", |number| Token::Value(number.slice().parse().unwrap()))]
     #[regex("'.'", |character| Token::Char(character.slice().chars().nth(1).unwrap()))]
-    #[regex(r"\$\d+\.\.\d+", slice_full)]
-    #[regex(r"\$\d+\.\.", slice_to)]
-    #[regex(r"\$\.\.\d+", slice_from)]
-    #[regex(r"\$\d+", slice_at)]
+    #[regex(r"\$\d+", parameter)]
     #[regex(r"@\d+\.\.\d+", range)]
     #[regex(r":[a-zA-Z\+\-\*/%><\|&_]+", |atom| Token::Atom(atom.slice()[1..].to_string()))]
     #[regex(r"\(|\)|\{|\}|\[|\]", |s| Token::Special(s.slice().to_string()))]

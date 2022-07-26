@@ -5,96 +5,96 @@ use charon_ariadne::Report;
 use itertools::Itertools;
 use phf::phf_map;
 
-fn type_of_container(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
-    Ok(vec![encode_string(&type_of(&par[0]))])
+fn type_of_container(_state: &mut State, par: Tokens) -> Result<Token, Report> {
+    Ok(encode_string(&type_of(&par[0])))
 }
 
-fn sum(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn sum(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let x = if let Group(x) | List(x) = &par[0] {
         x
     } else {
         unimplemented!()
     };
 
-    Ok(vec![Value(x.as_nums().iter().sum())])
+    Ok(Value(x.as_nums().iter().sum()))
 }
 
-fn add(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn add(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
         unimplemented!()
     };
 
-    Ok(vec![Token::Value(x + y)])
+    Ok(Token::Value(x + y))
 }
 
-fn sub(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn sub(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
         unimplemented!()
     };
 
-    Ok(vec![Value(y - x)])
+    Ok(Value(y - x))
 }
 
-fn mul(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn mul(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
         unimplemented!()
     };
 
-    Ok(vec![Value(x * y)])
+    Ok(Value(x * y))
 }
 
-fn div(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn div(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
         unimplemented!()
     };
 
-    Ok(vec![Value(y / x)])
+    Ok(Value(y / x))
 }
 
-fn modulo(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn modulo(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
         unimplemented!()
     };
 
-    Ok(vec![Value(y % x)])
+    Ok(Value(y % x))
 }
 
-fn len(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn len(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let x = if let Group(x) | List(x) = &par[0] {
         x
     } else {
         unimplemented!()
     };
 
-    Ok(vec![Value(x.len() as f64)])
+    Ok(Value(x.len() as f64))
 }
 
-fn reverse(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn reverse(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     if let Group(x) = &par[0] {
-        Ok(vec![Group(x.iter().rev().cloned().collect::<Vec<_>>())])
+        Ok(Group(x.iter().rev().cloned().collect::<Vec<_>>()))
     } else if let List(x) = &par[0] {
-        Ok(vec![List(x.iter().rev().cloned().collect::<Vec<_>>())])
+        Ok(List(x.iter().rev().cloned().collect::<Vec<_>>()))
     } else {
         unimplemented!()
     }
 }
 
-fn output(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn output(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     println!("{}", convert(&par[0]));
-    Ok(vec![])
+    Ok(Void)
 }
 
-fn eq(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn eq(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let parameters: (Token, Token) = par.iter().cloned().collect_tuple().unwrap();
 
     let equal = match parameters {
@@ -107,106 +107,85 @@ fn eq(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
         _ => unimplemented!(),
     };
 
-    let result = Value(match equal {
+    Ok(Value(match equal {
         true => 1.0,
         false => 0.0,
-    });
-
-    Ok(vec![result])
+    }))
 }
 
-fn or(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn or(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
         unimplemented!()
     };
 
-    let result = if *x == 1.0 || *y == 1.0 {
+    Ok(if *x == 1.0 || *y == 1.0 {
         Value(1.0)
     } else {
         Value(0.0)
-    };
-
-    Ok(vec![result])
+    })
 }
 
-fn not(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn not(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let x = if let [Value(x)] = par.as_slice() {
         x
     } else {
         unimplemented!()
     };
 
-    let result = if *x != 0.0 { Value(0.0) } else { Value(1.0) };
-
-    Ok(vec![result])
+    Ok(if *x != 0.0 { Value(0.0) } else { Value(1.0) })
 }
 
-fn and(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn and(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
         unimplemented!()
     };
 
-    let result = if *x == 1.0 && *y == 1.0 {
+    Ok(if *x == 1.0 && *y == 1.0 {
         Value(1.0)
     } else {
         Value(0.0)
-    };
-
-    Ok(vec![result])
+    })
 }
 
-fn greater(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn greater(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
         unimplemented!()
     };
 
-    let result = if *x > *y { Value(1.0) } else { Value(0.0) };
-
-    Ok(vec![result])
+    Ok(if *x > *y { Value(1.0) } else { Value(0.0) })
 }
 
-fn less(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn less(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let (x, y) = if let [Value(x), Value(y)] = par.as_slice() {
         (x, y)
     } else {
         unimplemented!()
     };
 
-    let result = if x < y { Value(1.0) } else { Value(0.0) };
-
-    Ok(vec![result])
+    Ok(if x < y { Value(1.0) } else { Value(0.0) })
 }
 
-fn release(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
-    let x = if let Group(x) = &par[0] {
-        x
-    } else {
-        unimplemented!()
-    };
-    Ok(x.clone())
+fn axe(_state: &mut State, _: Tokens) -> Result<Token, Report> {
+    Ok(Void)
 }
 
-fn axe(_state: &mut State, _: Tokens) -> Result<Tokens, Report> {
-    Ok(vec![])
-}
-
-fn call(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
-    Ok(vec![match &par[0] {
+fn call(_state: &mut State, par: Tokens) -> Result<Token, Report> {
+    Ok(match &par[0] {
         ContainerLiteral(x) => Container(x.to_string()),
         FunctionLiteral(x) => Function(x.to_string()),
         Lambda(lambda) => ActiveLambda(lambda.to_vec()),
         _ => unimplemented!(),
-    }])
+    })
 }
 
-fn map(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
-    let deref = &call(_state, vec![par[0].clone()])?[0];
+fn map(_state: &mut State, par: Tokens) -> Result<Token, Report> {
+    let deref = &call(_state, vec![par[0].clone()])?;
 
     let elements: Vec<Token> = if let Iterator(x) = &par[1] {
         x.to_vec()
@@ -219,26 +198,26 @@ fn map(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
         result = [result, _state.eval(vec![element, deref.clone()])?].concat();
     }
 
-    Ok(vec![Iterator(result)])
+    Ok(Iterator(result))
 }
 
-fn foldr(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn foldr(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let mut acc: Token = par[0].clone();
     let arr = if let Iterator(x) = &par[2] {
         x.to_vec()
     } else {
         unimplemented!()
     };
-    let func = &call(_state, vec![par[1].clone()])?[0];
+    let func = &call(_state, vec![par[1].clone()])?;
 
     for element in arr {
         acc = _state.eval(vec![acc.clone(), element, func.clone()])?[0].clone();
     }
 
-    Ok(vec![acc])
+    Ok(acc)
 }
 
-fn foldl(_state: &mut State, mut par: Tokens) -> Result<Tokens, Report> {
+fn foldl(_state: &mut State, mut par: Tokens) -> Result<Token, Report> {
     let reversed: Token = if let Iterator(x) = &par[0] {
         Iterator(x.iter().cloned().rev().collect())
     } else {
@@ -248,63 +227,63 @@ fn foldl(_state: &mut State, mut par: Tokens) -> Result<Tokens, Report> {
     foldr(_state, par)
 }
 
-fn iter(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
-    Ok(vec![if let Group(x) | List(x) = &par[0] {
+fn iter(_state: &mut State, par: Tokens) -> Result<Token, Report> {
+    Ok(if let Group(x) | List(x) = &par[0] {
         Iterator(x.to_vec())
     } else {
         unimplemented!()
-    }])
+    })
 }
 
-fn collect_group(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn collect_group(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let arr = if let Iterator(x) = &par[0] {
         x.to_vec()
     } else {
         unimplemented!()
     };
 
-    Ok(vec![Group(arr)])
+    Ok(Group(arr))
 }
 
-fn collect_list(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn collect_list(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     let arr = if let Iterator(x) = &par[0] {
         x.to_vec()
     } else {
         unimplemented!()
     };
 
-    Ok(vec![List(arr)])
+    Ok(List(arr))
 }
 
-fn lambda(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn lambda(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     if let List(x) = &par[0] {
-        Ok(vec![Lambda(x.to_vec())])
+        Ok(Lambda(x.to_vec()))
     } else {
         unimplemented!()
     }
 }
 
-fn head(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn head(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     if let Group(x) | List(x) = &par[0] {
         if let Some(first) = x.get(0) {
-            Ok(vec![first.clone()])
+            Ok(first.clone())
         } else {
-            Ok(vec![])
+            Ok(Null)
         }
     } else {
         unimplemented!()
     }
 }
 
-fn tail(_state: &mut State, par: Tokens) -> Result<Tokens, Report> {
+fn tail(_state: &mut State, par: Tokens) -> Result<Token, Report> {
     match par[0].clone() {
         Group(mut x) => {
             x.remove(0);
-            Ok(vec![Group(x.clone())])
+            Ok(Group(x.clone()))
         }
         List(mut x) => {
             x.remove(0);
-            Ok(vec![List(x.clone())])
+            Ok(List(x.clone()))
         }
         _ => unimplemented!(),
     }
@@ -338,9 +317,8 @@ pub static FUNCTIONS: phf::Map<&'static str, (FunctionRef, &[&'static str])> = p
     "OUTPUT" => (output, &["Any"]),
     "=" => (eq, &["Any", "Any"]),
     "eq" => (eq, &["Any", "Any"]),
-    "release" => (release, &[]),
     "axe" => (axe, &["Any"]),
-    "swap" => (|_, par| Ok(par), &["Any", "Any"]),
+    "swap" => (|_, par| Ok(par[0].clone()), &["Any", "Any"]),
     "call" => (call, &["Literal"]),
     "map" => (map, &["Literal", "Iterator"]),
     "foldr" => (foldr, &["Any", "Literal", "Iterator"]),

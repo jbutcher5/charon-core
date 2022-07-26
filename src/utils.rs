@@ -1,7 +1,8 @@
 use charon_ariadne::{Color, Label, Report, ReportBuilder, ReportKind, Source};
+use rayon::prelude::*;
 
 use crate::stdlib::{COMPLEX_TYPES, FUNCTIONS};
-use crate::{Range, State, Token, Tokens};
+use crate::{State, Token, Tokens};
 
 pub fn convert(token: &Token) -> String {
     match token {
@@ -33,11 +34,14 @@ pub fn type_of(token: &Token) -> String {
 }
 
 pub trait Utils {
-    fn get_par(&mut self, func: &str, reference_code: Tokens) -> Result<Tokens, Report>;
+    fn get_par(
+        &mut self,
+        func: Token,
+        reference_code: Tokens,
+        state: &State,
+    ) -> Result<Tokens, Report>;
     fn as_nums(&self) -> Vec<f64>;
-    fn first_function(&self) -> Option<(std::ops::Range<usize>, Token)>;
-    fn bundle_groups(&mut self) -> Tokens;
-    fn bundle_lists(&mut self) -> Tokens;
+    fn bundle(&self) -> Tokens;
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)>;
     fn skin_content(&mut self);
     fn literal(&self) -> String;
@@ -65,13 +69,52 @@ impl Token {
 }
 
 impl Utils for Tokens {
-    fn get_par(&mut self, func: &str, reference_code: Tokens) -> Result<Tokens, Report> {
+    fn get_par(
+        &mut self,
+        func: Token,
+        reference_code: Tokens,
+        state: &State,
+    ) -> Result<Tokens, Report> {
         let mut result = vec![];
-        let paramerters = FUNCTIONS.get(func).unwrap().1.iter();
+        let parameters = match func {
+            Token::Function(ident) => FUNCTIONS.get(&ident).unwrap().1.to_vec(),
+            Token::Container(ident) => {
+                let container = state.get(&ident).unwrap();
+
+                fn highest_rec(tokens: Tokens, max: usize) -> usize {
+                    let mut highest: usize = 0;
+
+                    for token in tokens {
+                        if let Token::Group(inner) | Token::List(inner) = token {
+                            let inner_highest = highest_rec(inner, max);
+
+                            if inner_highest > highest {
+                                highest = inner_highest;
+                            }
+                        } else if let Token::Parameter(index) = token {
+                            if index + 1 > highest {
+                                highest = index + 1
+                            }
+                        }
+                    }
+
+                    highest
+                }
+
+                let all_tokens: Vec<Token> = container
+                    .iter()
+                    .fold(vec![], |acc, x| [acc, x.0.clone(), x.1.clone()].concat());
+
+                let max: usize = highest_rec(all_tokens, self.len());
+
+                vec!["Any"; max]
+            }
+            _ => unimplemented!(),
+        };
         let literal = reference_code.literal_enumerate();
         let mut final_report: Option<ReportBuilder<std::ops::Range<usize>, Source>> = None;
 
-        for (index, token_type) in paramerters.clone().enumerate() {
+        for (index, token_type) in parameters.clone().iter().enumerate() {
             match self.pop() {
                 Some(content) => {
                     if *token_type == "Any" || type_of(&content) == *token_type {
@@ -119,8 +162,9 @@ impl Utils for Tokens {
                             Label::new(literal.1[literal.1.len() - 1].clone())
                                 .with_message(format!(
                                     "This function expects the parameters ({}).",
-                                    paramerters
+                                    parameters
                                         .clone()
+                                        .iter()
                                         .fold("".to_string(), |x, acc| format!("{} {}", acc, x))
                                         .trim()
                                 ))
@@ -159,68 +203,27 @@ impl Utils for Tokens {
             .collect()
     }
 
-    fn first_function(&self) -> Option<(std::ops::Range<usize>, Token)> {
-        let mut results: Option<(std::ops::Range<usize>, Token)> = None;
+    fn bundle(&self) -> Tokens {
+        static BUNDLES: &[(&str, &str, &str); 3] =
+            &[("(", ")", "Expr"), ("{", "}", "Group"), ("[", "]", "List")];
 
-        for (i, token) in self.iter().rev().enumerate() {
-            if let Token::Function(value) = token {
-                results = Some((0..self.len() - (i + 1), Token::Function(value.to_string())));
-            } else if let Token::Container(value) = token {
-                results = Some((0..self.len() - (i + 1), Token::Container(value.to_string())));
-            } else if let Token::ActiveLambda(lambda) = token {
-                results = Some((
-                    0..self.len() - (i + 1),
-                    Token::ActiveLambda(lambda.to_vec()),
-                ));
+        let mut bundled = self.clone();
+
+        for (first, second, collection) in BUNDLES {
+            if let Some((x, y)) = self.special_pairs(first, second) {
+                let bundled_token = match *collection {
+                    "Expr" => Token::Expr,
+                    "Group" => Token::Group,
+                    "List" => Token::List,
+                    _ => unimplemented!(),
+                }(bundled[x + 1..y].to_vec().bundle());
+
+                bundled.splice(x..y + 1, vec![bundled_token]);
+                bundled = bundled.bundle();
             }
         }
 
-        results.as_ref()?;
-
-        let mut count: i32 = 0;
-
-        for (i, token) in self[..results.clone()?.0.end].iter().rev().enumerate() {
-            if count != 0 {
-                if Token::Special("(".to_string()) == *token {
-                    count += 1;
-                } else if Token::Special(")".to_string()) == *token {
-                    count -= 1;
-                }
-            } else if Token::Special("(".to_string()) == *token {
-                results = Some((
-                    self.len() - i - 2..results.clone()?.0.end,
-                    results.clone()?.1,
-                ))
-            } else if Token::Special(")".to_string()) == *token {
-                count -= 1;
-            }
-        }
-
-        results
-    }
-
-    fn bundle_groups(&mut self) -> Tokens {
-        match self.special_pairs("{", "}") {
-            Some((x, y)) => {
-                let token_group =
-                    Token::Group(self[x + 1..y].to_vec().bundle_groups().bundle_lists());
-                self.splice(x..y + 1, vec![token_group]);
-                self.bundle_groups()
-            }
-            None => self.to_owned(),
-        }
-    }
-
-    fn bundle_lists(&mut self) -> Tokens {
-        match self.special_pairs("[", "]") {
-            Some((x, y)) => {
-                let token_list =
-                    Token::List(self[x + 1..y].to_vec().bundle_lists().bundle_groups());
-                self.splice(x..y + 1, vec![token_list]);
-                self.bundle_lists()
-            }
-            None => self.to_owned(),
-        }
+        bundled
     }
 
     fn special_pairs(&self, first: &str, second: &str) -> Option<(usize, usize)> {
@@ -233,8 +236,6 @@ impl Utils for Tokens {
                 break;
             }
         }
-
-        first_index?;
 
         let mut count: i32 = 1;
 
@@ -249,11 +250,11 @@ impl Utils for Tokens {
             }
         }
 
-        if let Some(second_index) = second_index {
-            Some((first_index?, second_index))
-        } else {
-            None
+        if count == 0 && second_index.is_none() {
+            second_index = Some(self[first_index? + 1..].len() + first_index?);
         }
+
+        Some((first_index?, second_index?))
     }
 
     fn skin_content(&mut self) {
@@ -315,34 +316,16 @@ pub trait Function {
 
 impl Function for State {
     fn resolve(&self, function: &Tokens, arr: &Tokens) -> Tokens {
-        let mut buffer = vec![];
         let reversed: Tokens = arr.iter().cloned().rev().collect();
-        for token in function {
-            match token {
-                Token::Parameter(range) => {
-                    let mut slice = match range {
-                        Range::From(from) => {
-                            reversed[*from].iter().cloned().rev().collect::<Tokens>()
-                        }
-                        Range::To(to) => reversed[to.clone()]
-                            .iter()
-                            .cloned()
-                            .rev()
-                            .collect::<Tokens>(),
-                        Range::Full(full) => reversed[full.clone()]
-                            .iter()
-                            .cloned()
-                            .rev()
-                            .collect::<Tokens>(),
-                    };
-
-                    buffer.append(&mut slice);
+        function
+            .par_iter()
+            .map(|token| {
+                if let Token::Parameter(index) = token {
+                    reversed[*index].clone()
+                } else {
+                    token.clone()
                 }
-                Token::Group(x) => buffer.push(Token::Group(self.resolve(x, arr))),
-                _ => buffer.push(token.clone()),
-            }
-        }
-
-        buffer
+            })
+            .collect()
     }
 }
