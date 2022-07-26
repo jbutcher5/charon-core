@@ -204,15 +204,13 @@ impl Utils for Tokens {
     }
 
     fn bundle(&self) -> Tokens {
-        static BUNDLES: &[(&str, &str, &str); 3] =
-            &[("(", ")", "Expr"), ("{", "}", "Group"), ("[", "]", "List")];
+        static BUNDLES: &[(&str, &str, &str); 2] = &[("{", "}", "Group"), ("[", "]", "List")];
 
         let mut bundled = self.clone();
 
         for (first, second, collection) in BUNDLES {
             if let Some((x, y)) = self.special_pairs(first, second) {
                 let bundled_token = match *collection {
-                    "Expr" => Token::Expr,
                     "Group" => Token::Group,
                     "List" => Token::List,
                     _ => unimplemented!(),
