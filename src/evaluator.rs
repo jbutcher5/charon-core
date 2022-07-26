@@ -71,7 +71,11 @@ impl Evaluate for State {
                         self,
                     )?;
 
-                    parameter_stack = VecDeque::from(parameters.clone());
+                    let mut n = parameters.clone().len();
+                    while n > 0 {
+                        parameter_stack.pop_back();
+                        n -= 1;
+                    }
 
                     let result = FUNCTIONS.get(ident).unwrap().0(self, parameters)?;
 
