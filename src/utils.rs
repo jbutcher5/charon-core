@@ -226,7 +226,7 @@ impl Utils for Tokens {
                     &"Expr" => Token::Expr,
                     &"Group" => Token::Group,
                     &"List" => Token::List,
-                    _ => unimplemented!()
+                    _ => unimplemented!(),
                 }(bundled[x + 1..y].to_vec().bundle());
 
                 bundled.splice(x..y + 1, vec![bundled_token]);

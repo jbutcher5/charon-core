@@ -113,6 +113,9 @@ impl Evaluate for State {
                         .concat(),
                     );
                 }
+                Token::Group(contents) => {
+                    parameter_stack.push_back(Token::Group(self.eval(contents)?))
+                }
                 Token::Void => continue,
                 _ => parameter_stack.push_back(token),
             }
