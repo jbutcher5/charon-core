@@ -1,7 +1,8 @@
 use charon_ariadne::{Color, Label, Report, ReportBuilder, ReportKind, Source};
+use rayon::prelude::*;
 
 use crate::stdlib::{COMPLEX_TYPES, FUNCTIONS};
-use crate::{Range, State, Token, Tokens};
+use crate::{State, Token, Tokens};
 
 pub fn convert(token: &Token) -> String {
     match token {
@@ -81,7 +82,7 @@ impl Utils for Tokens {
                 let container = state.get(&ident).unwrap();
 
                 fn highest_rec(tokens: Tokens, max: usize) -> usize {
-                    let mut highest = 0;
+                    let mut highest: usize = 0;
 
                     for token in tokens {
                         if let Token::Group(inner) | Token::List(inner) = token {
@@ -90,21 +91,9 @@ impl Utils for Tokens {
                             if inner_highest > highest {
                                 highest = inner_highest;
                             }
-                        } else if let Token::Parameter(range) = token {
-                            let range_max = match range {
-                                Range::Full(full) => *full.end() + 1,
-                                Range::From(from) => from.end + 1,
-                                Range::To(to) => {
-                                    if to.start > max {
-                                        to.start + 1
-                                    } else {
-                                        max
-                                    }
-                                }
-                            };
-
-                            if range_max > highest {
-                                highest = range_max
+                        } else if let Token::Parameter(index) = token {
+                            if index + 1 > highest {
+                                highest = index + 1
                             }
                         }
                     }
@@ -327,34 +316,16 @@ pub trait Function {
 
 impl Function for State {
     fn resolve(&self, function: &Tokens, arr: &Tokens) -> Tokens {
-        let mut buffer = vec![];
         let reversed: Tokens = arr.iter().cloned().rev().collect();
-        for token in function {
-            match token {
-                Token::Parameter(range) => {
-                    let mut slice = match range {
-                        Range::From(from) => {
-                            reversed[*from].iter().cloned().rev().collect::<Tokens>()
-                        }
-                        Range::To(to) => reversed[to.clone()]
-                            .iter()
-                            .cloned()
-                            .rev()
-                            .collect::<Tokens>(),
-                        Range::Full(full) => reversed[full.clone()]
-                            .iter()
-                            .cloned()
-                            .rev()
-                            .collect::<Tokens>(),
-                    };
-
-                    buffer.append(&mut slice);
+        function
+            .par_iter()
+            .map(|token| {
+                if let Token::Parameter(index) = token {
+                    reversed[*index].clone()
+                } else {
+                    token.clone()
                 }
-                Token::Group(x) => buffer.push(Token::Group(self.resolve(x, arr))),
-                _ => buffer.push(token.clone()),
-            }
-        }
-
-        buffer
+            })
+            .collect()
     }
 }
