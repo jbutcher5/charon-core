@@ -84,7 +84,7 @@ dependencies = [
 
 [[package]]
 name = "charon_core"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "charon_ariadne",
  "criterion",
