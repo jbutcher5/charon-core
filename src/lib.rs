@@ -2,7 +2,7 @@ pub mod evaluator;
 mod lexer;
 mod parser;
 mod stdlib;
-mod utils;
+pub mod utils;
 
 use charon_ariadne::Report;
 use std::collections::HashMap;
