@@ -1,6 +1,6 @@
 [package]
 name = "charon_core"
-version = "0.6.1"
+version = "0.6.2"
 edition = "2021"
 authors = ["James Butcher <jamesbutcher@duck.com>"]
 repository = "https://github.com/charon-lang/core"

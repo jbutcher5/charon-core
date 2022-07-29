@@ -97,7 +97,7 @@ pub enum LexerToken {
     #[regex(r"\$\d+", parameter)]
     #[regex(r"@\d+\.\.\d+", range)]
     #[regex(r":[a-zA-Z\+\-\*/%><\|&_]+", |atom| Token::Atom(atom.slice()[1..].to_string()))]
-    #[regex(r"\(|\)|\{|\}|\[|\]", |s| Token::Special(s.slice().to_string()))]
+    #[regex(r"\{|\}|\[|\]", |s| Token::Special(s.slice().to_string()))]
     Token(Token),
 
     #[regex(r"[a-zA-Z\+\-\*/%><\|&_]+", |func| func.slice().to_string())]
