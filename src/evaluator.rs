@@ -92,6 +92,13 @@ impl Evaluate for State {
                         self,
                     )?;
 
+                    let mut n = parameters.clone().len();
+                    while n > 0 {
+                        parameter_stack.pop_back();
+                        n -= 1;
+                    }
+
+
                     let cases = self.get(ident.as_str()).unwrap();
 
                     let mut selected_consequent: Option<&Vec<Token>> = None;
@@ -108,6 +115,31 @@ impl Evaluate for State {
                     execution_stack = VecDeque::from(
                         [
                             self.resolve(selected_consequent.unwrap(), &parameters),
+                            Vec::from(execution_stack.clone()),
+                        ]
+                        .concat(),
+                    );
+                }
+                Token::ActiveLambda(ref lambda) => {
+                     let parameters = Vec::from(parameter_stack.clone()).get_par(
+                        token.clone(),
+                        [
+                            Vec::from(parameter_stack.clone()),
+                            Vec::from(execution_stack.clone()),
+                        ]
+                        .concat(),
+                        self,
+                    )?;
+
+                    let mut n = parameters.clone().len();
+                    while n > 0 {
+                        parameter_stack.pop_back();
+                        n -= 1;
+                    }
+
+                    execution_stack = VecDeque::from(
+                        [
+                            self.resolve(&lambda, &parameters),
                             Vec::from(execution_stack.clone()),
                         ]
                         .concat(),

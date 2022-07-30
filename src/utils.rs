@@ -76,38 +76,40 @@ impl Utils for Tokens {
         state: &State,
     ) -> Result<Tokens, Report> {
         let mut result = vec![];
+
+        fn highest_rec(tokens: Tokens) -> usize {
+            let mut highest: usize = 0;
+
+            for token in tokens {
+                if let Token::Group(inner) | Token::List(inner) = token {
+                    let inner_highest = highest_rec(inner);
+
+                    if inner_highest > highest {
+                        highest = inner_highest;
+                    }
+                } else if let Token::Parameter(index) = token {
+                    if index + 1 > highest {
+                        highest = index + 1
+                    }
+                }
+            }
+
+            highest
+        }
+
         let parameters = match func {
             Token::Function(ident) => FUNCTIONS.get(&ident).unwrap().1.to_vec(),
+            Token::ActiveLambda(lambda) => {
+                vec!["Any"; highest_rec(lambda)]
+            }
             Token::Container(ident) => {
                 let container = state.get(&ident).unwrap();
-
-                fn highest_rec(tokens: Tokens, max: usize) -> usize {
-                    let mut highest: usize = 0;
-
-                    for token in tokens {
-                        if let Token::Group(inner) | Token::List(inner) = token {
-                            let inner_highest = highest_rec(inner, max);
-
-                            if inner_highest > highest {
-                                highest = inner_highest;
-                            }
-                        } else if let Token::Parameter(index) = token {
-                            if index + 1 > highest {
-                                highest = index + 1
-                            }
-                        }
-                    }
-
-                    highest
-                }
 
                 let all_tokens: Vec<Token> = container
                     .iter()
                     .fold(vec![], |acc, x| [acc, x.0.clone(), x.1.clone()].concat());
 
-                let max: usize = highest_rec(all_tokens, self.len());
-
-                vec!["Any"; max]
+                vec!["Any"; highest_rec(all_tokens)]
             }
             _ => unimplemented!(),
         };
